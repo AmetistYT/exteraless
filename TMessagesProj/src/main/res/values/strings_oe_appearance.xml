@@ -128,6 +128,7 @@
     <string name="OEAppearanceHideAiIv">Instant View Summary</string>
     <string name="MonetStyleHeader">Monet palette</string>
     <string name="MonetStyleTelemone">Telemone</string>
+    <string name="MonetStyleInugram">Inugram</string>
     <string name="MonetStyleClassic">Classic</string>
     <string name="OEAppearanceTabCounterAll">All chats</string>
     <string name="OEAppearanceTabCounterUnmuted">Except muted</string>
