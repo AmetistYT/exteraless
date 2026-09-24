@@ -13635,6 +13635,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 ArrayList<File> files = new ArrayList<>();
 
                 files.addAll(Arrays.asList(dir.listFiles()));
+                files.addAll(Arrays.asList(app.exteraless.plugins.PluginLog.files()));
 
                 File filesDir = ApplicationLoader.getFilesDirFixed();
                 filesDir = new File(filesDir, "malformed_database/");

@@ -970,6 +970,49 @@ def test_plugin_method_named_like_old_internals_survives_attach(sdk):
     assert plugin.plugin_id == 'test_plugin'
 
 
+def test_log_capture_forwards_lines_with_owner_and_level(loader, monkeypatch):
+    captured = []
+
+    class Bridge:
+        @staticmethod
+        def logStream(owner, level, text):
+            captured.append((owner, level, text))
+
+    monkeypatch.setattr(loader, '_permissions', lambda: Bridge)
+    monkeypatch.setattr(loader, 'caller_plugin_id', lambda: 'admin_tools')
+
+    class Sink:
+        def __init__(self):
+            self.data = ''
+
+        def write(self, text):
+            self.data += text
+            return len(text)
+
+        def flush(self):
+            pass
+
+    sink = Sink()
+    stream = loader._PluginLogStream(sink, 'W')
+    stream.write('first ')
+    stream.write('line\nsecond')
+    stream.write(' line\n')
+    assert sink.data == 'first line\nsecond line\n'
+    assert captured == [('admin_tools', 'W', 'first line'), ('admin_tools', 'W', 'second line')]
+
+    captured.clear()
+    handler = loader._PluginLogHandler()
+    handler.setFormatter(__import__('logging').Formatter('%(name)s: %(message)s'))
+    logger = __import__('logging').getLogger('zwylib.async')
+    logger.addHandler(handler)
+    logger.propagate = False
+    try:
+        logger.error('task failed')
+    finally:
+        logger.removeHandler(handler)
+    assert captured == [('admin_tools', 'E', 'zwylib.async: task failed')]
+
+
 def test_custom_sub_page_rows_keep_their_identity_across_rebuilds(sdk, loader, monkeypatch):
     factory = object()
 

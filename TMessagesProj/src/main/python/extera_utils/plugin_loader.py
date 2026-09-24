@@ -19,6 +19,7 @@ import inspect
 import json
 import os
 import re
+import logging
 import sys
 import threading
 from collections import namedtuple
@@ -1674,6 +1675,84 @@ def _install_interface_call_shim() -> None:
               file=sys.stderr)
 
 
+_LOG_LEVELS = {10: "D", 20: "I", 30: "W", 40: "E", 50: "F"}
+
+
+def _forward_log(level: str, text: str) -> None:
+    java = _permissions()
+    if java is None or not text:
+        return
+    try:
+        owner = caller_plugin_id()
+    except Exception:
+        owner = None
+    try:
+        java.logStream(owner, level, text)
+    except Exception:
+        pass
+
+
+class _PluginLogStream:
+    def __init__(self, target, level: str):
+        self._target = target
+        self._level = level
+        self._local = threading.local()
+
+    def write(self, text):
+        result = self._target.write(text) if self._target is not None else len(text)
+        try:
+            self._capture(text)
+        except Exception:
+            pass
+        return result
+
+    def _capture(self, text) -> None:
+        if not isinstance(text, str) or getattr(self._local, "busy", False):
+            return
+        buffer = getattr(self._local, "buffer", "") + text
+        if "\n" in buffer:
+            head, _, buffer = buffer.rpartition("\n")
+        elif len(buffer) > 8192:
+            head, buffer = buffer, ""
+        else:
+            self._local.buffer = buffer
+            return
+        self._local.buffer = buffer
+        self._local.busy = True
+        try:
+            _forward_log(self._level, head)
+        finally:
+            self._local.busy = False
+
+    def flush(self):
+        if self._target is not None:
+            self._target.flush()
+
+    def __getattr__(self, name):
+        return getattr(self._target, name)
+
+
+class _PluginLogHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            text = self.format(record)
+        except Exception:
+            return
+        _forward_log(_LOG_LEVELS.get(record.levelno, "I"), text)
+
+
+def _install_log_capture() -> None:
+    if not isinstance(sys.stdout, _PluginLogStream):
+        sys.stdout = _PluginLogStream(sys.stdout, "I")
+    if not isinstance(sys.stderr, _PluginLogStream):
+        sys.stderr = _PluginLogStream(sys.stderr, "W")
+    root = logging.getLogger()
+    if not any(isinstance(handler, _PluginLogHandler) for handler in root.handlers):
+        handler = _PluginLogHandler()
+        handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
+        root.addHandler(handler)
+
+
 def _install_sandbox() -> None:
     """Поставить финдер и врапперы импорта/open. Идемпотентно, не бросает."""
     global _original_import, _original_import_module, _original_open
@@ -1702,6 +1781,7 @@ def _install_sandbox() -> None:
         _install_jclass_guard()
         _install_color_int_shims()
         _install_dual_member_setters()
+        _install_log_capture()
         _install_dynamic_proxy_guard()
         _install_interface_call_shim()
         from . import class_aliases

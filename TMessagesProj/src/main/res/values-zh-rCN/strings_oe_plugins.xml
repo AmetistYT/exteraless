@@ -36,6 +36,9 @@
     <string name="PluginsInstallAction">安装</string>
     <string name="PluginsInstallUnknownConfirm">该文件未被识别为插件。若仍要安装，它将获得一切：消息、文件、网络以及应用的代码。</string>
     <string name="PluginsInstalled">已安装 %1$s。</string>
+    <string name="PluginsExportLogs">导出插件日志</string>
+    <string name="PluginsClearLogs">清除插件日志</string>
+    <string name="PluginsLogsCleared">插件日志已清除。</string>
     <string name="PluginsUpdateAction">更新</string>
     <string name="PluginsUpdated">已更新 %1$s。</string>
     <string name="PluginsEngineDisabledHint">插件引擎已关闭。请先在「设置 → 插件」中开启。</string>
