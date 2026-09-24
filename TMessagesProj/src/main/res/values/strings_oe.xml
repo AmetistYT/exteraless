@@ -2,7 +2,7 @@
 <!-- Строки фич, перенесённых из exteraGram. -->
 <resources>
     <string name="OpenExtera" translatable="false">exteraless</string>
-    <string name="OpenExteraInfo">Features ported from exteraGram</string>
+    <string name="OpenExteraInfo">Make the client truly yours</string>
 
 
     <string name="OpenExteraChats">Chats</string>
