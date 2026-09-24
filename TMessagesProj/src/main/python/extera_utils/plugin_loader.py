@@ -2305,6 +2305,14 @@ def _setting_identity_value(value, seen=None):
     return [type(value).__module__, type(value).__qualname__, id(value)]
 
 
+def _setting_shape_value(value):
+    if value is None or isinstance(value, (str, bool, int, float)):
+        return value
+    if isinstance(value, tuple):
+        return [_setting_shape_value(entry) for entry in value]
+    return [type(value).__module__, type(value).__qualname__]
+
+
 def _setting_callback_ident(callback, seen=None):
     if callback is None:
         return None
@@ -2345,7 +2353,7 @@ def _item_ident(item, scope: str, index: int) -> str:
                      for field in ("on_click", "on_long_click", "create_sub_fragment")]
         native_id = _setting_identity_value(getattr(getattr(item, "item", None), "id", None))
         custom = [getattr(item, field, None) for field in ("view", "factory", "factory_args")]
-        name.extend([callbacks, native_id, [_setting_identity_value(value) for value in custom]])
+        name.extend([callbacks, native_id, [_setting_shape_value(value) for value in custom]])
         if not any(name[1:4]) and not any(callbacks) and native_id is None and not any(value is not None for value in custom):
             name.append(index)
     return json.dumps([scope, type(item).__name__, name], ensure_ascii=False)

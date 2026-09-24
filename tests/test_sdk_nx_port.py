@@ -968,3 +968,19 @@ def test_plugin_method_named_like_old_internals_survives_attach(sdk):
     plugin._exteraless_attach('test_plugin')
     assert plugin._plugin_id('x') == 'id:x'
     assert plugin.plugin_id == 'test_plugin'
+
+
+def test_custom_sub_page_rows_keep_their_identity_across_rebuilds(sdk, loader, monkeypatch):
+    factory = object()
+
+    def build():
+        return [sdk.settings.Custom(factory=factory, factory_args=object(),
+                                    create_sub_fragment=lambda cid=cid: [sdk.settings.Text(f'Add filter {cid}')])
+                for cid in (1, 2)]
+
+    record = settings_record(sdk, loader, monkeypatch, [])
+    record.instance.create_settings = build
+    before = json.loads(loader.get_settings_json('test_plugin'))
+    after = json.loads(loader.get_settings_json('test_plugin'))
+    assert [row['row_id'] for row in before] == [row['row_id'] for row in after]
+    assert before[0]['row_id'] != before[1]['row_id']
