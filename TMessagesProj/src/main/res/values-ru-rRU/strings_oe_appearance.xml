@@ -108,6 +108,7 @@
     <string name="OEAppearanceNewLoadingStyle">Индикаторы загрузки</string>
     <string name="OEAppearanceNewChatHeaderStyle">Шапка чата</string>
     <string name="OEAppearanceNewNavigationBarStyle">Панель навигации</string>
+    <string name="OEAppearanceM3ListItems">Элементы списков</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">Панель навигации</string>
     <string name="OEAppearanceIosFirstFolderOnTabTap">Тап по вкладке — первая папка</string>

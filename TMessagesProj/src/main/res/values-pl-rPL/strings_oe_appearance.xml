@@ -100,6 +100,7 @@
     <string name="OEAppearanceNewLoadingStyle">Wskaźniki ładowania</string>
     <string name="OEAppearanceNewChatHeaderStyle">Nagłówek czatu</string>
     <string name="OEAppearanceNewNavigationBarStyle">Pasek nawigacji</string>
+    <string name="OEAppearanceM3ListItems">Elementy list</string>
     <string name="OEAppearanceIosNavigationBarStyle">Pasek nawigacji</string>
     <string name="OEAppearanceIosFirstFolderOnTabTap">Dotknięcie karty otwiera pierwszy folder</string>
     <string name="OEAppearanceHideAi">Ukryj AI</string>

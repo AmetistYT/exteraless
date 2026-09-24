@@ -118,6 +118,7 @@
     <string name="OEAppearanceNewLoadingStyle">Loading Indicators</string>
     <string name="OEAppearanceNewChatHeaderStyle">Chat Header</string>
     <string name="OEAppearanceNewNavigationBarStyle">Navigation Bar</string>
+    <string name="OEAppearanceM3ListItems">List Items</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">Navigation Bar</string>
     <string name="OEAppearanceIosFirstFolderOnTabTap">Tab Tap Opens First Folder</string>

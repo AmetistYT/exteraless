@@ -100,6 +100,7 @@
     <string name="OEAppearanceNewLoadingStyle">加载指示器</string>
     <string name="OEAppearanceNewChatHeaderStyle">对话顶栏</string>
     <string name="OEAppearanceNewNavigationBarStyle">导航栏</string>
+    <string name="OEAppearanceM3ListItems">列表项</string>
     <string name="OEAppearanceIosNavigationBarStyle">导航栏</string>
     <string name="OEAppearanceIosFirstFolderOnTabTap">点按标签页返回首个文件夹</string>
     <string name="OEAppearanceHideAi">隐藏 AI</string>

@@ -122,7 +122,7 @@ public class TextSettingsCell extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        final int fixed = AndroidUtilities.dp(50);
+        final int fixed = AndroidUtilities.dp(app.exteraless.appearance.M3ListItems.rowHeight(50));
         measureContent(widthMeasureSpec, fixed);
         if (!wrapText) {
             return;

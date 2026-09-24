@@ -3533,8 +3533,9 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
     private boolean useSegmentedSections() {
         return segmentedSectionsEnabled
                 && sectionsItemDecoration != null
-                && app.exteraless.appearance.AppearanceConfig.dividerStyle()
-                        == app.exteraless.appearance.AppearanceConfig.DIVIDER_SEGMENTS;
+                && (app.exteraless.appearance.AppearanceConfig.dividerStyle()
+                        == app.exteraless.appearance.AppearanceConfig.DIVIDER_SEGMENTS
+                        || app.exteraless.appearance.M3ListItems.enabled());
     }
 
     /** Внутренний угол сегмента: у exteraGram min(радиус секции, 4dp). */
