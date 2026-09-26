@@ -8,6 +8,8 @@
 
 package org.telegram.messenger;
 
+import app.exteraless.notifications.NotificationsHelper;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -255,6 +257,8 @@ public class NotificationsController extends BaseController implements Notificat
         };
 
         dialogsNotificationsFacade = new NotificationsSettingsFacade(currentAccount);
+
+        notificationsQueue.postRunnable(() -> NotificationsHelper.loadWearNotificationIds(currentAccount, wearNotificationsIds));
 
         AndroidUtilities.runOnUIThread(() -> {
             getNotificationCenter().addObserver(this, NotificationCenter.fileLoaded);
@@ -521,6 +525,76 @@ public class NotificationsController extends BaseController implements Notificat
         });
     }
 
+    public void processReadTopic(long dialogId, long topicId, int maxId) {
+        if (topicId == 0) {
+            return;
+        }
+        notificationsQueue.postRunnable(() -> {
+            ArrayList<Integer> ids = null;
+            for (int a = 0; a < pushMessages.size(); a++) {
+                MessageObject messageObject = pushMessages.get(a);
+                if (messageObject.getDialogId() != dialogId || messageObject.getId() > maxId || messageObject.isStoryReactionPush) {
+                    continue;
+                }
+                if (MessageObject.getTopicId(currentAccount, messageObject.messageOwner, getMessagesController().isForum(messageObject)) != topicId) {
+                    continue;
+                }
+                if (ids == null) {
+                    ids = new ArrayList<>();
+                }
+                ids.add(messageObject.getId());
+            }
+            if (ids != null) {
+                LongSparseArray<ArrayList<Integer>> map = new LongSparseArray<>();
+                map.put(DialogObject.isChatDialog(dialogId) && ChatObject.isChannel(getMessagesController().getChat(-dialogId)) ? dialogId : 0, ids);
+                removeDeletedMessagesFromNotifications(map, false);
+            }
+        });
+    }
+
+    public void processReadReactions(long dialogId, SparseBooleanArray unreadReactions) {
+        ArrayList<Integer> ids = null;
+        for (int i = 0; i < unreadReactions.size(); i++) {
+            if (!unreadReactions.valueAt(i)) {
+                if (ids == null) {
+                    ids = new ArrayList<>();
+                }
+                ids.add(unreadReactions.keyAt(i));
+            }
+        }
+        if (ids == null) {
+            return;
+        }
+        LongSparseArray<ArrayList<Integer>> map = new LongSparseArray<>();
+        map.put(ChatObject.isChannel(getMessagesController().getChat(-dialogId)) ? dialogId : 0, ids);
+        removeDeletedMessagesFromNotifications(map, true);
+    }
+
+    private void deletePushMessagesFromStorage(ArrayList<MessageObject> messages) {
+        LongSparseArray<ArrayList<Integer>> byDialog = new LongSparseArray<>();
+        for (int a = 0, N = messages.size(); a < N; a++) {
+            MessageObject messageObject = messages.get(a);
+            if (messageObject.getId() == 0) {
+                continue;
+            }
+            long dialogId = messageObject.getDialogId();
+            ArrayList<Integer> ids = byDialog.get(dialogId);
+            if (ids == null) {
+                ids = new ArrayList<>();
+                byDialog.put(dialogId, ids);
+            }
+            ids.add(messageObject.getId());
+        }
+        if (byDialog.size() == 0) {
+            return;
+        }
+        getMessagesStorage().getStorageQueue().postRunnable(() -> {
+            for (int a = 0, N = byDialog.size(); a < N; a++) {
+                getMessagesStorage().deletePushMessages(byDialog.keyAt(a), byDialog.valueAt(a));
+            }
+        });
+    }
+
     public void removeDeletedMessagesFromNotifications(LongSparseArray<ArrayList<Integer>> deletedMessages, boolean isReactions) {
         ArrayList<MessageObject> popupArrayRemove = new ArrayList<>(0);
         notificationsQueue.postRunnable(() -> {
@@ -583,6 +657,7 @@ public class NotificationsController extends BaseController implements Notificat
                 }
             }
             if (!popupArrayRemove.isEmpty()) {
+                deletePushMessagesFromStorage(popupArrayRemove);
                 AndroidUtilities.runOnUIThread(() -> {
                     for (int a = 0, size = popupArrayRemove.size(); a < size; a++) {
                         popupMessages.remove(popupArrayRemove.get(a));
@@ -590,7 +665,7 @@ public class NotificationsController extends BaseController implements Notificat
                     NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.pushMessagesUpdated);
                 });
             }
-            if (old_unread_count != total_unread_count) {
+            if (old_unread_count != total_unread_count || !popupArrayRemove.isEmpty()) {
                 if (!notifyCheck) {
                     delayedPushMessages.clear();
                     showOrUpdateNotification(notifyCheck);
@@ -668,7 +743,8 @@ public class NotificationsController extends BaseController implements Notificat
                     pushDialogsOverrideMention.remove(dialogId);
                 }
             }
-            if (popupArrayRemove.isEmpty()) {
+            if (!popupArrayRemove.isEmpty()) {
+                deletePushMessagesFromStorage(popupArrayRemove);
                 AndroidUtilities.runOnUIThread(() -> {
                     for (int a = 0, size = popupArrayRemove.size(); a < size; a++) {
                         popupMessages.remove(popupArrayRemove.get(a));
@@ -676,7 +752,7 @@ public class NotificationsController extends BaseController implements Notificat
                     NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.pushMessagesUpdated);
                 });
             }
-            if (old_unread_count != total_unread_count) {
+            if (old_unread_count != total_unread_count || !popupArrayRemove.isEmpty()) {
                 if (!notifyCheck) {
                     delayedPushMessages.clear();
                     showOrUpdateNotification(notifyCheck);
@@ -848,7 +924,7 @@ public class NotificationsController extends BaseController implements Notificat
                     int messageId = inbox.get(key);
                     for (int a = 0; a < pushMessages.size(); a++) {
                         MessageObject messageObject = pushMessages.get(a);
-                        if (!messageObject.messageOwner.from_scheduled && messageObject.getDialogId() == key && messageObject.getId() <= messageId && !messageObject.isStoryReactionPush) {
+                        if (messageObject.getDialogId() == key && messageObject.getId() <= messageId && !messageObject.isStoryReactionPush) {
                             if (isPersonalMessage(messageObject)) {
                                 personalCount--;
                             }
@@ -923,6 +999,9 @@ public class NotificationsController extends BaseController implements Notificat
                 }
             }
             if (!popupArrayRemove.isEmpty()) {
+                deletePushMessagesFromStorage(popupArrayRemove);
+                delayedPushMessages.clear();
+                showOrUpdateNotification(false);
                 AndroidUtilities.runOnUIThread(() -> {
                     for (int a = 0, size = popupArrayRemove.size(); a < size; a++) {
                         popupMessages.remove(popupArrayRemove.get(a));
@@ -1465,7 +1544,7 @@ public class NotificationsController extends BaseController implements Notificat
                     pushDialogsOverrideMention.remove(dialogId);
                     for (int a = 0; a < pushMessages.size(); a++) {
                         MessageObject messageObject = pushMessages.get(a);
-                        if (!messageObject.messageOwner.from_scheduled && messageObject.getDialogId() == dialogId && !messageObject.isStoryReactionPush) {
+                        if (messageObject.getDialogId() == dialogId && !messageObject.isStoryReactionPush) {
                             if (isPersonalMessage(messageObject)) {
                                 personalCount--;
                             }
@@ -1507,7 +1586,7 @@ public class NotificationsController extends BaseController implements Notificat
                     NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.pushMessagesUpdated);
                 });
             }
-            if (old_unread_count != total_unread_count) {
+            if (old_unread_count != total_unread_count || !popupArrayToRemove.isEmpty()) {
                 if (!notifyCheck) {
                     delayedPushMessages.clear();
                     showOrUpdateNotification(notifyCheck);
@@ -3300,6 +3379,7 @@ public class NotificationsController extends BaseController implements Notificat
                 notificationManager.cancel(wearNotificationsIds.valueAt(a));
             }
             wearNotificationsIds.clear();
+            NotificationsHelper.saveWearNotificationIds(currentAccount, wearNotificationsIds);
         });
     }
 
@@ -3318,6 +3398,7 @@ public class NotificationsController extends BaseController implements Notificat
                 notificationManager.cancel(wearNotificationsIds.valueAt(a));
             }
             wearNotificationsIds.clear();
+            NotificationsHelper.saveWearNotificationIds(currentAccount, wearNotificationsIds);
             AndroidUtilities.runOnUIThread(() -> NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.pushMessagesUpdated));
         } catch (Exception e) {
             FileLog.e(e);
@@ -5784,6 +5865,7 @@ public class NotificationsController extends BaseController implements Notificat
                 ShortcutManagerCompat.removeDynamicShortcuts(ApplicationLoader.applicationContext, ids);
             }
         }
+        NotificationsHelper.saveWearNotificationIds(currentAccount, wearNotificationsIds);
     }
 
     private String cutLastName(String name) {
