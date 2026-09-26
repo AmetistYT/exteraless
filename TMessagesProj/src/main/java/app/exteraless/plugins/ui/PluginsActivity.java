@@ -345,6 +345,9 @@ public class PluginsActivity extends BaseFragment {
             String ext = source.getName().contains(".")
                     ? source.getName().substring(source.getName().lastIndexOf('.'))
                     : ".plugin";
+            if (ext.equalsIgnoreCase(".py")) {
+                ext = ".plugin";
+            }
             File copy = new File(dir, plugin.id + ext);
             try (InputStream in = new java.io.FileInputStream(source);
                  FileOutputStream out = new FileOutputStream(copy)) {
