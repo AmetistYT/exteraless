@@ -172,6 +172,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int hideSearchButtonRow;
     private int showResultsBeforeVotingRow;
     private int dateOfForwardedMsgRow;
+    private int showTimeHintRow;
+    private int rememberAllRepliesRow;
     private int chatMenuGroupRow;
     private int chatMenuAdminsRow;
     private int chatMenuRecentActionsRow;
@@ -396,6 +398,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         hideSearchButtonRow = addRow("hideSearchButton");
         showResultsBeforeVotingRow = addRow("showResultsBeforeVoting");
         dateOfForwardedMsgRow = addRow("dateOfForwardedMsg", "DateOfForwardedMsg");
+        showTimeHintRow = addRow("showTimeHint", "ShowTimeHint");
+        rememberAllRepliesRow = addRow("rememberAllBackMessages", "rememberAllBackMessages");
         chatMenuGroupRow = addRow("chatMenu");
         if (chatMenuExpanded) {
             chatMenuAdminsRow = addRow();
@@ -1727,6 +1731,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == lockedEmojiAsStickerRow) return NaConfig.INSTANCE.getSendLockedCustomEmojiAsSticker();
         if (position == deleteChatForBothSidesRow) return NaConfig.INSTANCE.getDeleteChatForBothSides();
         if (position == dateOfForwardedMsgRow) return NaConfig.INSTANCE.getDateOfForwardedMsg();
+        if (position == showTimeHintRow) return NaConfig.INSTANCE.getShowTimeHint();
+        if (position == rememberAllRepliesRow) return NekoConfig.rememberAllBackMessages;
         if (position == premiumEmojiStatusRow) return NaConfig.INSTANCE.getPremiumItemEmojiStatus();
         if (position == premiumEmojiInRepliesRow) return NaConfig.INSTANCE.getPremiumItemEmojiInReplies();
         if (position == premiumColorsInRepliesRow) return NaConfig.INSTANCE.getPremiumItemCustomColorInReplies();
@@ -2357,6 +2363,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndCheck(getString(R.string.DeleteChatForBothSides), NaConfig.INSTANCE.getDeleteChatForBothSides().Bool(), true);
             } else if (position == dateOfForwardedMsgRow) {
                 cell.setTextAndCheck(getString(R.string.DateOfForwardedMsg), NaConfig.INSTANCE.getDateOfForwardedMsg().Bool(), true);
+            } else if (position == showTimeHintRow) {
+                cell.setTextAndCheck(getString(R.string.ShowTimeHint), NaConfig.INSTANCE.getShowTimeHint().Bool(), true);
+            } else if (position == rememberAllRepliesRow) {
+                cell.setTextAndCheck(getString(R.string.rememberAllBackMessages), NekoConfig.rememberAllBackMessages.Bool(), true);
             } else if (position == fixLinkPreviewRow) {
                 cell.setTextAndValueAndCheck(getString(R.string.FixLinkPreview), "x.com → fixupx.com",
                         NaConfig.INSTANCE.getFixLinkPreview().Bool(), false, true);
