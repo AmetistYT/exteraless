@@ -48,6 +48,9 @@ public class MusicBrowserService extends MediaBrowserService {
         if (rootHints != null && rootHints.getBoolean(BrowserRoot.EXTRA_RECENT, false)) {
             return null;
         }
+        if (rootHints != null && rootHints.getBoolean(BrowserRoot.EXTRA_RECENT, false)) {
+            return null;
+        }
         boolean isSelf = Process.SYSTEM_UID == clientUid || Process.myUid() == clientUid;
         if (!isSelf && !PackageValidator.isKnownCaller(this, clientPackageName, clientUid)) {
             return null;
