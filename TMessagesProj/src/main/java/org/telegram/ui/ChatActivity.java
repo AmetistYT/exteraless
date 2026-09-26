@@ -48742,6 +48742,9 @@ public class ChatActivity extends BaseFragment implements
         final Browser.Progress progress = makeProgressForLink(cell, link);
         final TLRPC.TL_contact contact = getContactsController().contactsByPhone.get(PhoneFormat.stripExceptNumbers(phone));
         Utilities.Callback<TLRPC.User> open = user -> {
+            if (getContext() == null || getParentActivity() == null || isFinishing()) {
+                return;
+            }
             TLRPC.UserFull userInfo = user != null ? getMessagesController().getUserFull(user.id) : null;
 
             final ItemOptions options = ItemOptions.makeOptions(ChatActivity.this, cell, true);
