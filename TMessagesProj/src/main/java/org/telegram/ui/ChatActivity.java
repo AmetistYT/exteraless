@@ -3707,6 +3707,7 @@ public class ChatActivity extends BaseFragment implements
     public void onFragmentDestroy() {
         app.exteraless.plugins.menus.MenuInjector.releaseMessageMenu(this);
         super.onFragmentDestroy();
+        ReactionsEffectOverlay.dismissByFragment(this);
         AndroidUtilities.cancelRunOnUIThread(loadNextNewerFeedPage);
         if (feedIntegration != null) {
             feedIntegration.destroy();
