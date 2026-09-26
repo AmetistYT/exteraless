@@ -1085,6 +1085,10 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
 
     }
 
+    private int getClickChildPosition(View child) {
+        return useLayoutPositionOnClick ? getChildLayoutPosition(child) : getChildAdapterPosition(child);
+    }
+
     private class RecyclerListViewItemClickListener implements OnItemTouchListener {
 
         public RecyclerListViewItemClickListener(Context context) {
@@ -1184,6 +1188,11 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
                     if (currentChildView == null || currentChildPosition == -1 || onItemLongClickListener == null && onItemLongClickListenerExtended == null) {
                         return;
                     }
+                    int position = getClickChildPosition(currentChildView);
+                    if (position == NO_POSITION) {
+                        return;
+                    }
+                    currentChildPosition = position;
                     View child = currentChildView;
                     if (onItemLongClickListener != null) {
                         if (onItemLongClickListener.onItemClick(currentChildView, currentChildPosition)) {
@@ -1251,11 +1260,7 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
                 }
                 currentChildPosition = -1;
                 if (currentChildView != null) {
-                    if (useLayoutPositionOnClick) {
-                        currentChildPosition = view.getChildLayoutPosition(currentChildView);
-                    } else {
-                        currentChildPosition = view.getChildAdapterPosition(currentChildView);
-                    }
+                    currentChildPosition = getClickChildPosition(currentChildView);
                     MotionEvent childEvent = MotionEvent.obtain(0, 0, event.getActionMasked(), event.getX() - currentChildView.getLeft(), event.getY() - currentChildView.getTop(), 0);
                     if (currentChildView.onTouchEvent(childEvent)) {
                         interceptedByChild = true;
