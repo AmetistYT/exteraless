@@ -116,4 +116,9 @@
     <string name="OEAppearanceEmojiSetsInfo">Zmień emoji w całej aplikacji</string>
     <string name="OEAppearanceHideSettingsSections">Ukryj sekcje ustawień</string>
     <string name="OEBottomNavigationBar">Dolny pasek</string>
+    <string name="OEProfileMusicDesign">Muzyka w profilu</string>
+    <string name="OEProfileMusicUseOfficial">Styl Telegram</string>
+    <string name="OEProfileMusicUseOfficialInfo">Pokazywać utwór pod awatarem, jak w oficjalnej aplikacji?</string>
+    <string name="OEProfileMusicUseCard">Karta</string>
+    <string name="OEProfileMusicUseCardInfo">Pokazywać utwór jako kartę pod nagłówkiem profilu?</string>
 </resources>

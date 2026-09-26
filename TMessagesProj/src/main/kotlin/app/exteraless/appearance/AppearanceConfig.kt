@@ -268,6 +268,16 @@ object AppearanceConfig {
     }
 
     @JvmField
+    val profileMusicCard =
+        addConfig("OEAppearanceProfileMusicCard", ConfigItem.configTypeBool, true)
+
+    @JvmStatic
+    fun profileMusicCard(): Boolean {
+        ensureLoaded()
+        return profileMusicCard.Bool()
+    }
+
+    @JvmField
     val iosChatHeader =
         addConfig("OEAppearanceIosChatHeader", ConfigItem.configTypeBool, false)
 

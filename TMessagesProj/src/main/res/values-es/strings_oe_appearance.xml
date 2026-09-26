@@ -116,4 +116,9 @@
     <string name="OEAppearanceEmojiSetsInfo">Cambia los emojis de toda la app</string>
     <string name="OEAppearanceHideSettingsSections">Ocultar secciones de Ajustes</string>
     <string name="OEBottomNavigationBar">Barra inferior</string>
+    <string name="OEProfileMusicDesign">Música del perfil</string>
+    <string name="OEProfileMusicUseOfficial">Estilo Telegram</string>
+    <string name="OEProfileMusicUseOfficialInfo">¿Mostrar la pista debajo del avatar, como en la app oficial?</string>
+    <string name="OEProfileMusicUseCard">Tarjeta</string>
+    <string name="OEProfileMusicUseCardInfo">¿Mostrar la pista como una tarjeta debajo del encabezado del perfil?</string>
 </resources>

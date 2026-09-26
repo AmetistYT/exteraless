@@ -126,4 +126,9 @@
     <string name="OEAppearanceEmojiSetsInfo">Заменить эмодзи приложения на другой набор.</string>
     <string name="OEAppearanceHideSettingsSections">Скрыть разделы настроек</string>
     <string name="OEBottomNavigationBar">Нижняя панель</string>
+    <string name="OEProfileMusicDesign">Музыка в профиле</string>
+    <string name="OEProfileMusicUseOfficial">Как в Telegram</string>
+    <string name="OEProfileMusicUseOfficialInfo">Показывать трек под аватаркой, как в официальном клиенте?</string>
+    <string name="OEProfileMusicUseCard">Карточкой</string>
+    <string name="OEProfileMusicUseCardInfo">Показывать трек карточкой под шапкой профиля?</string>
 </resources>

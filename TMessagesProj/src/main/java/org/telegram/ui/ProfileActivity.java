@@ -3964,6 +3964,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 musicView.setMusicDocument(userInfo.saved_music);
             }
             musicView.setOnClickListener(v -> openSavedMusic());
+            musicView.setOnLongClickListener(v -> {
+                showProfileMusicDesignDialog();
+                return true;
+            });
 
             actionsView = new ProfileActionsView(context, dp(74));
             setActionsMode();
@@ -10980,12 +10984,16 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         if (userId != 0) {
             TLRPC.User user = getMessagesController().getUser(userId);
-            if (userInfo != null && userInfo.saved_music != null && (imageUpdater == null || myProfile)
-                    && app.exteraless.nowplaying.NowPlayingController.shouldShowCard(userInfo.saved_music)) {
-                hasMusicCard = true;
-                app.exteraless.nowplaying.LastFmNowPlaying.prefetch(
-                        app.exteraless.nowplaying.ProfileMusicMark.nickFrom(
-                                FileLoader.getDocumentFileName(userInfo.saved_music), userId));
+            if (userInfo != null && userInfo.saved_music != null && (imageUpdater == null || myProfile)) {
+                if (app.exteraless.appearance.AppearanceConfig.profileMusicCard()
+                        && app.exteraless.nowplaying.NowPlayingController.shouldShowCard(userInfo.saved_music)) {
+                    hasMusicCard = true;
+                    app.exteraless.nowplaying.LastFmNowPlaying.prefetch(
+                            app.exteraless.nowplaying.ProfileMusicMark.nickFrom(
+                                    FileLoader.getDocumentFileName(userInfo.saved_music), userId));
+                } else {
+                    hasMusic = true;
+                }
             }
 
             if (emptyRow < 0 && emptyRow2 < 0) {
@@ -11482,6 +11490,23 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             }
             musicView.setVisibility(hasMusic ? View.VISIBLE : View.GONE);
         }
+    }
+
+    private void showProfileMusicDesignDialog() {
+        if (getParentActivity() == null) {
+            return;
+        }
+        final boolean card = app.exteraless.appearance.AppearanceConfig.profileMusicCard();
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), resourcesProvider);
+        builder.setTitle(getString(R.string.OEProfileMusicDesign));
+        builder.setMessage(getString(card ? R.string.OEProfileMusicUseOfficialInfo : R.string.OEProfileMusicUseCardInfo));
+        builder.setPositiveButton(getString(card ? R.string.OEProfileMusicUseOfficial : R.string.OEProfileMusicUseCard), (dialog, which) -> {
+            app.exteraless.appearance.AppearanceConfig.profileMusicCard.setConfigBool(!card);
+            updateListAnimated(false);
+            needLayout(true);
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
     }
 
     private void openSavedMusic() {
@@ -13842,6 +13867,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 case VIEW_TYPE_MUSIC: {
                     ProfileMusicCard card = new ProfileMusicCard(mContext, resourcesProvider);
                     card.setOnCardClickListener(ProfileActivity.this::openSavedMusic);
+                    card.setOnCardLongClickListener(ProfileActivity.this::showProfileMusicDesignDialog);
                     view = card;
                     view.setTag(RecyclerListView.TAG_NOT_SECTION);
                     break;

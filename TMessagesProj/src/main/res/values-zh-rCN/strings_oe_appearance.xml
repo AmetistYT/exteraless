@@ -116,4 +116,9 @@
     <string name="OEAppearanceEmojiSetsInfo">更换应用中的表情</string>
     <string name="OEAppearanceHideSettingsSections">隐藏设置分区</string>
     <string name="OEBottomNavigationBar">底部栏</string>
+    <string name="OEProfileMusicDesign">资料音乐</string>
+    <string name="OEProfileMusicUseOfficial">Telegram 样式</string>
+    <string name="OEProfileMusicUseOfficialInfo">像官方客户端一样在头像下方显示曲目？</string>
+    <string name="OEProfileMusicUseCard">卡片</string>
+    <string name="OEProfileMusicUseCardInfo">在资料页顶部下方以卡片形式显示曲目？</string>
 </resources>
