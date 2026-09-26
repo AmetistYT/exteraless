@@ -50606,10 +50606,7 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private boolean canShowCenteredTitle(ChatActivity parentFragment) {
-        if (!NaConfig.INSTANCE.getCenterActionBarTitle().Bool()) {
-            return false;
-        }
-        if (NaConfig.INSTANCE.getCenterActionBarTitleType().Int() == 2) {
+        if (!app.exteraless.appearance.AppearanceConfig.iosChatHeader()) {
             return false;
         }
         if (parentFragment == null) {

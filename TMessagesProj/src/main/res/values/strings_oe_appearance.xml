@@ -121,7 +121,7 @@
     <string name="OEAppearanceM3ListItems">List Items</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">Navigation Bar</string>
-    <string name="OEAppearanceIosFirstFolderOnTabTap">Tab Tap Opens First Folder</string>
+    <string name="OEAppearanceIosChatHeader">iOS Chat Header</string>
     <string name="OEAppearanceHideAi">Hide AI</string>
     <string name="OEAppearanceHideAiEditor">AI Editor</string>
     <string name="OEAppearanceHideAiSummary">Message Summary</string>

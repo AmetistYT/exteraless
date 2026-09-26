@@ -268,13 +268,13 @@ object AppearanceConfig {
     }
 
     @JvmField
-    val iosFirstFolderOnTabTap =
-        addConfig("OEAppearanceIosFirstFolderOnTabTap", ConfigItem.configTypeBool, false)
+    val iosChatHeader =
+        addConfig("OEAppearanceIosChatHeader", ConfigItem.configTypeBool, false)
 
     @JvmStatic
-    fun iosFirstFolderOnTabTap(): Boolean {
+    fun iosChatHeader(): Boolean {
         ensureLoaded()
-        return iosFirstFolderOnTabTap.Bool()
+        return iosChatHeader.Bool()
     }
 
     // ---- AI-функции Telegram ----
@@ -604,6 +604,7 @@ object AppearanceConfig {
         }
         migrateCustomTitle()
         migrateCenterTitle()
+        migrateIosChatHeader()
         migrateModernStyles()
         migrateDecorations()
     }
@@ -617,6 +618,11 @@ object AppearanceConfig {
         if (type == 2 || type == 3) {
             NaConfig.centerActionBarTitleType.setConfigInt(1)
         }
+    }
+
+    private fun migrateIosChatHeader() {
+        if (getPreferences().contains(iosChatHeader.key)) return
+        iosChatHeader.setConfigBool(NaConfig.centerActionBarTitle.Bool())
     }
 
     private fun migrateModernStyles() {

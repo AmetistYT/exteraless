@@ -111,7 +111,7 @@
     <string name="OEAppearanceM3ListItems">Элементы списков</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">Панель навигации</string>
-    <string name="OEAppearanceIosFirstFolderOnTabTap">Тап по вкладке — первая папка</string>
+    <string name="OEAppearanceIosChatHeader">Шапка чата в стиле iOS</string>
     <string name="OEAppearanceHideActionBarStatus">Скрыть статус</string>
     <string name="OEAppearanceHideAi">Скрыть AI</string>
     <string name="OEAppearanceHideAiEditor">AI-редактор</string>

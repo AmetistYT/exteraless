@@ -117,7 +117,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private boolean md3Expanded;
     private int iosGroupRow;
     private int iosNavBarRow;
-    private int iosFolderTapRow;
+    private int iosChatHeaderRow;
     private boolean iosExpanded;
     // Скрытие апстримных AI-функций: своя сворачиваемая группа.
     private int hideAiGroupRow;
@@ -230,9 +230,9 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         iosGroupRow = addRow("iosStyles");
         if (iosExpanded) {
             iosNavBarRow = addRow("iosNavBar");
-            iosFolderTapRow = addRow("iosFolderTap");
+            iosChatHeaderRow = addRow("iosChatHeader");
         } else {
-            iosNavBarRow = iosFolderTapRow = -1;
+            iosNavBarRow = iosChatHeaderRow = -1;
         }
         hideAiGroupRow = addRow("hideAi");
         if (hideAiExpanded) {
@@ -612,9 +612,9 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             }
             rebuildAllAndSelf(view, enable);
             return;
-        } else if (position == iosFolderTapRow) {
-            AppearanceConfig.iosFirstFolderOnTabTap.setConfigBool(!AppearanceConfig.iosFirstFolderOnTabTap.Bool());
-            rebuildAllAndSelf(view, AppearanceConfig.iosFirstFolderOnTabTap.Bool());
+        } else if (position == iosChatHeaderRow) {
+            AppearanceConfig.iosChatHeader.setConfigBool(!AppearanceConfig.iosChatHeader.Bool());
+            rebuildAllAndSelf(view, AppearanceConfig.iosChatHeader.Bool());
             return;
         } else if (position == hideAiGroupRow) {
             hideAiExpanded = !hideAiExpanded;
@@ -1030,9 +1030,9 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     } else if (position == iosNavBarRow) {
                         cell.setText(getString(R.string.OEAppearanceIosNavigationBarStyle), "",
                                 AppearanceConfig.iosNavigationBarStyle.Bool(), true, true);
-                    } else if (position == iosFolderTapRow) {
-                        cell.setText(getString(R.string.OEAppearanceIosFirstFolderOnTabTap), "",
-                                AppearanceConfig.iosFirstFolderOnTabTap.Bool(), false, true);
+                    } else if (position == iosChatHeaderRow) {
+                        cell.setText(getString(R.string.OEAppearanceIosChatHeader), "",
+                                AppearanceConfig.iosChatHeader.Bool(), false, true);
                     } else if (position == hideAiEditorRow) {
                         cell.setText(getString(R.string.OEAppearanceHideAiEditor), "",
                                 AppearanceConfig.hideAiEditor.Bool(), true, true);
@@ -1169,7 +1169,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     || position == md3SwitchRow || position == md3ChatHeaderRow
                     || position == md3NavBarRow || position == md3ListItemsRow || position == hideAiEditorRow
                     || position == hideAiSummaryRow || position == hideAiIvRow
-                    || position == iosNavBarRow || position == iosFolderTapRow
+                    || position == iosNavBarRow || position == iosChatHeaderRow
                     || position == hidePremiumSectionRow || position == hideHelpSectionRow) {
                 return TYPE_ROUND_CHECK;
             } else if (position == dividerStyleRow || position == glassOutlineRow
@@ -1327,14 +1327,14 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private int iosSelectedCount() {
         int n = 0;
         if (AppearanceConfig.iosNavigationBarStyle.Bool()) n++;
-        if (AppearanceConfig.iosFirstFolderOnTabTap.Bool()) n++;
+        if (AppearanceConfig.iosChatHeader.Bool()) n++;
         return n;
     }
 
     private void toggleAllIosStyles() {
         boolean enable = iosSelectedCount() == 0;
         AppearanceConfig.iosNavigationBarStyle.setConfigBool(enable);
-        AppearanceConfig.iosFirstFolderOnTabTap.setConfigBool(enable);
+        AppearanceConfig.iosChatHeader.setConfigBool(enable);
         if (enable) {
             AppearanceConfig.newNavigationBarStyle.setConfigBool(false);
         }
