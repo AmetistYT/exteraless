@@ -136,4 +136,6 @@
     <string name="SendLockedCustomEmojiAsSticker">Premium Emoji as Stickers</string>
     <string name="SendLockedCustomEmojiAsStickerInfo">Without Premium, premium emoji are sent as regular stickers. Only WebP and WebM emoji are supported.</string>
     <string name="PhotoEditorTypefaceOswald" translatable="false">Oswald</string>
+    <string name="OEChatsTranslateInSheet">Telegram Translation Window</string>
+    <string name="OEChatsTranslateInSheetInfo">Translate opens the sheet from the official app with a provider switch</string>
 </resources>

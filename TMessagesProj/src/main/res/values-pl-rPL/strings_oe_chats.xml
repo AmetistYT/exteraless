@@ -121,4 +121,6 @@
     <string name="OEChatsAskWhenBotCommands">Wysłaniem komendy bota</string>
     <string name="OEChatsHdrPhotos">Zdjęcia HDR</string>
     <string name="OEChatsHdrPhotosInfo">Pokazuj zdjęcia HDR w pełnej jasności. Wyłącz, jeśli zdjęcia wyglądają na ciemne.</string>
+    <string name="OEChatsTranslateInSheet">Okno tłumaczenia Telegram</string>
+    <string name="OEChatsTranslateInSheetInfo">Tłumaczenie otwiera okno z oficjalnej aplikacji z wyborem dostawcy</string>
 </resources>

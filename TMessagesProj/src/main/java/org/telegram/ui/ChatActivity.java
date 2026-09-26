@@ -47895,6 +47895,9 @@ public class ChatActivity extends BaseFragment implements
                 if (handleTranslateDuringAutoTrans(null)) {
                     return;
                 }
+                if (id == nkbtn_translate && ChatsConfig.translateInSheet.Bool() && showTranslateSheet()) {
+                    break;
+                }
                 MessageTransKt.translateMessages(this, id == nkbtn_translate_llm ? Translator.providerLLMTranslator : 0);
                 break;
             case nkbtn_translateVoice:
@@ -50643,6 +50646,36 @@ public class ChatActivity extends BaseFragment implements
             }
         }
         return messageObject;
+    }
+
+    private boolean showTranslateSheet() {
+        final MessageObject message = getMessageForTranslate();
+        if (message == null || message.messageOwner == null || getParentActivity() == null
+                || message.isPoll() || message.isVoice() || message.isTranslated()) {
+            return false;
+        }
+        final boolean noforwards = isPeerNoForwards() || message.messageOwner.noforwards || message.type == MessageObject.TYPE_PAID_MEDIA;
+        final String toLang = app.exteraless.utils.text.TranslatorUtils.getResolvedTargetLanguageCode();
+        final String fromLang = message.messageOwner.originalLanguage;
+        final Utilities.CallbackReturn<URLSpan, Boolean> onLinkPress = link -> {
+            didPressMessageUrl(link, false, message, null);
+            return true;
+        };
+        final TLRPC.InputPeer inputPeer = message.scheduled || message.isSponsored() || chatMode == MODE_QUICK_REPLIES
+                ? null : getInputPeerForMessageRequest(message);
+        final int[] messageIdToTranslate = new int[]{message.getId()};
+        if (message.type == MessageObject.TYPE_ARTICLE && message.messageOwner.rich_message != null) {
+            TranslateAlert2.showAlert(getParentActivity(), this, currentAccount, inputPeer, messageIdToTranslate[0],
+                    fromLang, toLang, message.messageOwner.rich_message, noforwards, onLinkPress, null);
+            return true;
+        }
+        final CharSequence text = message.getMessageTextToTranslate(selectedObjectGroup, messageIdToTranslate);
+        if (TextUtils.isEmpty(text)) {
+            return false;
+        }
+        TranslateAlert2.showAlert(getParentActivity(), this, currentAccount, inputPeer, messageIdToTranslate[0], message.summarized,
+                fromLang == null ? "und" : fromLang, toLang, text, message.messageOwner.entities, noforwards, onLinkPress, null);
+        return true;
     }
 
     private boolean canTranslateSelectedMessage(MessageObject messageObject) {

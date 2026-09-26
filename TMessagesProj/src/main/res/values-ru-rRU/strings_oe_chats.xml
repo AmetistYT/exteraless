@@ -133,4 +133,6 @@
     <string name="OEChatsHdrPhotosInfo">Показывать HDR-фото в полной яркости. Выключите, если фото темнеют.</string>
     <string name="SendLockedCustomEmojiAsSticker">Премиум-эмодзи как стикеры</string>
     <string name="SendLockedCustomEmojiAsStickerInfo">Без Premium премиум-эмодзи отправляются обычными стикерами. Поддерживаются только эмодзи WebP и WebM.</string>
+    <string name="OEChatsTranslateInSheet">Перевод в окне Telegram</string>
+    <string name="OEChatsTranslateInSheetInfo">Кнопка «Перевести» открывает окно из официального клиента с выбором переводчика</string>
 </resources>

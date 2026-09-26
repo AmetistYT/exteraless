@@ -121,4 +121,6 @@
     <string name="OEChatsAskWhenBotCommands">发送机器人指令</string>
     <string name="OEChatsHdrPhotos">HDR 照片</string>
     <string name="OEChatsHdrPhotosInfo">以完整亮度显示 HDR 照片。若照片发暗，请关闭。</string>
+    <string name="OEChatsTranslateInSheet">Telegram 翻译窗口</string>
+    <string name="OEChatsTranslateInSheetInfo">点按翻译时打开官方客户端的翻译窗口，可切换翻译服务</string>
 </resources>

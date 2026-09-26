@@ -174,6 +174,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int dateOfForwardedMsgRow;
     private int showTimeHintRow;
     private int rememberAllRepliesRow;
+    private int translateInSheetRow;
     private int chatMenuGroupRow;
     private int chatMenuAdminsRow;
     private int chatMenuRecentActionsRow;
@@ -400,6 +401,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         dateOfForwardedMsgRow = addRow("dateOfForwardedMsg", "DateOfForwardedMsg");
         showTimeHintRow = addRow("showTimeHint", "ShowTimeHint");
         rememberAllRepliesRow = addRow("rememberAllBackMessages", "rememberAllBackMessages");
+        translateInSheetRow = addRow("translateInSheet");
         chatMenuGroupRow = addRow("chatMenu");
         if (chatMenuExpanded) {
             chatMenuAdminsRow = addRow();
@@ -1733,6 +1735,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == dateOfForwardedMsgRow) return NaConfig.INSTANCE.getDateOfForwardedMsg();
         if (position == showTimeHintRow) return NaConfig.INSTANCE.getShowTimeHint();
         if (position == rememberAllRepliesRow) return NekoConfig.rememberAllBackMessages;
+        if (position == translateInSheetRow) return ChatsConfig.translateInSheet;
         if (position == premiumEmojiStatusRow) return NaConfig.INSTANCE.getPremiumItemEmojiStatus();
         if (position == premiumEmojiInRepliesRow) return NaConfig.INSTANCE.getPremiumItemEmojiInReplies();
         if (position == premiumColorsInRepliesRow) return NaConfig.INSTANCE.getPremiumItemCustomColorInReplies();
@@ -2367,6 +2370,9 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndCheck(getString(R.string.ShowTimeHint), NaConfig.INSTANCE.getShowTimeHint().Bool(), true);
             } else if (position == rememberAllRepliesRow) {
                 cell.setTextAndCheck(getString(R.string.rememberAllBackMessages), NekoConfig.rememberAllBackMessages.Bool(), true);
+            } else if (position == translateInSheetRow) {
+                cell.setTextAndValueAndCheck(getString(R.string.OEChatsTranslateInSheet),
+                        getString(R.string.OEChatsTranslateInSheetInfo), ChatsConfig.translateInSheet.Bool(), true, true);
             } else if (position == fixLinkPreviewRow) {
                 cell.setTextAndValueAndCheck(getString(R.string.FixLinkPreview), "x.com → fixupx.com",
                         NaConfig.INSTANCE.getFixLinkPreview().Bool(), false, true);

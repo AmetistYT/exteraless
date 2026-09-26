@@ -172,6 +172,9 @@ object ChatsConfig {
     @JvmField
     val hideChannelSearchButton = addConfig("OEChatsHideChannelSearchButton", ConfigItem.configTypeBool, false)
 
+    @JvmField
+    val translateInSheet = addConfig("OEChatsTranslateInSheet", ConfigItem.configTypeBool, false)
+
     // ---- Камера (расширенные) ----
 
     /** Запоминать последнюю использованную камеру (только UI). */
