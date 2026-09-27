@@ -147,7 +147,7 @@ final class RoundVideoCameraController {
     private boolean backConfigurationLogged;
     private boolean frameRateFallbackAttempted;
     private boolean frameRatePolicyResolved;
-    private boolean force30Fps;
+    private RoundVideoSession.FrameRate pipelineFrameRate;
     private long segmentStartedNs;
     private long cameraOpenRequestedNs;
     private long captureSessionRequestedNs;
@@ -460,6 +460,7 @@ final class RoundVideoCameraController {
     }
 
     private void createRecordingPipeline() throws IOException {
+        pipelineFrameRate = activeFrameRate;
         recorder = new RoundVideoCodecRecorder(
                 writer,
                 timelineOffsetUs,
@@ -1082,7 +1083,7 @@ final class RoundVideoCameraController {
                         )) {
                     fallbackCandidate = cameraCandidate;
                 }
-                if (requestedFrameRate == RoundVideoSession.FrameRate.FPS_30
+                if (effectiveRequestedFrameRate() == RoundVideoSession.FrameRate.FPS_30
                         || frameRatePlan.frameRate == requestedFrameRate) {
                     if (selectedCandidate == null
                             || isPreferredCameraCandidate(
@@ -1153,10 +1154,16 @@ final class RoundVideoCameraController {
         if (requestedFrameRate != RoundVideoSession.FrameRate.FPS_60) return;
         boolean front = supports60FpsForFacing(RoundVideoSession.CameraFacing.FRONT);
         boolean back = supports60FpsForFacing(RoundVideoSession.CameraFacing.BACK);
-        force30Fps = !front || !back;
         diagnostics.log("60 fps session capability: front=" + front
                 + ", back=" + back
-                + ", selected=" + (force30Fps ? 30 : 60));
+                + ", selected=per camera");
+    }
+
+    private RoundVideoSession.FrameRate effectiveRequestedFrameRate() {
+        if (pipelineFrameRate == RoundVideoSession.FrameRate.FPS_30) {
+            return RoundVideoSession.FrameRate.FPS_30;
+        }
+        return requestedFrameRate;
     }
 
     private boolean supports60FpsForFacing(@NonNull RoundVideoSession.CameraFacing facing)
@@ -1251,12 +1258,12 @@ final class RoundVideoCameraController {
         Range<Integer>[] ranges = cameraCharacteristics.get(
                 CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES
         );
-        if (requestedFrameRate == RoundVideoSession.FrameRate.FPS_30 || force30Fps) {
+        if (effectiveRequestedFrameRate() == RoundVideoSession.FrameRate.FPS_30) {
             Range<Integer> range = findBestFpsRange(ranges, 30);
             diagnostics.log("fps selection: id=" + id
                     + ", requested=" + requestedFrameRate.getValue()
                     + ", mode=REGULAR, range=" + range
-                    + (force30Fps ? ", reason=session-wide fallback" : ""));
+                    + (requestedFrameRate != RoundVideoSession.FrameRate.FPS_30 ? ", reason=recording started at 30 fps" : ""));
             return new FrameRatePlan(
                     RoundVideoSession.FrameRate.FPS_30,
                     range,
