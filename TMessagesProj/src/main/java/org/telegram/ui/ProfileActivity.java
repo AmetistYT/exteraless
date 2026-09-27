@@ -11956,6 +11956,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 nameTextView[a].setRightDrawableOutside(a == 0);
                 if (a == 0 && !copyFromChatActivity) {
                     BadgeDTO userBadge = BadgesController.INSTANCE.getBadge(user);
+                    nameTextView[a].setRightDrawable2OnClick(null);
                     if (user.scam || user.fake) {
                         nameTextView[a].setRightDrawable2(getScamDrawable(user.scam ? 0 : 1));
                         nameTextViewRightDrawable2ContentDescription = LocaleController.getString(R.string.ScamMessage);
@@ -11964,6 +11965,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         nameTextViewRightDrawable2ContentDescription = LocaleController.getString(R.string.AccDescrVerified);
                     } else if (userBadge != null) {
                         nameTextView[a].setRightDrawable2(getBadgeDrawable(userBadge, false, a));
+                        nameTextView[a].setRightDrawable2OnClick(v -> BadgesController.INSTANCE.showBadgeBulletin(this, userBadge, user, resourcesProvider, currentAccount));
                         nameTextViewRightDrawable2ContentDescription = userBadge.getText();
                     } else if (getMessagesController().isDialogMuted(dialogId != 0 ? dialogId : userId, topicId)) {
                         nameTextView[a].setRightDrawable2(getThemedDrawable(Theme.key_drawable_muteIconDrawable));
@@ -11995,12 +11997,14 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                 } else if (a == 1) {
                     BadgeDTO userBadge = BadgesController.INSTANCE.getBadge(user);
+                    nameTextView[a].setRightDrawable2OnClick(null);
                     if (user.scam || user.fake) {
                         nameTextView[a].setRightDrawable2(getScamDrawable(user.scam ? 0 : 1));
                     } else if (user.verified) {
                         nameTextView[a].setRightDrawable2(getVerifiedCrossfadeDrawable(a));
                     } else if (userBadge != null) {
                         nameTextView[a].setRightDrawable2(getBadgeDrawable(userBadge, true, a));
+                        nameTextView[a].setRightDrawable2OnClick(v -> BadgesController.INSTANCE.showBadgeBulletin(this, userBadge, user, resourcesProvider, currentAccount));
                     } else {
                         nameTextView[a].setRightDrawable2(null);
                     }
@@ -12299,6 +12303,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 nameTextView[a].setRightDrawableOnClick(null);
                 if (a != 0) {
                     BadgeDTO chatBadge = BadgesController.INSTANCE.getBadge(chat);
+                    nameTextView[a].setRightDrawable2OnClick(null);
                     if (chat.scam || chat.fake) {
                         nameTextView[a].setRightDrawable2(getScamDrawable(chat.scam ? 0 : 1));
                         nameTextViewRightDrawableContentDescription = LocaleController.getString(R.string.ScamMessage);
@@ -12307,6 +12312,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         nameTextViewRightDrawableContentDescription = LocaleController.getString(R.string.AccDescrVerified);
                     } else if (chatBadge != null) {
                         nameTextView[a].setRightDrawable2(getBadgeDrawable(chatBadge, true, a));
+                        final TLRPC.Chat badgeChat = chat;
+                        nameTextView[a].setRightDrawable2OnClick(v -> BadgesController.INSTANCE.showBadgeBulletin(this, chatBadge, badgeChat, resourcesProvider, currentAccount));
                         nameTextViewRightDrawableContentDescription = chatBadge.getText();
                     } else {
                         nameTextView[a].setRightDrawable2(null);
