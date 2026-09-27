@@ -17637,7 +17637,7 @@ public class MessagesController extends BaseController implements NotificationCe
                     newTaskId = taskId;
                 }
 
-                if (!NekoConfig.unlimitedPinnedDialogs.Bool()) getConnectionsManager().sendRequest(req, (response, error) -> {
+                getConnectionsManager().sendRequest(req, (response, error) -> {
                     if (newTaskId != 0) {
                         getMessagesStorage().removePendingTask(newTaskId);
                     }
@@ -17649,9 +17649,6 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void loadPinnedDialogs(final int folderId, long newDialogId, ArrayList<Long> order) {
-        if (NekoConfig.unlimitedPinnedDialogs.Bool()) {
-            return;
-        }
         if (loadingPinnedDialogs.indexOfKey(folderId) >= 0 || getUserConfig().isPinnedDialogsLoaded(folderId)) {
             return;
         }
@@ -17755,6 +17752,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 getMessagesStorage().getStorageQueue().postRunnable(() -> AndroidUtilities.runOnUIThread(() -> {
                     loadingPinnedDialogs.delete(folderId);
                     applyDialogsNotificationsSettings(newPinnedDialogs);
+                    final boolean keepLocalPins = NekoConfig.unlimitedPinnedDialogs.Bool();
                     boolean changed = false;
                     boolean added = false;
                     int maxPinnedNum = 0;
@@ -17783,9 +17781,11 @@ public class MessagesController extends BaseController implements NotificationCe
                             continue;
                         }
                         maxPinnedNum = Math.max(dialog.pinnedNum, maxPinnedNum);
-                        dialog.pinned = false;
-                        dialog.pinnedNum = 0;
-                        changed = true;
+                        if (!keepLocalPins) {
+                            dialog.pinned = false;
+                            dialog.pinnedNum = 0;
+                            changed = true;
+                        }
                         pinnedNum++;
                     }
 
@@ -17844,7 +17844,9 @@ public class MessagesController extends BaseController implements NotificationCe
                         sortDialogs(null);
                         getNotificationCenter().postNotificationName(NotificationCenter.dialogsNeedReload);
                     }
-                    getMessagesStorage().unpinAllDialogsExceptNew(pinnedDialogs, folderId);
+                    if (!keepLocalPins) {
+                        getMessagesStorage().unpinAllDialogsExceptNew(pinnedDialogs, folderId);
+                    }
                     getMessagesStorage().putDialogs(toCache, 1);
                     getUserConfig().setPinnedDialogsLoaded(folderId, true);
                     getUserConfig().saveConfig(false);
