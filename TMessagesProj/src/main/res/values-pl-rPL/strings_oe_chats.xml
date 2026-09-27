@@ -124,4 +124,9 @@
     <string name="OEChatsHdrPhotosInfo">Pokazuj zdjęcia HDR w pełnej jasności. Wyłącz, jeśli zdjęcia wyglądają na ciemne.</string>
     <string name="OEChatsTranslateInSheet">Okno tłumaczenia Telegram</string>
     <string name="OEChatsTranslateInSheetInfo">Tłumaczenie otwiera okno z oficjalnej aplikacji z wyborem dostawcy</string>
+    <string name="OEChatsInlineMath">Wyniki obliczeń w polu tekstowym</string>
+    <string name="OEChatsInlineMathInfo">Wpisz wyrażenie i „=”, aby zobaczyć wynik; spacja go wstawi.</string>
+    <string name="OEChatsInlineMathCurrency">Waluty przez @calcmulabot</string>
+    <string name="OEChatsInlineMathCurrencyInfo">Wyrażenia z walutami, np. „10 usd to rub =”, są wysyłane do @calcmulabot po kurs.</string>
+    <string name="OEChatsInlineMathAnnouncement">Wynik: %1$s</string>
 </resources>

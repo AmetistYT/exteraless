@@ -124,4 +124,9 @@
     <string name="OEChatsHdrPhotosInfo">以完整亮度显示 HDR 照片。若照片发暗，请关闭。</string>
     <string name="OEChatsTranslateInSheet">Telegram 翻译窗口</string>
     <string name="OEChatsTranslateInSheetInfo">点按翻译时打开官方客户端的翻译窗口，可切换翻译服务</string>
+    <string name="OEChatsInlineMath">输入框内计算</string>
+    <string name="OEChatsInlineMathInfo">输入算式和“=”即可看到结果，按空格插入。</string>
+    <string name="OEChatsInlineMathCurrency">通过 @calcmulabot 换算货币</string>
+    <string name="OEChatsInlineMathCurrencyInfo">含货币的算式（如“10 usd to rub =”）会发送给 @calcmulabot 获取汇率。</string>
+    <string name="OEChatsInlineMathAnnouncement">结果：%1$s</string>
 </resources>
