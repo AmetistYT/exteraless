@@ -2000,6 +2000,10 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         return avatarImageView != null && avatarImageView.getVisibility() == VISIBLE;
     }
 
+    public float getTitleCenterX() {
+        return titleTextView == null ? getWidth() / 2f : titleTextView.getLeft() + titleTextView.getWidth() / 2f;
+    }
+
     public int getVisualWidth() {
         float width = 0;
 
@@ -2009,7 +2013,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (subtitleTextView != null) {
             width = Math.max(width, subtitleTextView.getExactWidthIncludeDrawables());
         }
-        if (hasVisibleAvatar()) {
+        if (hasVisibleAvatar() && !isCentered()) {
             width += dp(52 + 18);
         } else {
             width += dp(34);
