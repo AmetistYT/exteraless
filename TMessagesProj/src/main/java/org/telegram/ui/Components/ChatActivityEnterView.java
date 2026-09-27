@@ -1099,13 +1099,20 @@ public class ChatActivityEnterView extends FrameLayout implements
         public void updateColors() {
             int dotColor = getThemedColor(Theme.key_chat_recordedVoiceDot);
             int background = getThemedColor(Theme.key_chat_messagePanelBackground);
+            int greyColor = getThemedColor(Theme.key_chat_messagePanelVoiceDelete);
             redDotPaint.setColor(dotColor);
             drawable.beginApplyLayerColors();
             drawable.setLayerColor("Cup Red", dotColor);
-            drawable.setLayerColor("Box", dotColor);
-            drawable.setLayerColor("Line 1", background);
-            drawable.setLayerColor("Line 2", background);
-            drawable.setLayerColor("Line 3", background);
+            drawable.setLayerColor("Box Red", dotColor);
+            drawable.setLayerColor("Cup Grey", greyColor);
+            drawable.setLayerColor("Box Grey", greyColor);
+            drawable.setLayerColor("Box_Grey 2", greyColor);
+            drawable.setLayerColor("Line 1", greyColor);
+            drawable.setLayerColor("Line 2", greyColor);
+            drawable.setLayerColor("Line 3", greyColor);
+            drawable.setLayerColor("Line 1 Dup", background);
+            drawable.setLayerColor("Line 2 Dup", background);
+            drawable.setLayerColor("Line 3 Dup", background);
             drawable.commitApplyLayerColors();
         }
 
@@ -11772,10 +11779,13 @@ public class ChatActivityEnterView extends FrameLayout implements
             recordDeleteImageView.setLayerColor("Box Red", dotColor);
             recordDeleteImageView.setLayerColor("Cup Grey", greyColor);
             recordDeleteImageView.setLayerColor("Box Grey", greyColor);
-
-            recordDeleteImageView.setLayerColor("Line 1", background);
-            recordDeleteImageView.setLayerColor("Line 2", background);
-            recordDeleteImageView.setLayerColor("Line 3", background);
+            recordDeleteImageView.setLayerColor("Box_Grey 2", greyColor);
+            recordDeleteImageView.setLayerColor("Line 1", greyColor);
+            recordDeleteImageView.setLayerColor("Line 2", greyColor);
+            recordDeleteImageView.setLayerColor("Line 3", greyColor);
+            recordDeleteImageView.setLayerColor("Line 1 Dup", background);
+            recordDeleteImageView.setLayerColor("Line 2 Dup", background);
+            recordDeleteImageView.setLayerColor("Line 3 Dup", background);
         }
     }
 

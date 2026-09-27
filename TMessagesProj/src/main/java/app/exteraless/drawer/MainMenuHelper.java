@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 
-import androidx.media3.common.util.Consumer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +24,7 @@ import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.browser.Browser;
+import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
@@ -428,7 +428,7 @@ public final class MainMenuHelper {
             if (bot.inactive || bot.side_menu_disclaimer_needed) {
                 final android.content.Context context = ctx.fragment() != null && ctx.fragment().getContext() != null
                         ? ctx.fragment().getContext() : launchActivity;
-                WebAppDisclaimerAlert.show(context, (Consumer<Boolean>) allowSendMessage -> {
+                WebAppDisclaimerAlert.show(context, (Utilities.Callback<Boolean>) allowSendMessage -> {
                     final TLRPC.TL_messages_toggleBotInAttachMenu req = new TLRPC.TL_messages_toggleBotInAttachMenu();
                     req.bot = MessagesController.getInstance(ctx.currentAccount()).getInputUser(bot.bot_id);
                     req.enabled = true;
