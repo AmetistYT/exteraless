@@ -200,6 +200,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
     private final boolean useCameraX = cameraType == app.exteraless.chats.ChatsConfig.CAMERA_TYPE_CAMERA_X;
     private final boolean useCamera2 = !useCameraX
             && (cameraType == app.exteraless.chats.ChatsConfig.CAMERA_TYPE_CAMERA_2
+                || cameraType == app.exteraless.chats.ChatsConfig.CAMERA_TYPE_TELEGRAM
                 || SharedConfig.isUsingCamera2(currentAccount));
     /** Зум у Camera2 и CameraX — кратность (min..max), у Camera1 — доля 0..1. */
     private final boolean useRatioZoom = useCamera2 || useCameraX;

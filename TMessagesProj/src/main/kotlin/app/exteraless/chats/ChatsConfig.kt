@@ -217,6 +217,7 @@ object ChatsConfig {
     const val CAMERA_TYPE_SYSTEM = 0
     const val CAMERA_TYPE_CAMERA_2 = 1
     const val CAMERA_TYPE_CAMERA_X = 2
+    const val CAMERA_TYPE_TELEGRAM = 3
 
     // ---- Статические геттеры для горячих мест в Java ----
 
@@ -241,12 +242,12 @@ object ChatsConfig {
         return pauseOnMinimizeRound.Bool()
     }
 
-    /** Тип камеры для кружков: 0 системная, 1 Camera2, 2 CameraX. */
+    /** Тип камеры для кружков: 0 системная, 1 Camera2, 2 CameraX, 3 новый рекордер Telegram. */
     @JvmStatic
     fun cameraType(): Int {
         ensureLoaded()
         val type = cameraType.Int()
-        return if (type in CAMERA_TYPE_SYSTEM..CAMERA_TYPE_CAMERA_X) type else CAMERA_TYPE_SYSTEM
+        return if (type in CAMERA_TYPE_SYSTEM..CAMERA_TYPE_TELEGRAM) type else CAMERA_TYPE_SYSTEM
     }
 
     @JvmStatic

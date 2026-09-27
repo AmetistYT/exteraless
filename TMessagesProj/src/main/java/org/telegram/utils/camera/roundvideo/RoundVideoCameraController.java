@@ -782,6 +782,9 @@ final class RoundVideoCameraController {
         );
         setContinuousVideoAf(builder);
         setPreferredFps(builder, logConfiguration);
+        if (app.exteraless.chats.ChatsConfig.cameraStabilization.Bool()) {
+            applyStabilization(builder);
+        }
         applyZoom(builder);
         applyTorch(builder);
         requestGeneration++;
@@ -1322,6 +1325,30 @@ final class RoundVideoCameraController {
             return map.getOutputMinFrameDuration(SurfaceTexture.class, size);
         } catch (RuntimeException e) {
             return -1L;
+        }
+    }
+
+    private void applyStabilization(@NonNull CaptureRequest.Builder builder) {
+        if (characteristics == null) return;
+        int[] ois = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION);
+        if (ois != null) {
+            for (int mode : ois) {
+                if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
+                    builder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON);
+                    builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
+                    return;
+                }
+            }
+        }
+        int[] eis = characteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES);
+        if (eis != null) {
+            for (int mode : eis) {
+                if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
+                    builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+                    builder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF);
+                    return;
+                }
+            }
         }
     }
 

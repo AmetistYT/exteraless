@@ -48,7 +48,7 @@ public abstract class InstantCameraViewBase extends FrameLayout {
             Theme.ResourcesProvider resourcesProvider,
             boolean isNewDesign
     ) {
-        return SharedSettings.roundVideoCamera2Enabled.get()
+        return app.exteraless.chats.ChatsConfig.cameraType() == app.exteraless.chats.ChatsConfig.CAMERA_TYPE_TELEGRAM
                 ? new InstantCameraView2(context, delegate, resourcesProvider, isNewDesign)
                 : new InstantCameraView(context, delegate, resourcesProvider, isNewDesign);
     }
