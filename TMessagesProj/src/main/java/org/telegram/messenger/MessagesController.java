@@ -21577,6 +21577,7 @@ public class MessagesController extends BaseController implements NotificationCe
         if (webPages != null) {
             getMessagesStorage().putWebPages(webPages);
         }
+        com.radolyn.ayugram.messages.AyuSpyController.onUpdatesRead(currentAccount, markAsReadMessagesOutbox, markAsReadEncrypted, markContentAsReadMessages, markContentAsReadMessagesDate, date);
         if (markAsReadMessagesInbox != null || markAsReadMessagesOutbox != null || markAsReadEncrypted != null || markContentAsReadMessages != null || stillUnreadMessagesCount != null) {
             if (markAsReadMessagesInbox != null || markAsReadMessagesOutbox != null || markContentAsReadMessages != null || stillUnreadMessagesCount != null) {
                 getMessagesStorage().updateDialogsWithReadMessages(markAsReadMessagesInbox, markAsReadMessagesOutbox, markContentAsReadMessages, stillUnreadMessagesCount, true);
