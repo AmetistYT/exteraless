@@ -44,7 +44,7 @@ public final class AyuForwardLoader implements NotificationCenter.NotificationCe
     }
 
     public static boolean needsFile(MessageObject messageObject) {
-        return messageObject != null && messageObject.messageOwner != null && !messageObject.isSticker() && !messageObject.isAnimatedSticker() && !messageObject.isAnimatedEmoji()
+        return messageObject != null && messageObject.messageOwner != null && !MessageHelper.isWebPageMessage(messageObject) && !messageObject.isSticker() && !messageObject.isAnimatedSticker() && !messageObject.isAnimatedEmoji()
                 && (messageObject.isPhoto() || messageObject.isVideo() || messageObject.isRoundVideo() || messageObject.getDocument() != null);
     }
 
