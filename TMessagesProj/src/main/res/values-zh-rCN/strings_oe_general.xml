@@ -99,4 +99,7 @@
     <string name="OEAyuPlayedTodayAt">%s 已收听</string>
     <string name="OEAyuPlayedYesterdayAt">昨天 %s 已收听</string>
     <string name="OEAyuPlayedDateTimeAt">%1$s %2$s 已收听</string>
+    <string name="OEAyuForwardLoadingMedia">正在加载媒体</string>
+    <string name="OEAyuForwardLoadingCount">文件：%1$d / %2$d</string>
+    <string name="OEAyuForwardLoadFailed">无法加载要转发的媒体</string>
 </resources>

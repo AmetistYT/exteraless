@@ -99,4 +99,7 @@
     <string name="OEAyuPlayedTodayAt">odsłuchano o %s</string>
     <string name="OEAyuPlayedYesterdayAt">odsłuchano wczoraj o %s</string>
     <string name="OEAyuPlayedDateTimeAt">odsłuchano %1$s o %2$s</string>
+    <string name="OEAyuForwardLoadingMedia">Pobieranie multimediów</string>
+    <string name="OEAyuForwardLoadingCount">Pliki: %1$d z %2$d</string>
+    <string name="OEAyuForwardLoadFailed">Nie udało się pobrać multimediów do przekazania</string>
 </resources>

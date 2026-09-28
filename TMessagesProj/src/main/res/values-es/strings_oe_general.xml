@@ -99,4 +99,7 @@
     <string name="OEAyuPlayedTodayAt">escuchado a las %s</string>
     <string name="OEAyuPlayedYesterdayAt">escuchado ayer a las %s</string>
     <string name="OEAyuPlayedDateTimeAt">escuchado el %1$s a las %2$s</string>
+    <string name="OEAyuForwardLoadingMedia">Cargando multimedia</string>
+    <string name="OEAyuForwardLoadingCount">Archivos: %1$d de %2$d</string>
+    <string name="OEAyuForwardLoadFailed">No se pudo cargar el contenido para reenviar</string>
 </resources>

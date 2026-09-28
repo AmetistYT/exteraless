@@ -13298,12 +13298,25 @@ public class ChatActivity extends BaseFragment implements
         }
         final long target = did == 0 ? dialog_id : did;
         final boolean sameDialog = target == dialog_id;
-        return getMessageHelper().sendMessagesAsCopy(arrayList, target, null,
-                sameDialog ? getThreadMessage() : null, null, notify, scheduleDate,
-                sameDialog ? chatMode : 0, sameDialog ? quickReplyShortcut : null,
-                sameDialog ? getQuickReplyId() : 0, payStars,
-                sameDialog ? getSendMonoForumPeerId() : 0,
-                sameDialog ? getSendMessageSuggestionParams() : null);
+        final MessageObject threadMessage = sameDialog ? getThreadMessage() : null;
+        final int mode = sameDialog ? chatMode : 0;
+        final String shortcut = sameDialog ? quickReplyShortcut : null;
+        final int shortcutId = sameDialog ? getQuickReplyId() : 0;
+        final long monoForumPeerId = sameDialog ? getSendMonoForumPeerId() : 0;
+        final MessageSuggestionParams suggestionParams = sameDialog ? getSendMessageSuggestionParams() : null;
+        final ArrayList<MessageObject> missing = com.radolyn.ayugram.messages.AyuForwardLoader.getMissingMedia(currentAccount, arrayList);
+        if (!missing.isEmpty()) {
+            final ArrayList<MessageObject> messages = new ArrayList<>(arrayList);
+            com.radolyn.ayugram.messages.AyuForwardLoader.load(this, missing, () -> {
+                if (!getMessageHelper().sendMessagesAsCopy(messages, target, null, threadMessage, null, notify, scheduleDate,
+                        mode, shortcut, shortcutId, payStars, monoForumPeerId, suggestionParams)) {
+                    BulletinFactory.of(this).createErrorBulletin(getString(R.string.OEAyuForwardLoadFailed)).show();
+                }
+            });
+            return true;
+        }
+        return getMessageHelper().sendMessagesAsCopy(arrayList, target, null, threadMessage, null, notify, scheduleDate,
+                mode, shortcut, shortcutId, payStars, monoForumPeerId, suggestionParams);
     }
 
     private boolean hasNoforwardsMessage(ArrayList<MessageObject> messages) {
