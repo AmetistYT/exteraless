@@ -324,6 +324,12 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
      * сами: галочки внутри группы и счётчик «N/6» ставятся при привязке, а стиль
      * переключателей и слайдеров читается при отрисовке.
      */
+    private void notifyRow(int row) {
+        if (listAdapter != null && row >= 0) {
+            listAdapter.notifyItemChanged(row);
+        }
+    }
+
     private void rebuildAllAndSelf(View clicked, boolean checked) {
         if (clicked instanceof org.telegram.ui.Cells.CheckBoxCell) {
             ((org.telegram.ui.Cells.CheckBoxCell) clicked).setChecked(checked, true);
@@ -591,6 +597,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             AppearanceConfig.newNavigationBarStyle.setConfigBool(enable);
             if (enable) {
                 AppearanceConfig.iosNavigationBarStyle.setConfigBool(false);
+                notifyRow(iosNavBarRow);
                 leaveFloatingBottomNavigation();
             }
             rebuildAllAndSelf(view, enable);
@@ -609,6 +616,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             AppearanceConfig.iosNavigationBarStyle.setConfigBool(enable);
             if (enable) {
                 AppearanceConfig.newNavigationBarStyle.setConfigBool(false);
+                notifyRow(md3NavBarRow);
             }
             rebuildAllAndSelf(view, enable);
             return;
