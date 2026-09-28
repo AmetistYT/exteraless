@@ -69,6 +69,7 @@ public final class InlineMathController {
     }
 
     private static boolean enabled() {
+        ChatsConfig.ensureLoaded();
         return ChatsConfig.inlineMathResult.Bool();
     }
 
