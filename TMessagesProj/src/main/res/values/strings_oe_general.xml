@@ -172,8 +172,8 @@
     <string name="OEUpdateDownloading">Downloading update</string>
     <string name="OEUpdateDownloadFailed">Could not download the update</string>
     <string name="OEUpdateCheckFailed">Could not check for updates</string>
-    <string name="OEUserLookupTitle">Search by ID</string>
-    <string name="OEUserLookupStart">Users missing from the cache are looked up by ID through **@usinfobot**. The bot has to be started once — this will send it /start.</string>
+    <string name="OEUserLookupTitle">Starting @usinfobot</string>
+    <string name="OEUserLookupStart">Finding a user by ID requires **@usinfobot**. It only works once started, so we\'ll send it /start. A chat with it will appear in your chat list.</string>
     <string name="OEUserLookupStartButton">Start</string>
     <string name="OEUserLookupNotFound">User %1$d not found</string>
 </resources>

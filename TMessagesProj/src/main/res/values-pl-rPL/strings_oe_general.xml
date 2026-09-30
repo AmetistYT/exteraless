@@ -110,8 +110,8 @@
     <string name="OEUpdateDownloading">Pobieranie aktualizacji</string>
     <string name="OEUpdateDownloadFailed">Nie udało się pobrać aktualizacji</string>
     <string name="OEUpdateCheckFailed">Nie udało się sprawdzić aktualizacji</string>
-    <string name="OEUserLookupTitle">Wyszukiwanie po ID</string>
-    <string name="OEUserLookupStart">Użytkownicy spoza pamięci podręcznej są wyszukiwani po ID przez **@usinfobot**. Bota trzeba raz uruchomić — zostanie do niego wysłane /start.</string>
+    <string name="OEUserLookupTitle">Uruchamianie @usinfobot</string>
+    <string name="OEUserLookupStart">Do wyszukania użytkownika po ID potrzebny jest **@usinfobot**. Działa dopiero po uruchomieniu, więc wyślemy mu /start. Czat z nim pojawi się na liście czatów.</string>
     <string name="OEUserLookupStartButton">Uruchom</string>
     <string name="OEUserLookupNotFound">Nie znaleziono użytkownika %1$d</string>
 </resources>
