@@ -156,4 +156,6 @@
     <string name="OEUserLookupStart">للعثور على مستخدم بواسطة المعرّف، يلزم البوت **@usinfobot**. لا يعمل إلا بعد تشغيله، لذلك سنرسل إليه /start. ستظهر محادثة معه في قائمة محادثاتك.</string>
     <string name="OEUserLookupStartButton">تشغيل</string>
     <string name="OEUserLookupNotFound">المستخدم %1$d غير موجود</string>
+    <string name="OEUpdateTitle">يتوفر تحديث</string>
+    <string name="OEUpdateDownloadProgress">%1$s من %2$s</string>
 </resources>

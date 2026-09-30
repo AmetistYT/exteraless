@@ -114,4 +114,6 @@
     <string name="OEUserLookupStart">Para buscar a un usuario por ID se necesita **@usinfobot**. Solo funciona después de iniciarlo, así que le enviaremos /start. Aparecerá un chat con él en tu lista de chats.</string>
     <string name="OEUserLookupStartButton">Iniciar</string>
     <string name="OEUserLookupNotFound">Usuario %1$d no encontrado</string>
+    <string name="OEUpdateTitle">Actualización disponible</string>
+    <string name="OEUpdateDownloadProgress">%1$s de %2$s</string>
 </resources>

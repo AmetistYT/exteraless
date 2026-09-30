@@ -15,10 +15,10 @@ import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildConfig;
+import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
-import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.LaunchActivity;
@@ -31,6 +31,8 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -48,6 +50,7 @@ public final class GitHubUpdater {
     private static final String PREFS = "exteraless_updater";
     private static final String KEY_LAST_CHECK = "last_check";
     private static final String KEY_SKIPPED = "skipped_tag";
+    private static final Pattern VERSION = Pattern.compile("(\\d+)\\.(\\d+)\\.(\\d+)");
 
     private static volatile OkHttpClient client;
     private static volatile boolean checking;
@@ -209,7 +212,38 @@ public final class GitHubUpdater {
         return universal != null ? universal : any;
     }
 
+    private static int[] version(String... sources) {
+        for (String source : sources) {
+            if (source == null) {
+                continue;
+            }
+            Matcher matcher = VERSION.matcher(source);
+            if (matcher.find()) {
+                return new int[]{Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3))};
+            }
+        }
+        return null;
+    }
+
+    private static Integer compareVersion(Release release) {
+        int[] remote = version(release.tag, release.name, release.apkName);
+        int[] local = version(BuildVars.BUILD_VERSION_STRING);
+        if (remote == null || local == null) {
+            return null;
+        }
+        for (int i = 0; i < 3; i++) {
+            if (remote[i] != local[i]) {
+                return Integer.compare(remote[i], local[i]);
+            }
+        }
+        return 0;
+    }
+
     private static Boolean isNewer(Release release) throws Exception {
+        Integer versionOrder = compareVersion(release);
+        if (versionOrder != null && versionOrder != 0) {
+            return versionOrder > 0;
+        }
         String commit = BuildConfig.BUILD_COMMIT_ID;
         if (!TextUtils.isEmpty(commit)) {
             JSONObject compare = getJson(API + "/compare/" + commit + "..." + Uri.encode(release.tag));
@@ -222,7 +256,7 @@ public final class GitHubUpdater {
             long published = item == null ? 0 : parseDate(item.optString("published_at"));
             return published > BuildConfig.BUILD_TIMESTAMP * 1000L;
         }
-        return null;
+        return versionOrder != null ? Boolean.FALSE : null;
     }
 
     private static long parseDate(String value) {
@@ -241,23 +275,41 @@ public final class GitHubUpdater {
         if (activity == null) {
             return;
         }
-        String notes = release.body == null ? "" : release.body.replace("**", "").replace("\r", "").trim();
-        if (notes.length() > 3000) {
-            notes = notes.substring(0, 3000) + "…";
-        }
         String size = release.apkSize > 0 ? AndroidUtilities.formatFileSize(release.apkSize) : "";
-        new AlertDialog.Builder(activity, fragment.getResourceProvider())
-                .setTitle(LocaleController.formatString(R.string.OEUpdateAvailable, TextUtils.isEmpty(release.name) ? release.tag : release.name))
-                .setMessage(notes.isEmpty() ? release.tag : notes)
-                .setPositiveButton(size.isEmpty() ? LocaleController.getString(R.string.OEUpdateInstall)
-                        : LocaleController.formatString(R.string.OEUpdateInstallSize, size), (d, w) -> download(activity, fragment, release))
-                .setNeutralButton(LocaleController.getString(R.string.OEUpdateSkip),
-                        (d, w) -> prefs().edit().putString(KEY_SKIPPED, release.tag).apply())
-                .setNegativeButton(LocaleController.getString(R.string.OEUpdateLater), null)
-                .show();
+        int[] remote = version(release.tag, release.name, release.apkName);
+        StringBuilder subtitle = new StringBuilder(TextUtils.isEmpty(release.name) ? release.tag : release.name);
+        if (remote != null) {
+            subtitle.append(" · ").append(remote[0]).append('.').append(remote[1]).append('.').append(remote[2]);
+        }
+        if (!size.isEmpty()) {
+            subtitle.append(" · ").append(size);
+        }
+        String notes = TextUtils.isEmpty(release.body) ? release.tag : release.body;
+        String updateText = size.isEmpty() ? LocaleController.getString(R.string.OEUpdateInstall)
+                : LocaleController.formatString(R.string.OEUpdateInstallSize, size);
+        new UpdateSheet(activity, fragment.getResourceProvider(), LocaleController.getString(R.string.OEUpdateTitle),
+                subtitle.toString(), notes, updateText, new UpdateSheet.Delegate() {
+            @Override
+            public void onUpdate(UpdateSheet sheet) {
+                download(activity, sheet, release);
+            }
+
+            @Override
+            public void onSkip() {
+                prefs().edit().putString(KEY_SKIPPED, release.tag).apply();
+            }
+
+            @Override
+            public void onCancelDownload() {
+                Call call = download;
+                if (call != null) {
+                    call.cancel();
+                }
+            }
+        }).show();
     }
 
-    private static void download(Activity activity, BaseFragment fragment, Release release) {
+    private static void download(Activity activity, UpdateSheet sheet, Release release) {
         if (download != null) {
             return;
         }
@@ -273,17 +325,7 @@ public final class GitHubUpdater {
             }
         }
         File target = new File(dir, release.apkName.replaceAll("[^A-Za-z0-9._-]", "_"));
-        AlertDialog progress = new AlertDialog(activity, AlertDialog.ALERT_TYPE_LOADING, fragment.getResourceProvider());
-        progress.setTitle(LocaleController.getString(R.string.OEUpdateDownloading));
-        progress.setMessage(release.name);
-        progress.setNegativeButton(LocaleController.getString(R.string.Cancel), (d, w) -> {
-            Call call = download;
-            if (call != null) {
-                call.cancel();
-            }
-        });
-        progress.setCanCancel(false);
-        progress.show();
+        sheet.setDownloading(true);
         Call call = client().newCall(new Request.Builder().url(release.apkUrl)
                 .header("User-Agent", "exteraless").build());
         download = call;
@@ -308,10 +350,7 @@ public final class GitHubUpdater {
                             if (percent != lastPercent) {
                                 lastPercent = percent;
                                 final long doneBytes = done;
-                                AndroidUtilities.runOnUIThread(() -> {
-                                    progress.setProgress(percent);
-                                    progress.setMessage(AndroidUtilities.formatFileSize(doneBytes) + " / " + AndroidUtilities.formatFileSize(total));
-                                });
+                                AndroidUtilities.runOnUIThread(() -> sheet.setProgress(doneBytes, total));
                             }
                         }
                     }
@@ -325,15 +364,13 @@ public final class GitHubUpdater {
             final boolean success = ok;
             AndroidUtilities.runOnUIThread(() -> {
                 download = null;
-                try {
-                    progress.dismiss();
-                } catch (Exception ignored) {
-                }
                 if (success) {
+                    sheet.finishDownload();
                     install(activity, target);
                 } else {
                     target.delete();
                     if (!call.isCanceled()) {
+                        sheet.setDownloading(false);
                         bulletin(LocaleController.getString(R.string.OEUpdateDownloadFailed), true);
                     }
                 }
