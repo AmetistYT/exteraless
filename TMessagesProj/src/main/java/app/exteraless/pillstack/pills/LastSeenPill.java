@@ -112,7 +112,18 @@ public class LastSeenPill extends BasePill {
                 return;
             }
             final boolean isOnline = user.status instanceof TLRPC.TL_userStatusOnline && user.status.expires > ConnectionsManager.getInstance(account).getCurrentTime();
-            setStatus(isOnline ? LocaleController.getString(R.string.Online) : LocaleController.formatUserStatus(account, user), isOnline);
+            final int lastSeen = isOnline ? 0 : app.exteraless.ghost.OwnLastSeen.seconds(account, user);
+            final String status;
+            if (isOnline) {
+                status = LocaleController.getString(R.string.Online);
+            } else if (lastSeen > 0 && app.exteraless.ghost.OwnLastSeen.isToday(lastSeen)) {
+                status = app.exteraless.ghost.OwnLastSeen.time(lastSeen);
+            } else if (lastSeen > 0) {
+                status = app.exteraless.ghost.OwnLastSeen.format(lastSeen);
+            } else {
+                status = LocaleController.formatUserStatus(account, user);
+            }
+            setStatus(status, isOnline);
             markDataUpdated();
         }));
     }
