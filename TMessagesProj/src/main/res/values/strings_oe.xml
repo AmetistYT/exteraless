@@ -31,6 +31,11 @@
     <string name="AppIconNya" translatable="false">Nya</string>
     <string name="AppIconAyu" translatable="false">Ayu</string>
     <string name="AppIconQuack" translatable="false">Quack</string>
+    <string name="AppIconGo" translatable="false">Go</string>
+    <string name="AppIconHand" translatable="false">Hand</string>
+    <string name="AppIconMono" translatable="false">Mono</string>
+    <string name="AppIconNothing" translatable="false">Nothing</string>
+    <string name="AppIconPlus" translatable="false">Plus</string>
     <string name="OpenExteraPreferences">exteraless Preferences</string>
     <string name="OpenExteraDesignSection">Design</string>
     <string name="OpenExteraDesigner">Icons and design</string>
