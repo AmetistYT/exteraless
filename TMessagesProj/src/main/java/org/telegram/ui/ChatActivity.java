@@ -445,6 +445,8 @@ public class ChatActivity extends BaseFragment implements
         FactorAnimator.Target
 {
 
+    private static final int MAX_SELECTED_MESSAGES = 1000;
+
     private MessageMenuStatus lastMessageMenuStatus = new MessageMenuStatus(false, false, false, false, false, false, false, false, false);
     private final static boolean PULL_DOWN_BACK_FRAGMENT = false;
     private final static boolean DISABLE_PROGRESS_VIEW = true;
@@ -1948,7 +1950,7 @@ public class ChatActivity extends BaseFragment implements
                         return;
                     }
                     if (messageObject.contentType == 0) {
-                        if (selected && selectedMessagesIds[0].size() + selectedMessagesIds[1].size() >= 100) {
+                        if (selected && selectedMessagesIds[0].size() + selectedMessagesIds[1].size() >= MAX_SELECTED_MESSAGES) {
                             limitReached = true;
                         } else {
                             limitReached = false;
@@ -10387,7 +10389,7 @@ public class ChatActivity extends BaseFragment implements
             if (!isSelectableBetweenMessage(message, begin, end)) {
                 continue;
             }
-            if (selectedMessagesIds[0].size() + selectedMessagesIds[1].size() >= 100) {
+            if (selectedMessagesIds[0].size() + selectedMessagesIds[1].size() >= MAX_SELECTED_MESSAGES) {
                 if (chatMode == MODE_SCHEDULED) {
                     MessageObject endMessage = messages.get(end);
                     addToSelectedMessages(endMessage, false, false);
@@ -20371,7 +20373,7 @@ public class ChatActivity extends BaseFragment implements
                     }
                 }
             } else {
-                if (selectedMessagesIds[0].size() + selectedMessagesIds[1].size() >= 100) {
+                if (selectedMessagesIds[0].size() + selectedMessagesIds[1].size() >= MAX_SELECTED_MESSAGES) {
                     AndroidUtilities.shakeView(selectedMessagesCountTextView);
                     Vibrator vibrator = (Vibrator) ApplicationLoader.applicationContext.getSystemService(Context.VIBRATOR_SERVICE);
                     if (vibrator != null) {

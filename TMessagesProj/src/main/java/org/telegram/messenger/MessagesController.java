@@ -9498,6 +9498,17 @@ public class MessagesController extends BaseController implements NotificationCe
         if ((messages == null || messages.isEmpty()) && taskId == 0) {
             return;
         }
+        if (taskId == 0 && taskRequest == null && messages != null && messages.size() > 100) {
+            final boolean splitRandoms = randoms != null && randoms.size() == messages.size();
+            for (int start = 0; start < messages.size(); start += 100) {
+                final int end = Math.min(messages.size(), start + 100);
+                final ArrayList<Long> chunkRandoms = splitRandoms ? new ArrayList<>(randoms.subList(start, end))
+                        : start == 0 ? randoms : null;
+                deleteMessages(new ArrayList<>(messages.subList(start, end)), chunkRandoms, encryptedChat, dialogId, forAll, mode,
+                        cacheOnly, 0, null, topicId, movedToScheduled, movedToScheduledMessageId);
+            }
+            return;
+        }
 
         // --- AyuGram hook
         int ayuDeletedMessagesCount = 0;
