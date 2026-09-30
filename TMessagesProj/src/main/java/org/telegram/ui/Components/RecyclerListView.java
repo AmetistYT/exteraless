@@ -3289,7 +3289,7 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
         }
         int count = 0;
         for (Class cls : classes) {
-            if (cls != null && !cls.equals(HeaderCell.class)) {
+            if (cls != null && !cls.equals(HeaderCell.class) && !cls.equals(tw.nekomimi.nekogram.ui.cells.HeaderCell.class)) {
                 count++;
             }
         }
@@ -3299,7 +3299,7 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
         final Class[] filtered = new Class[count];
         int index = 0;
         for (Class cls : classes) {
-            if (cls != null && !cls.equals(HeaderCell.class)) {
+            if (cls != null && !cls.equals(HeaderCell.class) && !cls.equals(tw.nekomimi.nekogram.ui.cells.HeaderCell.class)) {
                 filtered[index++] = cls;
             }
         }
@@ -3374,7 +3374,8 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
             // Вынесенный заголовок секции в карточку не входит — иначе он
             // оказывается её первой строкой, а смысл выноса ровно обратный
             view -> !(view instanceof TextInfoPrivacyCell || view instanceof ShadowSectionCell || view instanceof FiltersSetupActivity.HintInnerCell || view instanceof GraySectionCell || view instanceof CollapseTextCell)
-                    && !(view instanceof HeaderCell && app.exteraless.appearance.AppearanceConfig.sectionsSeparatedHeaders())
+                    && !((view instanceof HeaderCell || view instanceof tw.nekomimi.nekogram.ui.cells.HeaderCell)
+                            && app.exteraless.appearance.AppearanceConfig.sectionsSeparatedHeaders())
                     && !Objects.equals(view.getTag(), TAG_NOT_SECTION),
             padding,
             roundRadius,
