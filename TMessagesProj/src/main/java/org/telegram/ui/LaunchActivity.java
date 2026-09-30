@@ -6165,12 +6165,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             UpdateHelper.cleanAppUpdate();
             if (progress != null) {
                 progress.end();
-                BaseFragment fragment = getLastFragment();
-                if (fragment != null) {
-                    BulletinFactory.of(fragment).createSimpleBulletin(R.raw.done,
-                            LocaleController.getString(R.string.YourVersionIsLatestNax)).show();
-                }
             }
+            app.exteraless.updater.GitHubUpdater.check(force || progress != null);
             return;
         }
        /*if (!ApplicationLoader.isStandaloneBuild() && !ApplicationLoader.isBetaBuild()) {

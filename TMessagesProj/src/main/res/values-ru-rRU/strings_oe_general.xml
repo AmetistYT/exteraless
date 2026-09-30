@@ -161,4 +161,12 @@
     <string name="OEAyuForwardLoadingMedia">Загрузка медиа</string>
     <string name="OEAyuForwardLoadingCount">Файлов: %1$d из %2$d</string>
     <string name="OEAyuForwardLoadFailed">Не удалось загрузить медиа для пересылки</string>
+    <string name="OEUpdateAvailable">Доступно обновление: %1$s</string>
+    <string name="OEUpdateInstall">Обновить</string>
+    <string name="OEUpdateInstallSize">Обновить (%1$s)</string>
+    <string name="OEUpdateLater">Позже</string>
+    <string name="OEUpdateSkip">Пропустить версию</string>
+    <string name="OEUpdateDownloading">Загрузка обновления</string>
+    <string name="OEUpdateDownloadFailed">Не удалось скачать обновление</string>
+    <string name="OEUpdateCheckFailed">Не удалось проверить обновления</string>
 </resources>

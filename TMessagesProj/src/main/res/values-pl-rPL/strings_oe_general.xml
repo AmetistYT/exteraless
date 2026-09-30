@@ -102,4 +102,12 @@
     <string name="OEAyuForwardLoadingMedia">Pobieranie multimediów</string>
     <string name="OEAyuForwardLoadingCount">Pliki: %1$d z %2$d</string>
     <string name="OEAyuForwardLoadFailed">Nie udało się pobrać multimediów do przekazania</string>
+    <string name="OEUpdateAvailable">Dostępna aktualizacja: %1$s</string>
+    <string name="OEUpdateInstall">Aktualizuj</string>
+    <string name="OEUpdateInstallSize">Aktualizuj (%1$s)</string>
+    <string name="OEUpdateLater">Później</string>
+    <string name="OEUpdateSkip">Pomiń tę wersję</string>
+    <string name="OEUpdateDownloading">Pobieranie aktualizacji</string>
+    <string name="OEUpdateDownloadFailed">Nie udało się pobrać aktualizacji</string>
+    <string name="OEUpdateCheckFailed">Nie udało się sprawdzić aktualizacji</string>
 </resources>

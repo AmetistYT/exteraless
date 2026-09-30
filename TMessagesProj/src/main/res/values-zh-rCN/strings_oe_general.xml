@@ -102,4 +102,12 @@
     <string name="OEAyuForwardLoadingMedia">正在加载媒体</string>
     <string name="OEAyuForwardLoadingCount">文件：%1$d / %2$d</string>
     <string name="OEAyuForwardLoadFailed">无法加载要转发的媒体</string>
+    <string name="OEUpdateAvailable">有可用更新：%1$s</string>
+    <string name="OEUpdateInstall">更新</string>
+    <string name="OEUpdateInstallSize">更新（%1$s）</string>
+    <string name="OEUpdateLater">稍后</string>
+    <string name="OEUpdateSkip">跳过此版本</string>
+    <string name="OEUpdateDownloading">正在下载更新</string>
+    <string name="OEUpdateDownloadFailed">无法下载更新</string>
+    <string name="OEUpdateCheckFailed">无法检查更新</string>
 </resources>

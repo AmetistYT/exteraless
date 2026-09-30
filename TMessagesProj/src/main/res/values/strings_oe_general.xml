@@ -164,4 +164,12 @@
     <string name="OEAyuForwardLoadingMedia">Loading media</string>
     <string name="OEAyuForwardLoadingCount">Files: %1$d of %2$d</string>
     <string name="OEAyuForwardLoadFailed">Couldn\'t load media for forwarding</string>
+    <string name="OEUpdateAvailable">Update available: %1$s</string>
+    <string name="OEUpdateInstall">Update</string>
+    <string name="OEUpdateInstallSize">Update (%1$s)</string>
+    <string name="OEUpdateLater">Later</string>
+    <string name="OEUpdateSkip">Skip this version</string>
+    <string name="OEUpdateDownloading">Downloading update</string>
+    <string name="OEUpdateDownloadFailed">Could not download the update</string>
+    <string name="OEUpdateCheckFailed">Could not check for updates</string>
 </resources>
