@@ -215,10 +215,6 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
                                 ? R.drawable.msg_select : 0,
                         getString(R.string.MonetStyleClassic),
                         () -> applyMonetStyle(AppearanceConfig.MONET_STYLE_CLASSIC))
-                .add(current == AppearanceConfig.MONET_STYLE_INUGRAM
-                                ? R.drawable.msg_select : 0,
-                        getString(R.string.MonetStyleInugram),
-                        () -> applyMonetStyle(AppearanceConfig.MONET_STYLE_INUGRAM))
                 .setGravity(Gravity.RIGHT)
                 .show();
     }
@@ -238,8 +234,6 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
         switch (AppearanceConfig.monetStyle.Int()) {
             case AppearanceConfig.MONET_STYLE_CLASSIC:
                 return R.string.MonetStyleClassic;
-            case AppearanceConfig.MONET_STYLE_INUGRAM:
-                return R.string.MonetStyleInugram;
             default:
                 return R.string.MonetStyleTelemone;
         }

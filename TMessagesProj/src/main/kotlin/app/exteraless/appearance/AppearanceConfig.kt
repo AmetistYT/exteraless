@@ -43,8 +43,6 @@ object AppearanceConfig {
     /** Прежний набор Monet, пришедший вместе с базой форка (токены вида `a1_100`). */
     const val MONET_STYLE_CLASSIC = 1
 
-    const val MONET_STYLE_INUGRAM = 2
-
     @JvmStatic
     fun getPreferences(): SharedPreferences = NekoConfig.getPreferences()
 
@@ -95,7 +93,6 @@ object AppearanceConfig {
     @JvmStatic
     fun monetAssetSuffix(): String = when (monetStyle.Int()) {
         MONET_STYLE_CLASSIC -> "_gram"
-        MONET_STYLE_INUGRAM -> "_inu"
         else -> ""
     }
 
