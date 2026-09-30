@@ -168,4 +168,8 @@
     <string name="PluginWatchdogMuted">%1$s 将不再提示卡顿。可以在插件设置中恢复提示。</string>
     <string name="PluginWatchdogWarnings">卡顿提示</string>
     <string name="PluginWatchdogWarningsInfo">当插件长时间占用主线程或停止响应时提示。</string>
+    <string name="PluginDeniedGrant">授予</string>
+    <string name="PluginGrantedRestart">已授予 %1$s 权限。若未生效，请重启插件。</string>
+    <string name="PluginGrantedRestartAction">重启</string>
+    <string name="PluginGrantTrustedConfirm">%1$s 将获得「受信任」访问级别：插件因此可以修改应用代码。是否授予？</string>
 </resources>

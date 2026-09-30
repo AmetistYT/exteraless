@@ -168,4 +168,8 @@ Wtyczka: %1$s
     <string name="PluginWatchdogMuted">%1$s nie będzie już ostrzegać o spowolnieniach. Ostrzeżenia można przywrócić w ustawieniach wtyczki.</string>
     <string name="PluginWatchdogWarnings">Ostrzeżenia o spowolnieniach</string>
     <string name="PluginWatchdogWarningsInfo">Ostrzegaj, gdy wtyczka zbyt długo blokuje główny wątek lub przestaje odpowiadać.</string>
+    <string name="PluginDeniedGrant">Nadaj</string>
+    <string name="PluginGrantedRestart">Uprawnienie nadane: %1$s. Jeśli nie zadziała, uruchom wtyczkę ponownie.</string>
+    <string name="PluginGrantedRestartAction">Uruchom ponownie</string>
+    <string name="PluginGrantTrustedConfirm">%1$s otrzyma poziom dostępu „Zaufana”: z nim wtyczka może zmieniać kod aplikacji. Nadać?</string>
 </resources>
