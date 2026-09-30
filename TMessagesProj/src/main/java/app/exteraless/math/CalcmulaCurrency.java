@@ -105,6 +105,11 @@ public final class CalcmulaCurrency {
         return new MathExpression.Suggestion(caret, MathExpression.insertTextFor(text, caret, value), value);
     }
 
+    public static String resultFor(String query) {
+        String value = query == null ? null : RESULTS.get(query);
+        return TextUtils.isEmpty(value) ? null : value;
+    }
+
     public static boolean isKnown(String query) {
         return RESULTS.get(query) != null;
     }

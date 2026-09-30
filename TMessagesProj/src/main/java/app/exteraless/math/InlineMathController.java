@@ -48,6 +48,9 @@ public final class InlineMathController {
     private final Runnable announce = this::announce;
     private final Runnable refresh = this::refresh;
 
+    private String pendingQuery;
+    private int pendingEquals = -1;
+
     private MathExpression.Suggestion suggestion;
     private String announcedValue;
     private Locale separatorLocale;
@@ -103,9 +106,62 @@ public final class InlineMathController {
     }
 
     private void refresh() {
+        if (pendingQuery != null && acceptPending()) {
+            return;
+        }
         dirty = true;
         view.requestLayout();
         view.invalidate();
+    }
+
+    private void markPendingAccept() {
+        pendingQuery = null;
+        pendingEquals = -1;
+        if (!enabled() || !ChatsConfig.inlineMathCurrency.Bool() || delegate == null) {
+            return;
+        }
+        CharSequence text = view.getText();
+        int caret = view.getSelectionStart();
+        if (text == null || caret != view.getSelectionEnd()) {
+            return;
+        }
+        String query = CalcmulaCurrency.queryAt(text, caret);
+        if (query == null || CalcmulaCurrency.isKnown(query)) {
+            return;
+        }
+        pendingQuery = query;
+        pendingEquals = caret - 1;
+        CalcmulaCurrency.request(delegate.account(), query, refresh);
+    }
+
+    private boolean acceptPending() {
+        String query = pendingQuery;
+        int equals = pendingEquals;
+        pendingQuery = null;
+        pendingEquals = -1;
+        String value = CalcmulaCurrency.resultFor(query);
+        CharSequence text = view.getText();
+        Editable editable = text instanceof Editable ? (Editable) text : null;
+        int caret = view.getSelectionStart();
+        if (value == null || editable == null || !view.isFocused() || caret != view.getSelectionEnd()
+                || equals < 0 || caret != equals + 2 || caret > editable.length()
+                || editable.charAt(equals) != '=' || editable.charAt(caret - 1) != ' '
+                || !query.equals(CalcmulaCurrency.queryAt(editable, equals + 1))) {
+            return false;
+        }
+        BaseInputConnection.removeComposingSpans(editable);
+        if (!edit(() -> editable.insert(caret, value))) {
+            return false;
+        }
+        Selection.setSelection(editable, caret + value.length());
+        suggestion = null;
+        ghost.clear();
+        undoStart = caret;
+        undoEnd = caret + value.length();
+        dirty = true;
+        view.requestLayout();
+        view.invalidate();
+        return true;
     }
 
     private void announce() {
@@ -298,6 +354,8 @@ public final class InlineMathController {
     }
 
     public void cancel() {
+        pendingQuery = null;
+        pendingEquals = -1;
         AndroidUtilities.cancelRunOnUIThread(announce);
         announcedValue = null;
         reveal.cancel();
@@ -410,6 +468,9 @@ public final class InlineMathController {
             case KeyEvent.KEYCODE_TAB:
             case KeyEvent.KEYCODE_SPACE:
                 handled = commit();
+                if (!handled) {
+                    markPendingAccept();
+                }
                 break;
             case KeyEvent.KEYCODE_DEL:
                 handled = undo();
@@ -442,11 +503,14 @@ public final class InlineMathController {
         return new InputConnectionWrapper(connection, true) {
             @Override
             public boolean commitText(CharSequence text, int newCursorPosition) {
-                if (text != null && text.length() == 1 && text.charAt(0) == ' ' && suggestion != null) {
-                    finishComposingText();
-                    if (commit()) {
-                        return true;
+                if (text != null && text.length() == 1 && text.charAt(0) == ' ') {
+                    if (suggestion != null) {
+                        finishComposingText();
+                        if (commit()) {
+                            return true;
+                        }
                     }
+                    markPendingAccept();
                 }
                 return super.commitText(text, newCursorPosition);
             }
