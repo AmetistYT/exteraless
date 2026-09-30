@@ -110,4 +110,8 @@
     <string name="OEUpdateDownloading">Descargando actualización</string>
     <string name="OEUpdateDownloadFailed">No se pudo descargar la actualización</string>
     <string name="OEUpdateCheckFailed">No se pudieron buscar actualizaciones</string>
+    <string name="OEUserLookupTitle">Búsqueda por ID</string>
+    <string name="OEUserLookupStart">Los usuarios que no están en caché se buscan por ID a través de **@usinfobot**. Hay que iniciar el bot una vez: se le enviará /start.</string>
+    <string name="OEUserLookupStartButton">Iniciar</string>
+    <string name="OEUserLookupNotFound">Usuario %1$d no encontrado</string>
 </resources>

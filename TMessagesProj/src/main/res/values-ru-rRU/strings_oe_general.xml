@@ -169,4 +169,8 @@
     <string name="OEUpdateDownloading">Загрузка обновления</string>
     <string name="OEUpdateDownloadFailed">Не удалось скачать обновление</string>
     <string name="OEUpdateCheckFailed">Не удалось проверить обновления</string>
+    <string name="OEUserLookupTitle">Поиск по ID</string>
+    <string name="OEUserLookupStart">Пользователей, которых нет в кэше, ищем по ID через **@usinfobot**. Бота нужно один раз запустить — ему уйдёт /start.</string>
+    <string name="OEUserLookupStartButton">Запустить</string>
+    <string name="OEUserLookupNotFound">Пользователь %1$d не найден</string>
 </resources>

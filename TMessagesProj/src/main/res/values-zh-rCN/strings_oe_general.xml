@@ -110,4 +110,8 @@
     <string name="OEUpdateDownloading">正在下载更新</string>
     <string name="OEUpdateDownloadFailed">无法下载更新</string>
     <string name="OEUpdateCheckFailed">无法检查更新</string>
+    <string name="OEUserLookupTitle">按 ID 查找</string>
+    <string name="OEUserLookupStart">缓存中没有的用户会通过 **@usinfobot** 按 ID 查找。需要先启动一次该机器人，将向其发送 /start。</string>
+    <string name="OEUserLookupStartButton">启动</string>
+    <string name="OEUserLookupNotFound">未找到用户 %1$d</string>
 </resources>
