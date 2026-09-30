@@ -21,7 +21,6 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.BaseFragment;
-import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.CheckBox2;
@@ -57,7 +56,7 @@ import app.exteraless.plugins.ui.components.PluginFileViewer;
  * именами из исходника. exteraGram вместо этого показывает бейдж «источник
  * неизвестен»; бейдж говорит о канале, а не о плагине, и ничего не решает.
  */
-public class PluginInstallBottomSheet extends BottomSheet {
+public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet {
 
     public interface Delegate {
         /**
@@ -69,14 +68,17 @@ public class PluginInstallBottomSheet extends BottomSheet {
 
     private final List<PluginPermissionCell> cells = new ArrayList<>();
     private boolean enableAfterInstall = true;
-    private final com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet.PluginInstallParams installParams;
+    private final com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet.PluginInstallParams params;
+    private final Plugin plugin;
+    private final ButtonWithCounterView button;
 
     public PluginInstallBottomSheet(Activity activity, File file,
                                     com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet.PluginInstallParams params,
                                     Plugin plugin,
                                     Map<String, List<String>> capabilities, Delegate delegate) {
         super(activity, false);
-        installParams = params;
+        this.params = params;
+        this.plugin = plugin;
         setApplyBottomPadding(false);
         setApplyTopPadding(false);
 
@@ -155,7 +157,7 @@ public class PluginInstallBottomSheet extends BottomSheet {
                     LayoutHelper.WRAP_CONTENT));
         }
 
-        ButtonWithCounterView button = new ButtonWithCounterView(context, true, null);
+        button = new ButtonWithCounterView(context, true, null);
         final boolean update = plugin != null && !TextUtils.isEmpty(plugin.id)
                 && app.exteraless.plugins.PluginsController.getInstance().getPlugin(plugin.id) != null;
         button.setText(getString(update ? R.string.PluginsUpdateAction : R.string.PluginsInstallAction), false);
@@ -189,6 +191,7 @@ public class PluginInstallBottomSheet extends BottomSheet {
                     LayoutHelper.createFrame(40, 40, Gravity.RIGHT | Gravity.TOP, 0, 10, 10, 0));
         }
         setCustomView(root);
+        applyButtonState();
     }
 
     private android.view.View createAiReview(Context context, File file, Plugin plugin,
