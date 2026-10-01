@@ -31,6 +31,7 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.PushListenerController;
+import org.telegram.messenger.GooglePushListenerServiceProvider;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UnifiedPushService;
 import org.telegram.messenger.UserConfig;
@@ -958,6 +959,15 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         }
     }
 
+    private String gmsVersion() {
+        try {
+            return ApplicationLoader.applicationContext.getPackageManager()
+                    .getPackageInfo("com.google.android.gms", 0).versionName;
+        } catch (Exception e) {
+            return "none";
+        }
+    }
+
     private boolean batteryUnrestricted() {
         try {
             PowerManager pm = (PowerManager) ApplicationLoader.applicationContext.getSystemService(Context.POWER_SERVICE);
@@ -1016,6 +1026,9 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 ? SharedConfig.pushString.length() + " chars" : "none").append('\n');
         if (!hasToken) {
             text.append("token status: ").append(SharedConfig.pushStringStatus).append('\n');
+            if (GooglePushListenerServiceProvider.lastError != null) {
+                text.append("token error: ").append(GooglePushListenerServiceProvider.lastError).append('\n');
+            }
         }
         text.append("token fetch ms: ").append(
                 SharedConfig.pushStringGetTimeEnd - SharedConfig.pushStringGetTimeStart).append('\n');
@@ -1030,6 +1043,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 : LocaleController.formatDateTime(SharedConfig.pushLastReceivedTime / 1000L, true)).append('\n');
         text.append("play services: ")
                 .append(PushListenerController.getProvider().hasServices()).append('\n');
+        text.append("gms version: ").append(gmsVersion()).append('\n');
         text.append("keep alive: ").append(MessagesController
                 .getNotificationsSettings(UserConfig.selectedAccount)
                 .getBoolean("pushService", false)).append('\n');

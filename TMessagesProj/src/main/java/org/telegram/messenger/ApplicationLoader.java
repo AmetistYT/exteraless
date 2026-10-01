@@ -34,6 +34,7 @@ import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ViewGroup;
 
@@ -439,14 +440,17 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
     private static void startPushServiceInternal() {
         SharedPreferences preferences = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
         final int pushServiceType = NaConfig.INSTANCE.getPushServiceType().Int();
-        final boolean remotePush = pushServiceType != 0
+        final boolean remoteFailed = TextUtils.isEmpty(SharedConfig.pushString)
+                && ("__FIREBASE_FAILED__".equals(SharedConfig.pushStringStatus)
+                || UnifiedPushService.UP_FAILED.equals(SharedConfig.pushStringStatus));
+        final boolean remotePush = pushServiceType != 0 && !remoteFailed
                 && (pushServiceType == 2 || PushListenerController.getProvider().hasServices());
         boolean enabled;
         if (remotePush) {
             enabled = false;
         } else if (preferences.contains("pushService")) {
             enabled = preferences.getBoolean("pushService", true);
-        } else if (PushListenerController.getProvider().hasServices()) {
+        } else if (!remoteFailed && PushListenerController.getProvider().hasServices()) {
             return;
         } else {
             enabled = MessagesController.getMainSettings(UserConfig.selectedAccount).getBoolean("keepAliveService", false);
