@@ -25,6 +25,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
+import android.view.animation.PathInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -68,6 +69,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
 
     private static final float[] SPEEDS = {1f, 1.2f, 1.5f, 1.7f, 2f, 0.5f};
     private static final CubicBezierInterpolator EMPHASIZED = new CubicBezierInterpolator(0.2, 0, 0, 1);
+    private static final PathInterpolator BACK_GESTURE = new PathInterpolator(0.1f, 0.1f, 0f, 1f);
 
     private final LaunchActivity activity;
     private final int account;
@@ -117,12 +119,19 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
     private final RectF morphTo = new RectF();
     private final RectF morphCoverFrom = new RectF();
     private final RectF morphCoverTo = new RectF();
+    private final RectF morphCoverBase = new RectF();
     private final RectF morphRect = new RectF();
     private final RectF morphCover = new RectF();
     private final Rect morphSrc = new Rect();
     private final Path morphPath = new Path();
     private final Paint morphPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private PlayerMiniView miniSource;
+    private View morphCoverView;
+    private float morphCoverBaseRadius;
+    private boolean backPreview;
+    private float backProgress;
+    private int backDirection;
+    private ValueAnimator backAnimator;
     private boolean skipMorph;
     private boolean closing;
     private boolean detached;
@@ -513,15 +522,21 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             return;
         }
         if (!skipMorph && miniSource != null && !isDismissed()) {
-            if (morphAnimator != null && morphProgress >= 0f) {
+            if (morphProgress >= 0f) {
+                boolean preview = backPreview;
                 closing = true;
                 detach();
-                startMorph(morphProgress, 0f, 300, this::finishMorphClose);
+                cancelBackAnimator();
+                if (preview) {
+                    backPreview = false;
+                    morphCoverView.setVisibility(View.INVISIBLE);
+                }
+                startMorph(morphProgress, 0f, preview ? 380 : 300, this::finishMorphClose);
                 return;
             }
             float ty = root.getTranslationY();
             root.setTranslationY(0);
-            if (prepareMorph(lyricsFraction >= 0.5f ? smallCover : cover)) {
+            if (prepareMorph(true)) {
                 closing = true;
                 detach();
                 cancelSheetAnimation();
@@ -538,6 +553,12 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             morphAnimator.removeAllListeners();
             morphAnimator.cancel();
             morphAnimator = null;
+        }
+        if (morphProgress >= 0f) {
+            cancelBackAnimator();
+            backPreview = false;
+            restoreMorphCover();
+            clearMorph();
         }
         if (miniSource != null) {
             miniSource.setTransitionHidden(false);
@@ -566,14 +587,14 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
     @Override
     protected boolean onCustomOpenAnimation() {
         root.setTranslationY(0);
-        if (!prepareMorph(cover)) {
+        if (!prepareMorph(true)) {
             return false;
         }
         morphTo.set(0, 0, root.getWidth(), root.getHeight());
         morphToRadius = 0;
         startMorph(0f, 1f, 420, () -> {
             clearMorph();
-            cover.setVisibility(lyricsFraction >= 1f ? View.INVISIBLE : View.VISIBLE);
+            restoreMorphCover();
             cover.setTranslationZ(-cover.getElevation());
             cover.animate().translationZ(0).setDuration(250).start();
             morphBarsState = -1;
@@ -584,6 +605,100 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             }
         });
         return true;
+    }
+
+    @Override
+    protected boolean onCustomBackStarted(int swipeDirection) {
+        if (miniSource == null || skipMorph) {
+            return false;
+        }
+        if (closing || (morphProgress >= 0f && !backPreview)) {
+            return true;
+        }
+        if (backPreview) {
+            cancelBackAnimator();
+        } else if (root.getTranslationY() != 0f || !prepareMorph(false)) {
+            return false;
+        } else {
+            morphCoverBase.set(morphCoverTo);
+            morphCoverBaseRadius = morphCoverToRadius;
+            morphProgress = 1f;
+            backProgress = 0f;
+            backPreview = true;
+        }
+        backDirection = swipeDirection;
+        applyBackPreview();
+        return true;
+    }
+
+    @Override
+    protected void onCustomBackProgressed(float progress) {
+        if (!backPreview || closing) {
+            return;
+        }
+        cancelBackAnimator();
+        backProgress = progress;
+        applyBackPreview();
+    }
+
+    @Override
+    protected void onCustomBackCancelled() {
+        if (!backPreview || closing) {
+            return;
+        }
+        cancelBackAnimator();
+        backAnimator = ValueAnimator.ofFloat(backProgress, 0f);
+        backAnimator.addUpdateListener(a -> {
+            backProgress = (float) a.getAnimatedValue();
+            applyBackPreview();
+        });
+        backAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                backAnimator = null;
+                backPreview = false;
+                clearMorph();
+                if (miniSource != null) {
+                    miniSource.setTransitionHidden(false);
+                }
+                morphBarsState = -1;
+                applySystemBars(true);
+            }
+        });
+        backAnimator.setDuration((long) (250 * clamp01(backProgress)));
+        backAnimator.setInterpolator(CubicBezierInterpolator.DEFAULT);
+        backAnimator.start();
+    }
+
+    private void applyBackPreview() {
+        float t = BACK_GESTURE.getInterpolation(clamp01(backProgress));
+        float w = root.getWidth();
+        float h = root.getHeight();
+        float s = 1f - 0.1f * t;
+        float inset = (w - w * s) / 2f;
+        float left = inset + Math.max(0f, inset - dp(8)) * backDirection;
+        float top = Math.max(h / 2f, Math.min(h, morphFrom.centerY())) * (1f - s);
+        morphTo.set(left, top, left + w * s, top + h * s);
+        morphToRadius = dp(28) * t;
+        morphCoverTo.set(left + morphCoverBase.left * s, top + morphCoverBase.top * s, left + morphCoverBase.right * s, top + morphCoverBase.bottom * s);
+        morphCoverToRadius = morphCoverBaseRadius * s;
+        applyMorph();
+    }
+
+    private void cancelBackAnimator() {
+        if (backAnimator != null) {
+            backAnimator.removeAllListeners();
+            backAnimator.cancel();
+            backAnimator = null;
+        }
+    }
+
+    private void restoreMorphCover() {
+        if (morphCoverView == cover) {
+            cover.setVisibility(lyricsFraction >= 1f ? View.INVISIBLE : View.VISIBLE);
+        } else if (morphCoverView != null) {
+            morphCoverView.setVisibility(View.VISIBLE);
+        }
     }
 
     private static float clamp01(float v) {
@@ -610,11 +725,16 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         out.set(x + px * (1f - sx), y + py * (1f - sy), x + px + (view.getWidth() - px) * sx, y + py + (view.getHeight() - py) * sy);
     }
 
-    private boolean prepareMorph(View coverView) {
+    private boolean prepareMorph(boolean hideCover) {
         PlayerMiniView mini = miniSource;
         if (skipMorph || mini == null || !mini.canTransition() || root.getWidth() == 0 || !root.isAttachedToWindow()) {
             return false;
         }
+        if (lyricsAnimator != null && lyricsAnimator.isRunning()) {
+            lyricsAnimator.end();
+        }
+        View coverView = lyricsFraction >= 0.5f ? smallCover : cover;
+        morphCoverView = coverView;
         int[] loc = new int[2];
         root.getLocationOnScreen(loc);
         mini.getCardRect(morphFrom);
@@ -637,7 +757,9 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         }
         morphBarsState = -1;
         mini.setTransitionHidden(true);
-        coverView.setVisibility(View.INVISIBLE);
+        if (hideCover) {
+            coverView.setVisibility(View.INVISIBLE);
+        }
         layout.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         return true;
     }
@@ -744,6 +866,9 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             }
         }
         canvas.restore();
+        if (backPreview) {
+            return;
+        }
         lerpRect(morphCoverFrom, morphCoverTo, p, morphCover);
         float r = morphCoverFromRadius + (morphCoverToRadius - morphCoverFromRadius) * p;
         morphPath.rewind();
