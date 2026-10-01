@@ -10,6 +10,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Outline;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.text.TextUtils;
@@ -106,6 +108,8 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         }
     };
 
+    private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF backgroundRect = new RectF();
     private PlayerColors colors;
     private ValueAnimator colorAnimator;
     private MessageObject current;
@@ -164,8 +168,17 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             }
 
             @Override
+            public void setTranslationY(float translationY) {
+                super.setTranslationY(translationY);
+                invalidate();
+            }
+
+            @Override
             protected void onDraw(@NonNull Canvas canvas) {
-                canvas.drawColor(colors.surface);
+                float r = dp(28) * Math.max(0f, Math.min(1f, getTranslationY() / dp(56)));
+                backgroundPaint.setColor(colors.surface);
+                backgroundRect.set(0, 0, getWidth(), getHeight() + r);
+                canvas.drawRoundRect(backgroundRect, r, r, backgroundPaint);
             }
 
             @Override
