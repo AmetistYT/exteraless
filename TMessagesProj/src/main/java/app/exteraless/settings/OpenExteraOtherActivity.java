@@ -139,8 +139,8 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
         experimentalHeaderRow = addRow("experimentalHeader");
         localPremiumRow = addRow("localPremium");
         unlimitedPinnedDialogsRow = -1;
-        voiceEnhancementsRow = addRow("noiseSuppressAndVoiceEnhance", "NoiseSuppressAndVoiceEnhance");
-        enhancedVideoBitrateRow = addRow("enhancedVideoBitrate", "EnhancedVideoBitrate");
+        voiceEnhancementsRow = -1;
+        enhancedVideoBitrateRow = -1;
         sensitiveContentRow = addRow("sensitiveDisableFiltering", "SensitiveDisableFiltering");
         experimentalDividerRow = addRow();
 
