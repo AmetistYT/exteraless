@@ -152,7 +152,7 @@
     <string name="PluginsPinned">مثبّتة في الأعلى</string>
     <string name="PluginsUnpinned">أُلغي التثبيت في الأعلى</string>
     <string name="PluginSlowingDownTitle">الإضافة تبطّئ الواجهة</string>
-    <string name="PluginSlowingDownMessage">تشغل %1$s الخيط الرئيسي لنحو %2$d مللي ثانية كل ثانية، ولهذا يتوقف التطبيق عن الاستجابة للنقرات. تعطيل الإضافة وإعادة التشغيل؟</string>
+    <string name="PluginSlowingDownMessage">تشغل %1$s الخيط الرئيسي لنحو %2$d مللي ثانية كل ثانية، ولهذا يتوقف التطبيق عن الاستجابة للنقرات. تعطيل الإضافة؟</string>
     <string name="PluginsViewSource">عرض المصدر</string>
     <string name="PluginsAiReview">فحص بالذكاء الاصطناعي</string>
     <string name="PluginsAiReviewRole">أنت تراجع شيفرة إضافة خارجية لعميل Telegram. التزم بهذا الشكل في الإجابة. السطر الأول: الحكم بكلمة واحدة، آمن أو مشبوه أو خطير، وجملة واحدة توضح السبب. ثم النتائج، نتيجة في كل بند: سطر واحد قصير لكل منها يوضح ماذا تفعل الشيفرة وأين. مباشرة بعد كل نتيجة ضع الجزء الطويل داخل &lt;details&gt;&lt;summary&gt;عنوان قصير&lt;/summary&gt; الشرح والسطر المقتبس والاستدلال &lt;/details&gt;. اجعل كل ما هو خارج هذه الوسوم قصيرًا بما يكفي ليُقرأ بنظرة واحدة. إذا لم توجد نتائج، فقل ذلك في سطر واحد. لا تُعِد سرد الشيفرة، ولا تقدّم نصائح عامة، ولا تختلق ما ليس في المصدر.</string>
