@@ -2760,15 +2760,23 @@ public class LocaleController {
     }
 
     public static String formatDateOnline(long date, boolean[] madeShorter) {
-        return formatDateOnline(date, madeShorter, false);
+        return formatDateOnline(date, madeShorter, false, false);
+    }
+
+    public static String formatDateOnline(long date, boolean[] madeShorter, boolean[] relativeTime) {
+        return formatDateOnline(date, madeShorter, false, relativeTime != null);
     }
 
     public static String formatDateOnline(long date, boolean[] madeShorter, boolean localActivity) {
+        return formatDateOnline(date, madeShorter, localActivity, false);
+    }
+
+    public static String formatDateOnline(long date, boolean[] madeShorter, boolean localActivity, boolean relative) {
         final int seenRes = localActivity ? R.string.OELastActivityFormatted : R.string.LastSeenFormatted;
         final String seenDateKey = localActivity ? "OELastActivityDateFormatted" : "LastSeenDateFormatted";
         final int seenDateRes = localActivity ? R.string.OELastActivityDateFormatted : R.string.LastSeenDateFormatted;
         try {
-            if (OpenExteraConfig.relativeLastSeen()) {
+            if (relative && OpenExteraConfig.relativeLastSeen()) {
                 long diff = System.currentTimeMillis() / 1000 - date;
                 if (diff < 0) {
                     diff = 0;
@@ -3086,7 +3094,7 @@ public class LocaleController {
     }
 
     public static String formatUserStatus(int currentAccount, TLRPC.User user) {
-        return formatUserStatus(currentAccount, user, null);
+        return formatUserStatus(currentAccount, user, null, null, new boolean[1]);
     }
 
     public static String formatJoined(long date) {
@@ -3121,6 +3129,11 @@ public class LocaleController {
     }
 
     public static String formatUserStatus(int currentAccount, TLRPC.User user, boolean[] isOnline, boolean[] madeShorter) {
+        return formatUserStatus(currentAccount, user, isOnline, madeShorter, null);
+    }
+
+    public static String formatUserStatus(int currentAccount, TLRPC.User user, boolean[] isOnline, boolean[] madeShorter, boolean[] relativeTime) {
+        final boolean relative = relativeTime != null;
         if (user != null && user.status != null && user.status.expires == 0) {
             if (user.status instanceof TLRPC.TL_userStatusRecently) {
                 user.status.expires = user.status.by_me ? -1000 : -100;
@@ -3151,16 +3164,16 @@ public class LocaleController {
                 if (user.status.expires == -1) {
                     return getString("Invisible", R.string.Invisible);
                 } else if (user.status.expires == -100 || user.status.expires == -1000) {
-                    return LastSeenHelper.getFormattedLastSeenOrDefault(user, madeShorter, getString(R.string.Lately));
+                    return LastSeenHelper.getFormattedLastSeenOrDefault(user, madeShorter, getString(R.string.Lately), relative);
                     // return getString("Lately", R.string.Lately);
                 } else if (user.status.expires == -101 || user.status.expires == -1001) {
-                    return LastSeenHelper.getFormattedLastSeenOrDefault(user, madeShorter, getString(R.string.WithinAWeek));
+                    return LastSeenHelper.getFormattedLastSeenOrDefault(user, madeShorter, getString(R.string.WithinAWeek), relative);
                     // return getString("WithinAWeek", R.string.WithinAWeek);
                 } else if (user.status.expires == -102 || user.status.expires == -1002) {
-                    return LastSeenHelper.getFormattedLastSeenOrDefault(user, madeShorter, getString(R.string.WithinAMonth));
+                    return LastSeenHelper.getFormattedLastSeenOrDefault(user, madeShorter, getString(R.string.WithinAMonth), relative);
                     // return getString("WithinAMonth", R.string.WithinAMonth);
                 } else {
-                    return formatDateOnline(user.status.expires, madeShorter);
+                    return formatDateOnline(user.status.expires, madeShorter, false, relative);
                 }
             }
         }

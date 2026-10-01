@@ -393,7 +393,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
             // Подпись строки — живое превью самой настройки. Меняем только подпись:
             // пересборка ячейки оборвала бы анимацию переключателя, которая уже идёт.
             ((TextCheckCell) view).setValueText(
-                    LocaleController.formatDateOnline(fiveMinutesAgo, new boolean[1]));
+                    LocaleController.formatDateOnline(fiveMinutesAgo, new boolean[1], new boolean[1]));
         }
         if (position == hidePhoneRow) {
             getNotificationCenter().postNotificationName(NotificationCenter.mainUserInfoChanged);
@@ -1155,7 +1155,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                     } else if (position == relativeLastSeenRow) {
                         // Значение строки — живой пример «был(а) 5 минут назад».
                         cell.setTextAndValueAndCheck(getString(R.string.OEGeneralRelativeLastSeen),
-                                LocaleController.formatDateOnline(fiveMinutesAgo, new boolean[1]),
+                                LocaleController.formatDateOnline(fiveMinutesAgo, new boolean[1], new boolean[1]),
                                 OpenExteraConfig.relativeLastSeen.Bool(), false, true);
                     } else if (position == hidePhoneRow) {
                         cell.setTextAndCheck(getString(R.string.OEGeneralHidePhone),
