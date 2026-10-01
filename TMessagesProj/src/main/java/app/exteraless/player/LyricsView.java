@@ -4,7 +4,11 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Shader;
 import android.graphics.drawable.GradientDrawable;
 import android.os.SystemClock;
 import android.text.Layout;
@@ -60,6 +64,9 @@ public class LyricsView extends FrameLayout {
     private final RadialProgressView progress;
     private final GradientDrawable tileBg = new GradientDrawable();
     private final GradientDrawable buttonBg = new GradientDrawable();
+    private final Paint fadePaint = new Paint();
+    private LinearGradient topFade;
+    private LinearGradient bottomFade;
     private Delegate delegate;
     private Lyrics lyrics;
     private int state = -1;
@@ -79,8 +86,6 @@ public class LyricsView extends FrameLayout {
         list.setItemAnimator(null);
         list.setClipToPadding(false);
         list.setVerticalScrollBarEnabled(false);
-        list.setVerticalFadingEdgeEnabled(true);
-        list.setFadingEdgeLength(dp(40));
         list.setOverScrollMode(OVER_SCROLL_NEVER);
         list.setSelectorDrawableColor(0);
         list.setOnItemClickListener((view, position) -> {
@@ -114,6 +119,7 @@ public class LyricsView extends FrameLayout {
             }
         };
         tile.setWillNotDraw(false);
+        fadePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
         tileBg.setCornerRadius(dp(22));
         tile.setBackground(tileBg);
         empty.addView(tile, LayoutHelper.createLinear(64, 64, Gravity.CENTER_HORIZONTAL));
@@ -316,8 +322,27 @@ public class LyricsView extends FrameLayout {
     }
 
     @Override
+    protected void dispatchDraw(@NonNull Canvas canvas) {
+        if (list.getVisibility() != VISIBLE || getWidth() == 0 || getHeight() == 0 || topFade == null) {
+            super.dispatchDraw(canvas);
+            return;
+        }
+        int w = getWidth();
+        int h = getHeight();
+        int save = canvas.saveLayer(0, 0, w, h, null);
+        super.dispatchDraw(canvas);
+        fadePaint.setShader(topFade);
+        canvas.drawRect(0, 0, w, dp(32), fadePaint);
+        fadePaint.setShader(bottomFade);
+        canvas.drawRect(0, h - dp(40), w, h, fadePaint);
+        canvas.restoreToCount(save);
+    }
+
+    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        topFade = new LinearGradient(0, 0, 0, dp(32), 0xff000000, 0x00000000, Shader.TileMode.CLAMP);
+        bottomFade = new LinearGradient(0, h - dp(40), 0, h, 0x00000000, 0xff000000, Shader.TileMode.CLAMP);
         if (h != oldh) {
             applyPadding();
             list.post(() -> scrollToActive(false));
