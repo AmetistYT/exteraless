@@ -3821,7 +3821,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
             @Override
             protected boolean isStoriesView() {
-                return myProfile && !NaConfig.INSTANCE.getDisableStories().Bool();
+                return myProfile;
             }
 
             @Override
@@ -11244,7 +11244,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     reportDividerRow = rowCount++;
                 }
 
-                if (hasMedia || (user != null && user.bot && user.bot_can_edit && user.bot_has_main_app) || userInfo != null && userInfo.common_chats_count != 0 || myProfile) {
+                if (myProfile && NaConfig.INSTANCE.getDisableStories().Bool()) {
+                    if (userInfo != null && userInfo.stargifts_count > 0) {
+                        sharedMediaRow = rowCount++;
+                    }
+                } else if (hasMedia || (user != null && user.bot && user.bot_can_edit && user.bot_has_main_app) || userInfo != null && userInfo.common_chats_count != 0 || myProfile) {
                     sharedMediaRow = rowCount++;
                 } else if (lastSectionRow == -1 && needSendMessage) {
                     sendMessageRow = rowCount++;
