@@ -524,6 +524,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             if (prepareMorph(lyricsFraction >= 0.5f ? smallCover : cover)) {
                 closing = true;
                 detach();
+                cancelSheetAnimation();
                 morphTo.set(0, ty, root.getWidth(), root.getHeight() + ty);
                 morphToRadius = dp(28) * clamp01(ty / dp(56));
                 morphCoverTo.offset(0, ty);
