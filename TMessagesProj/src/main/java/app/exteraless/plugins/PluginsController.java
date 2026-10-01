@@ -845,6 +845,10 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void installPlugin(File source, boolean enable, InstallCallback callback) {
+        installPlugin(source, enable, false, callback);
+    }
+
+    public void installPlugin(File source, boolean enable, boolean keepEnabledState, InstallCallback callback) {
         fileExecutor.execute(() -> {
             PythonPluginsEngine engine = PythonPluginsEngine.getInstance();
             if (!awaitEngineStarted()) {
@@ -876,6 +880,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 copyFile(source, dest);
 
                 Plugin existing = getPlugin(id);
+                final boolean enabled = keepEnabledState && existing != null ? existing.enabled : enable;
                 if (existing != null && existing.loaded) {
                     unregisterPluginHooks(id);
                     engine.unload(existing);
@@ -885,8 +890,8 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                     deliver(callback, false, "metadata parse error", null);
                     return;
                 }
-                p.enabled = enable;
-                preferences.edit().putBoolean(PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + id, enable).apply();
+                p.enabled = enabled;
+                preferences.edit().putBoolean(PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + id, enabled).apply();
                 // Согласие пользователя записывает диалог установки (PluginPermissions.setGranted).
                 // Если он этого не сделал, запись всё равно должна появиться: без неё
                 // свежепоставленный плагин уедет в режим совместимости, где ему дают всё.
@@ -898,7 +903,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 synchronized (this) {
                     plugins.put(id, p);
                 }
-                if (enable && !isSafeMode()) {
+                if (enabled && !isSafeMode()) {
                     loadPluginInternal(p);
                 }
                 if (p.loadError != null) {
