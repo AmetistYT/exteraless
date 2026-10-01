@@ -490,6 +490,7 @@ public final class MathExpression {
         private double parseIdentifier(String name) {
             Double constant = CONSTANTS.get(name);
             if (constant != null) {
+                hasOperation = true;
                 return constant;
             }
             Function function = FUNCTIONS.get(name);
