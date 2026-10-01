@@ -47,6 +47,7 @@ import app.exteraless.OpenExteraConfig;
 import app.exteraless.chats.ChatsConfig;
 import app.exteraless.chats.DoubleTapCell;
 import app.exteraless.chats.StickerShapeCell;
+import app.exteraless.chats.TextStyleDialog;
 import app.exteraless.chats.WideChannelPostsPreviewCell;
 import app.exteraless.icons.BaseIconPacks;
 import kotlin.Unit;
@@ -247,6 +248,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int deleteMenuDeleteAllRow;
     private int deleteMenuCommonGroupsRow;
     private int groupedMessageMenuRow;
+    private int textStyleRow;
     private int messagesDividerRow;
 
     private int linkConfirmationsHeaderRow;
@@ -515,6 +517,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             deleteMenuBanUsersRow = deleteMenuReportSpamRow = deleteMenuDeleteAllRow = deleteMenuCommonGroupsRow = -1;
         }
         groupedMessageMenuRow = addRow("groupedMessageMenu");
+        textStyleRow = addRow("textStyle", "TextStyle");
         messagesDividerRow = addRow();
 
         linkConfirmationsHeaderRow = addRow("linkConfirmationsHeader");
@@ -1470,6 +1473,9 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         } else if (position == aiChatRow) {
             presentFragment(new app.exteraless.ai.ui.AiSettingsActivity());
             return;
+        } else if (position == textStyleRow) {
+            showDialog(TextStyleDialog.create(getParentActivity()));
+            return;
         } else if (position == openLinkConfirmationRow) {
             showOptions(view, openLinkConfirmationOptions(), index -> {
                 setOpenLinkConfirmation(index);
@@ -2384,7 +2390,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndCheck(getString(R.string.OEChatsWideFeedPosts),
                         ChatsConfig.wideFeedPosts.Bool(), false, true);
             } else if (position == groupedMessageMenuRow) {
-                cell.setTextAndCheck(getString(R.string.GroupedMessageMenu), NaConfig.INSTANCE.getGroupedMessageMenu().Bool(), false);
+                cell.setTextAndCheck(getString(R.string.GroupedMessageMenu), NaConfig.INSTANCE.getGroupedMessageMenu().Bool(), true);
             } else if (position == rememberLastUsedCameraRow) {
                 cell.setTextAndValueAndCheck(getString(R.string.OEChatsRememberLastUsedCamera),
                         getString(R.string.OEChatsRememberLastUsedCameraInfo),
@@ -2462,7 +2468,9 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         }
 
         private void bindSettings(TextSettingsCell cell, int position) {
-            if (position == doubleTapIncomingRow) {
+            if (position == textStyleRow) {
+                cell.setText(getString(R.string.TextStyle), false);
+            } else if (position == doubleTapIncomingRow) {
                 cell.setTextAndValue(getString(R.string.DoubleTapIncoming),
                         DoubleTap.doubleTapActionMap.get(NaConfig.INSTANCE.getDoubleTapAction().Int()), true);
             } else if (position == doubleTapOutgoingRow) {
@@ -2602,7 +2610,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                     || position == searchHashtagChatRow || position == searchHashtagChannelRow
                     || position == openLinkConfirmationRow || position == transcribeProviderRow
                     || position == cloudflareCredentialsRow || position == geminiApiKeyRow
-                    || position == openAiCredentialsRow || position == voskModelsRow;
+                    || position == openAiCredentialsRow || position == voskModelsRow
+                    || position == textStyleRow;
         }
     }
 }
