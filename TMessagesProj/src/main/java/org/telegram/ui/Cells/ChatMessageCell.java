@@ -19900,12 +19900,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     } else if (messageObject.replyMessageObject == null && messageObject.messageOwner.reply_to != null && messageObject.messageOwner.reply_to.reply_from != null) {
                         name = messageObject.getReplyQuoteNameWithIcon();
                     } else if (messageObject.replyMessageObject != null) {
-                        if (drawForwardedName) {
-                            String fwdName = AndroidUtilities.removeDiacritics(messageObject.replyMessageObject.getForwardedName());
-                            if (fwdName != null && messageObject.getForwardedName() != null)
-                                name = fwdName;
-                            // show fwdname from replied message when this message and the replied message is all forwarded message
-                        }
+                        name = getReplyForwardedName(messageObject.replyMessageObject);
 
                         if (name == null) {
                             long fromId = messageObject.replyMessageObject.getFromChatId();
@@ -22168,6 +22163,120 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
 
     public void drawSideButton(Canvas canvas) {
         drawSideButton(canvas, false);
+    }
+
+    private CharSequence getReplyForwardedName(MessageObject messageObject) {
+        if (messageObject == null || messageObject.messageOwner == null || messageObject.messageOwner.fwd_from == null) {
+            return null;
+        }
+        CharSequence currentName = getReplyForwardedCurrentName(messageObject);
+        CharSequence originName = getReplyForwardedOriginName(messageObject);
+        if (TextUtils.isEmpty(originName)) {
+            return null;
+        }
+        TLRPC.MessageFwdHeader fwd = messageObject.messageOwner.fwd_from;
+        boolean linkedChannelPost = fwd.from_id instanceof TLRPC.TL_peerChannel && fwd.from_id.channel_id == linkedChatId && fwd.channel_post != 0;
+        if (messageObject.isSaved || TextUtils.isEmpty(currentName) || TextUtils.equals(currentName, originName) || linkedChannelPost) {
+            return originName;
+        }
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+        builder.append(currentName).append(" d ").append(originName);
+        ColoredImageSpan arrow = new ColoredImageSpan(ContextCompat.getDrawable(getContext(), R.drawable.mini_forwarded).mutate());
+        arrow.setAlpha(0.9f);
+        builder.setSpan(arrow, currentName.length() + 1, currentName.length() + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return builder;
+    }
+
+    private CharSequence getReplyForwardedCurrentName(MessageObject messageObject) {
+        TLRPC.MessageFwdHeader fwd = messageObject.messageOwner.fwd_from;
+        long selfId = UserConfig.getInstance(currentAccount).getClientUserId();
+        if (messageObject.isSaved) {
+            return getReplyForwardedOriginName(messageObject);
+        }
+        if (fwd.from_id instanceof TLRPC.TL_peerChannel && (messageObject.getDialogId() == selfId || messageObject.getDialogId() == UserObject.REPLY_BOT)) {
+            return getReplyForwardedPeerName(fwd.from_id);
+        }
+        if (messageObject.getDialogId() == UserObject.VERIFY) {
+            return getReplyForwardedPeerName(fwd.from_id);
+        }
+        TLRPC.Peer savedFrom = fwd.saved_from_peer;
+        if (savedFrom != null) {
+            if (savedFrom.user_id != 0) {
+                if (!isSavedChat && fwd.from_id instanceof TLRPC.TL_peerUser) {
+                    return getReplyForwardedPeerName(fwd.from_id);
+                }
+                return getReplyForwardedPeerName(savedFrom);
+            }
+            if (savedFrom.channel_id != 0) {
+                if (messageObject.isSavedFromMegagroup() && fwd.from_id instanceof TLRPC.TL_peerUser) {
+                    return getReplyForwardedPeerName(fwd.from_id);
+                }
+                return getReplyForwardedPeerName(savedFrom);
+            }
+            if (savedFrom.chat_id != 0) {
+                if (fwd.from_id instanceof TLRPC.TL_peerUser || fwd.from_id instanceof TLRPC.TL_peerChat || fwd.from_id instanceof TLRPC.TL_peerChannel) {
+                    return getReplyForwardedPeerName(fwd.from_id);
+                }
+                return getReplyForwardedPeerName(savedFrom);
+            }
+        } else {
+            boolean ownOrImported = fwd.imported || messageObject.getDialogId() == selfId;
+            if (fwd.from_id instanceof TLRPC.TL_peerUser && ownOrImported) {
+                return getReplyForwardedPeerName(fwd.from_id);
+            }
+            if (!TextUtils.isEmpty(fwd.saved_from_name) && ownOrImported) {
+                return AndroidUtilities.removeDiacritics(fwd.saved_from_name);
+            }
+            if (!TextUtils.isEmpty(fwd.from_name) && ownOrImported) {
+                return AndroidUtilities.removeDiacritics(fwd.from_name);
+            }
+        }
+        TLRPC.Message message = messageObject.messageOwner;
+        if (message.from_id != null) {
+            return getReplyForwardedPeerName(message.from_id);
+        }
+        if (!message.post || message.peer_id == null) {
+            return null;
+        }
+        return getReplyForwardedPeerName(message.peer_id);
+    }
+
+    private CharSequence getReplyForwardedOriginName(MessageObject messageObject) {
+        TLRPC.MessageFwdHeader fwd = messageObject.messageOwner.fwd_from;
+        if (fwd.from_id instanceof TLRPC.TL_peerChannel) {
+            CharSequence channelName = getReplyForwardedPeerName(fwd.from_id);
+            if (TextUtils.isEmpty(channelName) || TextUtils.isEmpty(fwd.post_author)) {
+                return channelName;
+            }
+            return new SpannableStringBuilder(channelName).append(" (").append(fwd.post_author).append(")");
+        }
+        if (fwd.from_id != null) {
+            return getReplyForwardedPeerName(fwd.from_id);
+        }
+        if (!TextUtils.isEmpty(fwd.from_name)) {
+            return AndroidUtilities.removeDiacritics(fwd.from_name);
+        }
+        if (!TextUtils.isEmpty(fwd.saved_from_name)) {
+            return AndroidUtilities.removeDiacritics(fwd.saved_from_name);
+        }
+        String forwardedName = messageObject.getForwardedName();
+        return forwardedName == null ? null : AndroidUtilities.removeDiacritics(forwardedName);
+    }
+
+    private CharSequence getReplyForwardedPeerName(TLRPC.Peer peer) {
+        if (peer instanceof TLRPC.TL_peerUser) {
+            TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(peer.user_id);
+            return user == null ? null : AndroidUtilities.removeDiacritics(UserObject.getUserName(user));
+        }
+        if (peer instanceof TLRPC.TL_peerChannel) {
+            TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(peer.channel_id);
+            return chat == null ? null : AndroidUtilities.removeDiacritics(chat.title);
+        }
+        if (peer instanceof TLRPC.TL_peerChat) {
+            TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(peer.chat_id);
+            return chat == null ? null : AndroidUtilities.removeDiacritics(chat.title);
+        }
+        return null;
     }
 
     private app.exteraless.chats.StickerTime.Row stickerTimeRow() {
