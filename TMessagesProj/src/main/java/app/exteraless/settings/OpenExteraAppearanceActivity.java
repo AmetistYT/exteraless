@@ -135,6 +135,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private int hideFloatingButtonRow;
     private int hideSearchBarRow;
     private int senderMiniAvatarsRow;
+    private int channelSubscribersRow;
     private int titleTextRow;
     private int chatListDividerRow;
 
@@ -200,6 +201,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         hideFloatingButtonRow = addRow("hideFloatingButton");
         hideSearchBarRow = addRow("hideSearchBar");
         senderMiniAvatarsRow = addRow("senderMiniAvatars");
+        channelSubscribersRow = addRow("channelSubscribers");
         titleTextRow = addRow("titleText");
         chatListDividerRow = addRow();
 
@@ -816,6 +818,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             rebuild = true;
         } else if (position == senderMiniAvatarsRow) {
             item = AppearanceConfig.senderMiniAvatars;
+        } else if (position == channelSubscribersRow) {
+            item = AppearanceConfig.channelSubscribers;
         } else if (position == hideAllChatsRow) {
             item = NekoConfig.hideAllTab;
             rebuild = true;
@@ -978,7 +982,9 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     } else if (position == hideSearchBarRow) {
                         cell.setTextAndCheck(getString(R.string.OEAppearanceHideSearchBar), NaConfig.INSTANCE.getHideDialogsSearchField().Bool(), true);
                     } else if (position == senderMiniAvatarsRow) {
-                        cell.setTextAndCheck(getString(R.string.OEAppearanceSenderMiniAvatars), AppearanceConfig.senderMiniAvatars.Bool(), false);
+                        cell.setTextAndCheck(getString(R.string.OEAppearanceSenderMiniAvatars), AppearanceConfig.senderMiniAvatars.Bool(), true);
+                    } else if (position == channelSubscribersRow) {
+                        cell.setTextAndCheck(getString(R.string.OEAppearanceChannelSubscribers), AppearanceConfig.channelSubscribers.Bool(), false);
                     } else if (position == hideAllChatsRow) {
                         cell.setTextAndCheck(LocaleController.formatString(R.string.OEAppearanceHideAllChats, getString(R.string.FilterAllChats)), NekoConfig.hideAllTab.Bool(), false);
                     }

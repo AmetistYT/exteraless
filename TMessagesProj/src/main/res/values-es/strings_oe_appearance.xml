@@ -17,6 +17,7 @@
     <string name="OEAppearanceHideFloatingButton">Ocultar el botón flotante</string>
     <string name="OEAppearanceHideSearchBar">Ocultar la barra de búsqueda</string>
     <string name="OEAppearanceSenderMiniAvatars">Miniavatares de los remitentes</string>
+    <string name="OEAppearanceChannelSubscribers">Suscriptores de canales</string>
     <string name="OEAppearanceForceSnowInfo">Aparecerán copos de nieve cayendo en la barra superior, el menú lateral y los fondos de chat.</string>
     <string name="OEAppearanceTitleText">Texto del título</string>
     <string name="OEAppearanceTitleTextApp">@string/AppName</string>

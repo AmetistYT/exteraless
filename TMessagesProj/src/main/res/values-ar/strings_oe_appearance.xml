@@ -17,6 +17,7 @@
     <string name="OEAppearanceHideFloatingButton">إخفاء الزر العائم</string>
     <string name="OEAppearanceHideSearchBar">إخفاء شريط البحث</string>
     <string name="OEAppearanceSenderMiniAvatars">صور مصغّرة للمرسلين</string>
+    <string name="OEAppearanceChannelSubscribers">مشتركو القنوات</string>
     <string name="OEAppearanceForceSnowInfo">ستظهر ندف الثلج المتساقطة في شريط الإجراءات والقائمة الجانبية وخلفيات المحادثات.</string>
     <string name="OEAppearanceTitleText">نص العنوان</string>
     <string name="OEAppearanceTitleTextUsername">اسم المستخدم</string>
