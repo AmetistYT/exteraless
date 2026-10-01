@@ -159,6 +159,11 @@
     <string name="OEGeneralLastFmStageUpload">Uploading track…</string>
     <string name="OEGeneralLastFmStageSave">Saving to profile…</string>
     <string name="OEAyuSaveReadDate">Save Read Date</string>
+    <string name="OEAyuGhostHeader">Ghost</string>
+    <string name="OEAyuSavingHeader">Saving</string>
+    <string name="OEAyuDeletedHeader">Deleted messages in chat</string>
+    <string name="OEAyuOtherHeader">Other</string>
+    <string name="OEAyuDangerHeader">Danger zone</string>
     <string name="OEAyuSaveReadDateInfo">Remembers when your messages were read and listened to. Shown in the message menu when Telegram doesn\'t provide the time.</string>
     <string name="OEAyuPlayedTodayAt">listened at %s</string>
     <string name="OEAyuPlayedYesterdayAt">listened yesterday at %s</string>

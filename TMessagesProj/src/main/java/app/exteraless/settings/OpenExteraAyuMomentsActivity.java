@@ -72,6 +72,14 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private int headerRow;
     private int ghostRow;
     private int askStoryRow;
+    private int ghostDividerRow;
+    private int savingHeaderRow;
+    private int savingDividerRow;
+    private int deletedHeaderRow;
+    private int deletedDividerRow;
+    private int otherHeaderRow;
+    private int otherDividerRow;
+    private int dangerHeaderRow;
     private int regexRow;
     private int saveLastSeenRow;
     private int saveReadDateRow;
@@ -115,19 +123,20 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         headerRow = addRow("ayuHeader");
         ghostRow = addRow("ayuGhost");
         askStoryRow = addRow(NaConfig.INSTANCE.getAskBeforeOpeningStory().getKey());
-        regexRow = addRow(NaConfig.INSTANCE.getRegexFiltersEnabled().getKey());
-        saveLastSeenRow = addRow(NaConfig.INSTANCE.getSaveLocalLastSeen().getKey());
-        saveReadDateRow = addRow(NaConfig.INSTANCE.getSaveReadDate().getKey());
-        saveDeletedRow = addRow(NaConfig.INSTANCE.getEnableSaveDeletedMessages().getKey());
-        saveEditsRow = addRow(NaConfig.INSTANCE.getEnableSaveEditsHistory().getKey());
+        ghostDividerRow = addRow();
+
+        boolean saveDeleted = NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool();
         saveMediaRow = botUserRow = botChatRow = translucentRow = -1;
         saveDeletedPrivateRow = saveDeletedGroupsRow = saveDeletedChannelsRow = -1;
         replyToDeletedRow = deletedIconRow = deletedMarkRow = -1;
         saveMediaPrivateChatsRow = saveMediaPublicChannelsRow = saveMediaPrivateChannelsRow = -1;
         saveMediaPublicGroupsRow = saveMediaPrivateGroupsRow = -1;
-        // Подчинённые строки живут только при включённом сохранении удалённых —
-        // тот же порядок, что у NekoExperimentalSettingsActivity.checkSaveDeletedRows.
-        if (NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool()) {
+        deletedHeaderRow = deletedDividerRow = -1;
+
+        savingHeaderRow = addRow("ayuSavingHeader");
+        saveDeletedRow = addRow(NaConfig.INSTANCE.getEnableSaveDeletedMessages().getKey());
+        saveEditsRow = addRow(NaConfig.INSTANCE.getEnableSaveEditsHistory().getKey());
+        if (saveDeleted) {
             saveMediaRow = addRow(NaConfig.INSTANCE.getMessageSavingSaveMedia().getKey());
             if (saveMediaExpanded) {
                 saveMediaPrivateChatsRow = addRow();
@@ -143,14 +152,28 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             if (NaConfig.INSTANCE.getSaveDeletedMessageForBotUser().Bool()) {
                 botChatRow = addRow(NaConfig.INSTANCE.getSaveDeletedMessageForBot().getKey());
             }
+        }
+        saveLastSeenRow = addRow(NaConfig.INSTANCE.getSaveLocalLastSeen().getKey());
+        saveReadDateRow = addRow(NaConfig.INSTANCE.getSaveReadDate().getKey());
+        savingDividerRow = addRow();
+
+        if (saveDeleted) {
+            deletedHeaderRow = addRow("ayuDeletedHeader");
             replyToDeletedRow = addRow(NaConfig.INSTANCE.getReplyToDeletedAsQuote().getKey());
             translucentRow = addRow(NaConfig.INSTANCE.getTranslucentDeletedMessages().getKey());
             deletedIconRow = addRow(NaConfig.INSTANCE.getUseDeletedIcon().getKey());
             if (!NaConfig.INSTANCE.getUseDeletedIcon().Bool()) {
                 deletedMarkRow = addRow(NaConfig.INSTANCE.getCustomDeletedMark().getKey());
             }
+            deletedDividerRow = addRow();
         }
+
+        otherHeaderRow = addRow("ayuOtherHeader");
+        regexRow = addRow(NaConfig.INSTANCE.getRegexFiltersEnabled().getKey());
         forwardProtectedRow = addRow(NaConfig.INSTANCE.getForwardProtectedAsCopy().getKey());
+        otherDividerRow = addRow();
+
+        dangerHeaderRow = addRow("ayuDangerHeader");
         disableAllRow = addRow("ayuDisableAll");
         clearDbRow = addRow("ayuClearDatabase");
         dividerRow = addRow();
@@ -535,7 +558,15 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                 case TYPE_HEADER: {
                     HeaderCell cell = (HeaderCell) holder.itemView;
                     if (position == headerRow) {
-                        cell.setText(getString(R.string.OEGeneralAyuMoments));
+                        cell.setText(getString(R.string.OEAyuGhostHeader));
+                    } else if (position == savingHeaderRow) {
+                        cell.setText(getString(R.string.OEAyuSavingHeader));
+                    } else if (position == deletedHeaderRow) {
+                        cell.setText(getString(R.string.OEAyuDeletedHeader));
+                    } else if (position == otherHeaderRow) {
+                        cell.setText(getString(R.string.OEAyuOtherHeader));
+                    } else if (position == dangerHeaderRow) {
+                        cell.setText(getString(R.string.OEAyuDangerHeader));
                     }
                     break;
                 }
@@ -547,7 +578,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                         cell.setTextAndValueAndCheck(
                                 getString(R.string.AskBeforeOpeningStory),
                                 getString(R.string.AskBeforeOpeningStoryInfo),
-                                NaConfig.INSTANCE.getAskBeforeOpeningStory().Bool(), true, true);
+                                NaConfig.INSTANCE.getAskBeforeOpeningStory().Bool(), true, false);
                     } else if (position == regexRow) {
                         cell.setTextAndValueAndCheck(
                                 getString(NaConfig.INSTANCE.getRegexFiltersEnabled().getKey()),
@@ -559,7 +590,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                         cell.setTextAndValueAndCheck(
                                 getString(R.string.OEAyuSaveReadDate),
                                 getString(R.string.OEAyuSaveReadDateInfo),
-                                NaConfig.INSTANCE.getSaveReadDate().Bool(), true, true);
+                                NaConfig.INSTANCE.getSaveReadDate().Bool(), true, false);
                     } else if (position == saveDeletedRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getEnableSaveDeletedMessages(), true);
                     } else if (position == saveEditsRow) {
@@ -582,12 +613,12 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                     } else if (position == translucentRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getTranslucentDeletedMessages(), true);
                     } else if (position == deletedIconRow) {
-                        bindAyuCheck(cell, NaConfig.INSTANCE.getUseDeletedIcon(), true);
+                        bindAyuCheck(cell, NaConfig.INSTANCE.getUseDeletedIcon(), deletedMarkRow != -1);
                     } else if (position == forwardProtectedRow) {
                         cell.setTextAndValueAndCheck(
                                 getString(R.string.ForwardProtectedAsCopy),
                                 getString(R.string.ForwardProtectedAsCopyInfo),
-                                NaConfig.INSTANCE.getForwardProtectedAsCopy().Bool(), true, true);
+                                NaConfig.INSTANCE.getForwardProtectedAsCopy().Bool(), true, false);
                     }
                     break;
                 }
@@ -607,7 +638,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                     if (position == deletedMarkRow) {
                         cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
                         cell.setTextAndValue(getString(NaConfig.INSTANCE.getCustomDeletedMark().getKey()),
-                                NaConfig.INSTANCE.getCustomDeletedMark().String(), true);
+                                NaConfig.INSTANCE.getCustomDeletedMark().String(), false);
                     } else if (position == clearDbRow) {
                         cell.setTextColor(getThemedColor(Theme.key_text_RedRegular));
                         cell.setTextAndValue(getString(R.string.ClearMessageDatabase),
@@ -629,8 +660,12 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == headerRow) {
+            if (position == headerRow || position == savingHeaderRow || position == deletedHeaderRow
+                    || position == otherHeaderRow || position == dangerHeaderRow) {
                 return TYPE_HEADER;
+            } else if (position == ghostDividerRow || position == savingDividerRow
+                    || position == deletedDividerRow || position == otherDividerRow) {
+                return TYPE_SHADOW;
             } else if (position == dividerRow) {
                 return TYPE_INFO_PRIVACY;
             } else if (position == ghostRow || position == disableAllRow) {

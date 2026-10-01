@@ -139,6 +139,11 @@
     <string name="OEGeneralLastFmStageUpload">جارٍ رفع المقطع…</string>
     <string name="OEGeneralLastFmStageSave">جارٍ الحفظ في الملف الشخصي…</string>
     <string name="OEAyuSaveReadDate">حفظ تاريخ القراءة</string>
+    <string name="OEAyuGhostHeader">الشبح</string>
+    <string name="OEAyuSavingHeader">الحفظ</string>
+    <string name="OEAyuDeletedHeader">المحذوفة في الدردشة</string>
+    <string name="OEAyuOtherHeader">أخرى</string>
+    <string name="OEAyuDangerHeader">منطقة الخطر</string>
     <string name="OEAyuSaveReadDateInfo">يتذكر متى قُرئت رسائلك واستُمع إليها. يظهر في قائمة الرسالة عندما لا يوفر Telegram الوقت.</string>
     <string name="OEAyuPlayedTodayAt">استُمع إليها في %s</string>
     <string name="OEAyuPlayedYesterdayAt">استُمع إليها أمس في %s</string>

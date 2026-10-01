@@ -156,6 +156,11 @@
     <string name="OEGeneralLastFmStageUpload">Загружаю трек…</string>
     <string name="OEGeneralLastFmStageSave">Сохраняю в профиль…</string>
     <string name="OEAyuSaveReadDate">Сохранять дату прочтения</string>
+    <string name="OEAyuGhostHeader">Призрак</string>
+    <string name="OEAyuSavingHeader">Сохранение</string>
+    <string name="OEAyuDeletedHeader">Удалённые в чате</string>
+    <string name="OEAyuOtherHeader">Прочее</string>
+    <string name="OEAyuDangerHeader">Опасная зона</string>
     <string name="OEAyuSaveReadDateInfo">Запоминает, когда ваши сообщения прочитали и прослушали. Время видно в меню сообщения, если Telegram его не показывает.</string>
     <string name="OEAyuPlayedTodayAt">прослушано в %s</string>
     <string name="OEAyuPlayedYesterdayAt">прослушано вчера в %s</string>

@@ -97,6 +97,11 @@
     <string name="OEPrivacyFalseBottom">Podwójne dno</string>
     <string name="OEPrivacyFalseBottomShowIn">Pokazuj w sekcji „%1$s”</string>
     <string name="OEAyuSaveReadDate">Zapisuj datę przeczytania</string>
+    <string name="OEAyuGhostHeader">Duch</string>
+    <string name="OEAyuSavingHeader">Zapisywanie</string>
+    <string name="OEAyuDeletedHeader">Usunięte w czacie</string>
+    <string name="OEAyuOtherHeader">Inne</string>
+    <string name="OEAyuDangerHeader">Strefa zagrożenia</string>
     <string name="OEAyuSaveReadDateInfo">Zapamiętuje, kiedy Twoje wiadomości zostały przeczytane i odsłuchane. Czas widać w menu wiadomości, gdy Telegram go nie podaje.</string>
     <string name="OEAyuPlayedTodayAt">odsłuchano o %s</string>
     <string name="OEAyuPlayedYesterdayAt">odsłuchano wczoraj o %s</string>
