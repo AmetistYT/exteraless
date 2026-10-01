@@ -5,7 +5,10 @@ import static org.telegram.messenger.LocaleController.getString;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Outline;
+import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.text.TextUtils;
@@ -83,7 +86,7 @@ public class PlayerMiniView extends FrameLayout implements NotificationCenter.No
         });
         card.setClipToOutline(true);
         card.setElevation(dp(6));
-        card.setOnClickListener(v -> Md3Player.open(fragment));
+        card.setOnClickListener(v -> Md3Player.open(fragment, this));
         card.setContentDescription(getString(R.string.OEPlayerOpen));
         addView(card, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, HEIGHT_DP, Gravity.BOTTOM, 12, 0, 12, 12));
 
@@ -138,6 +141,66 @@ public class PlayerMiniView extends FrameLayout implements NotificationCenter.No
 
         applyColors(colors);
         setVisibility(GONE);
+    }
+
+    public boolean canTransition() {
+        return isAttachedToWindow() && getVisibility() == VISIBLE && shown && showProgress >= 1f && hostFactor >= 0.99f && card.getWidth() > 0;
+    }
+
+    public void getCardRect(RectF out) {
+        locate(card, out);
+    }
+
+    public void getCoverRect(RectF out) {
+        locate(cover, out);
+    }
+
+    private static void locate(View view, RectF out) {
+        int[] loc = new int[2];
+        view.getLocationOnScreen(loc);
+        out.set(loc[0], loc[1], loc[0] + view.getWidth(), loc[1] + view.getHeight());
+    }
+
+    public float getCardRadius() {
+        return dp(20);
+    }
+
+    public float getCoverRadius() {
+        return dp(12);
+    }
+
+    public int getCardColor() {
+        return colors.primaryContainer;
+    }
+
+    public Bitmap getCoverBitmap() {
+        return cover.getImageReceiver().getBitmap();
+    }
+
+    public Bitmap captureCard() {
+        int w = card.getWidth();
+        int h = card.getHeight();
+        if (w <= 0 || h <= 0) {
+            return null;
+        }
+        int visibility = cover.getVisibility();
+        try {
+            Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            cover.setVisibility(INVISIBLE);
+            card.setPressed(false);
+            card.jumpDrawablesToCurrentState();
+            card.draw(canvas);
+            return bitmap;
+        } catch (Throwable e) {
+            return null;
+        } finally {
+            cover.setVisibility(visibility);
+        }
+    }
+
+    public void setTransitionHidden(boolean hidden) {
+        card.setAlpha(hidden ? 0f : 1f);
     }
 
     public void setOffsetListener(Runnable listener) {

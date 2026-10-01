@@ -10,7 +10,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Outline;
+import android.graphics.Bitmap;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -28,6 +31,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.ColorUtils;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DialogObject;
@@ -109,6 +113,31 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
     };
 
     private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF morphFrom = new RectF();
+    private final RectF morphTo = new RectF();
+    private final RectF morphCoverFrom = new RectF();
+    private final RectF morphCoverTo = new RectF();
+    private final RectF morphRect = new RectF();
+    private final RectF morphCover = new RectF();
+    private final Rect morphSrc = new Rect();
+    private final Path morphPath = new Path();
+    private final Paint morphPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    private PlayerMiniView miniSource;
+    private boolean skipMorph;
+    private boolean closing;
+    private boolean detached;
+    private ValueAnimator morphAnimator;
+    private float morphProgress = -1f;
+    private float morphFromRadius;
+    private float morphToRadius;
+    private float morphCoverFromRadius;
+    private float morphCoverToRadius;
+    private int morphFromColor;
+    private Bitmap morphSnapshot;
+    private Bitmap morphCoverBitmap;
+    private int morphBarsState = -1;
+    private boolean underLightStatus;
+    private boolean underLightNav;
     private final RectF backgroundRect = new RectF();
     private PlayerColors colors;
     private ValueAnimator colorAnimator;
@@ -155,6 +184,9 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
 
             @Override
             public boolean dispatchTouchEvent(MotionEvent ev) {
+                if (morphProgress >= 0f || closing) {
+                    return true;
+                }
                 int action = ev.getActionMasked();
                 if (action == MotionEvent.ACTION_DOWN) {
                     touchInLyrics = lyricsMode && lyricsView.getVisibility() == VISIBLE && hitInRoot(lyricsView, ev.getX(), ev.getY());
@@ -174,7 +206,21 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             }
 
             @Override
+            protected void dispatchDraw(@NonNull Canvas canvas) {
+                if (morphProgress < 0f) {
+                    super.dispatchDraw(canvas);
+                    return;
+                }
+                drawMorphBackground(canvas);
+                super.dispatchDraw(canvas);
+                drawMorphForeground(canvas);
+            }
+
+            @Override
             protected void onDraw(@NonNull Canvas canvas) {
+                if (morphProgress >= 0f) {
+                    return;
+                }
                 float r = dp(28) * Math.max(0f, Math.min(1f, getTranslationY() / dp(56)));
                 backgroundPaint.setColor(colors.surface);
                 backgroundRect.set(0, 0, getWidth(), getHeight() + r);
@@ -431,6 +477,9 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
 
     @Override
     protected boolean canDismissWithSwipe() {
+        if (morphProgress >= 0f || closing) {
+            return false;
+        }
         return !touchInLyrics || !lyricsView.canScrollUp();
     }
 
@@ -449,9 +498,285 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         applySystemBars(true);
     }
 
+    public void setTransitionSource(PlayerMiniView source) {
+        miniSource = source;
+    }
+
+    public void dismissImmediately() {
+        skipMorph = true;
+        dismiss();
+    }
+
     @Override
     public void dismiss() {
+        if (closing) {
+            return;
+        }
+        if (!skipMorph && miniSource != null && !isDismissed()) {
+            if (morphAnimator != null && morphProgress >= 0f) {
+                closing = true;
+                detach();
+                startMorph(morphProgress, 0f, 300, this::finishMorphClose);
+                return;
+            }
+            float ty = root.getTranslationY();
+            root.setTranslationY(0);
+            if (prepareMorph(lyricsFraction >= 0.5f ? smallCover : cover)) {
+                closing = true;
+                detach();
+                morphTo.set(0, ty, root.getWidth(), root.getHeight() + ty);
+                morphToRadius = dp(28) * clamp01(ty / dp(56));
+                morphCoverTo.offset(0, ty);
+                startMorph(1f, 0f, 380, this::finishMorphClose);
+                return;
+            }
+            root.setTranslationY(ty);
+        }
+        detach();
+        if (morphAnimator != null) {
+            morphAnimator.removeAllListeners();
+            morphAnimator.cancel();
+            morphAnimator = null;
+        }
+        if (miniSource != null) {
+            miniSource.setTransitionHidden(false);
+        }
         super.dismiss();
+    }
+
+    private void finishMorphClose() {
+        if (miniSource != null) {
+            miniSource.setTransitionHidden(false);
+        }
+        root.setVisibility(View.INVISIBLE);
+        backDrawable.setAlpha(0);
+        skipDismissAnimation();
+        super.dismiss();
+    }
+
+    @Override
+    public void dismissInternal() {
+        if (miniSource != null) {
+            miniSource.setTransitionHidden(false);
+        }
+        super.dismissInternal();
+    }
+
+    @Override
+    protected boolean onCustomOpenAnimation() {
+        root.setTranslationY(0);
+        if (!prepareMorph(cover)) {
+            return false;
+        }
+        morphTo.set(0, 0, root.getWidth(), root.getHeight());
+        morphToRadius = 0;
+        startMorph(0f, 1f, 420, () -> {
+            clearMorph();
+            cover.setVisibility(lyricsFraction >= 1f ? View.INVISIBLE : View.VISIBLE);
+            cover.setTranslationZ(-cover.getElevation());
+            cover.animate().translationZ(0).setDuration(250).start();
+            morphBarsState = -1;
+            applySystemBars(true);
+            onOpenAnimationEnd();
+            if (delegate != null) {
+                delegate.onOpenAnimationEnd();
+            }
+        });
+        return true;
+    }
+
+    private static float clamp01(float v) {
+        return Math.max(0f, Math.min(1f, v));
+    }
+
+    private static void lerpRect(RectF a, RectF b, float t, RectF out) {
+        out.set(a.left + (b.left - a.left) * t, a.top + (b.top - a.top) * t, a.right + (b.right - a.right) * t, a.bottom + (b.bottom - a.bottom) * t);
+    }
+
+    private void rectInRoot(View view, RectF out) {
+        float x = 0;
+        float y = 0;
+        View v = view;
+        while (v != null && v != root) {
+            x += v.getLeft() + v.getTranslationX();
+            y += v.getTop() + v.getTranslationY();
+            v = v.getParent() instanceof View ? (View) v.getParent() : null;
+        }
+        float px = view.getPivotX();
+        float py = view.getPivotY();
+        float sx = view.getScaleX();
+        float sy = view.getScaleY();
+        out.set(x + px * (1f - sx), y + py * (1f - sy), x + px + (view.getWidth() - px) * sx, y + py + (view.getHeight() - py) * sy);
+    }
+
+    private boolean prepareMorph(View coverView) {
+        PlayerMiniView mini = miniSource;
+        if (skipMorph || mini == null || !mini.canTransition() || root.getWidth() == 0 || !root.isAttachedToWindow()) {
+            return false;
+        }
+        int[] loc = new int[2];
+        root.getLocationOnScreen(loc);
+        mini.getCardRect(morphFrom);
+        morphFrom.offset(-loc[0], -loc[1]);
+        mini.getCoverRect(morphCoverFrom);
+        morphCoverFrom.offset(-loc[0], -loc[1]);
+        morphFromRadius = mini.getCardRadius();
+        morphCoverFromRadius = mini.getCoverRadius();
+        morphFromColor = mini.getCardColor();
+        recycleSnapshot();
+        morphSnapshot = mini.captureCard();
+        Bitmap bitmap = coverView instanceof CoverImage ? ((CoverImage) coverView).getImageReceiver().getBitmap() : null;
+        morphCoverBitmap = bitmap != null ? bitmap : mini.getCoverBitmap();
+        rectInRoot(coverView, morphCoverTo);
+        morphCoverToRadius = coverView == cover ? dp(28) * cover.getScaleX() : dp(16);
+        if (activity != null && activity.getWindow() != null) {
+            int flags = activity.getWindow().getDecorView().getSystemUiVisibility();
+            underLightStatus = (flags & View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR) != 0;
+            underLightNav = (flags & View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR) != 0;
+        }
+        morphBarsState = -1;
+        mini.setTransitionHidden(true);
+        coverView.setVisibility(View.INVISIBLE);
+        layout.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        return true;
+    }
+
+    private void startMorph(float from, float to, long duration, Runnable onEnd) {
+        if (morphAnimator != null) {
+            morphAnimator.removeAllListeners();
+            morphAnimator.cancel();
+        }
+        morphProgress = from;
+        applyMorph();
+        morphAnimator = ValueAnimator.ofFloat(from, to);
+        morphAnimator.addUpdateListener(a -> {
+            morphProgress = (float) a.getAnimatedValue();
+            applyMorph();
+        });
+        morphAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                morphAnimator = null;
+                onEnd.run();
+            }
+        });
+        morphAnimator.setDuration(duration);
+        morphAnimator.setInterpolator(EMPHASIZED);
+        morphAnimator.start();
+    }
+
+    private void applyMorph() {
+        float p = morphProgress;
+        lerpRect(morphFrom, morphTo, p, morphRect);
+        float s = morphRect.width() / Math.max(1, root.getWidth());
+        layout.setPivotX(0);
+        layout.setPivotY(0);
+        layout.setScaleX(s);
+        layout.setScaleY(s);
+        layout.setTranslationX(morphRect.left);
+        layout.setTranslationY(morphRect.top);
+        layout.setAlpha(clamp01((p - 0.35f) / 0.65f));
+        backDrawable.setAlpha(dimBehind ? (int) (dimBehindAlpha * clamp01(p)) : 0);
+        updateMorphBars();
+        root.invalidate();
+    }
+
+    private void clearMorph() {
+        morphProgress = -1f;
+        layout.setScaleX(1f);
+        layout.setScaleY(1f);
+        layout.setTranslationX(0);
+        layout.setTranslationY(0);
+        layout.setAlpha(1f);
+        layout.setLayerType(View.LAYER_TYPE_NONE, null);
+        recycleSnapshot();
+        morphCoverBitmap = null;
+        root.invalidate();
+    }
+
+    private void recycleSnapshot() {
+        if (morphSnapshot != null) {
+            morphSnapshot.recycle();
+            morphSnapshot = null;
+        }
+    }
+
+    private void updateMorphBars() {
+        int state = morphProgress > 0.5f ? 1 : 0;
+        if (state == morphBarsState) {
+            return;
+        }
+        morphBarsState = state;
+        if (state == 1) {
+            boolean light = colors.lightStatusBar();
+            setBars(light, light);
+        } else {
+            setBars(underLightStatus, underLightNav);
+        }
+    }
+
+    private void drawMorphBackground(Canvas canvas) {
+        float p = morphProgress;
+        lerpRect(morphFrom, morphTo, p, morphRect);
+        float r = morphFromRadius + (morphToRadius - morphFromRadius) * p;
+        morphPath.rewind();
+        morphPath.addRoundRect(morphRect, r, r, Path.Direction.CW);
+        canvas.save();
+        canvas.clipPath(morphPath);
+        backgroundPaint.setColor(ColorUtils.blendARGB(morphFromColor, colors.surface, clamp01(p / 0.5f)));
+        canvas.drawRect(morphRect, backgroundPaint);
+    }
+
+    private void drawMorphForeground(Canvas canvas) {
+        float p = morphProgress;
+        Bitmap snapshot = morphSnapshot;
+        if (snapshot != null && !snapshot.isRecycled()) {
+            float a = 1f - clamp01(p / 0.3f);
+            if (a > 0f) {
+                canvas.save();
+                float s = morphRect.width() / snapshot.getWidth();
+                canvas.translate(morphRect.left, morphRect.top);
+                canvas.scale(s, s);
+                morphPaint.setAlpha((int) (255 * a));
+                canvas.drawBitmap(snapshot, 0, 0, morphPaint);
+                canvas.restore();
+            }
+        }
+        canvas.restore();
+        lerpRect(morphCoverFrom, morphCoverTo, p, morphCover);
+        float r = morphCoverFromRadius + (morphCoverToRadius - morphCoverFromRadius) * p;
+        morphPath.rewind();
+        morphPath.addRoundRect(morphCover, r, r, Path.Direction.CW);
+        canvas.save();
+        canvas.clipPath(morphPath);
+        Bitmap bitmap = morphCoverBitmap;
+        if (bitmap != null && !bitmap.isRecycled() && bitmap.getWidth() > 0 && bitmap.getHeight() > 0) {
+            int bw = bitmap.getWidth();
+            int bh = bitmap.getHeight();
+            float ratio = morphCover.width() / Math.max(1f, morphCover.height());
+            if (bw / (float) bh > ratio) {
+                int w = (int) (bh * ratio);
+                int x = (bw - w) / 2;
+                morphSrc.set(x, 0, x + w, bh);
+            } else {
+                int h = (int) (bw / ratio);
+                int y = (bh - h) / 2;
+                morphSrc.set(0, y, bw, y + h);
+            }
+            morphPaint.setAlpha(255);
+            canvas.drawBitmap(bitmap, morphSrc, morphCover, morphPaint);
+        } else {
+            backgroundPaint.setColor(colors.primaryContainer);
+            canvas.drawRect(morphCover, backgroundPaint);
+        }
+        canvas.restore();
+    }
+
+    private void detach() {
+        if (detached) {
+            return;
+        }
+        detached = true;
         if (instance == this) {
             instance = null;
         }
@@ -479,14 +804,14 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         if (id == NotificationCenter.messagePlayingDidStart) {
             MessageObject mo = MediaController.getInstance().getPlayingMessageObject();
             if (mo == null || !mo.isMusic()) {
-                dismiss();
+                dismissImmediately();
                 return;
             }
             bind(mo, true);
         } else if (id == NotificationCenter.messagePlayingDidReset) {
             MessageObject mo = MediaController.getInstance().getPlayingMessageObject();
             if (mo == null || !mo.isMusic()) {
-                dismiss();
+                dismissImmediately();
             } else {
                 bind(mo, true);
             }
@@ -610,7 +935,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
                 list.remove(mo);
                 if (list.list.isEmpty()) {
                     MediaController.getInstance().cleanup();
-                    dismiss();
+                    dismissImmediately();
                     return;
                 }
                 NotificationCenter.getInstance(mo.currentAccount).postNotificationName(NotificationCenter.musicListLoaded, list);
@@ -907,7 +1232,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
     }
 
     private void openClassic() {
-        dismiss();
+        dismissImmediately();
         if (activity != null) {
             new AudioPlayerAlert(activity, resourcesProvider).show();
         }
@@ -945,7 +1270,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             }
             o.add(R.drawable.msg_forward, getString(R.string.Forward), () -> {
                 o.dismiss();
-                dismiss();
+                dismissImmediately();
                 PlayerActions.forward(activity, mo);
             });
         } else {
@@ -960,7 +1285,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         });
         o.addIf(mo.getId() > 0, R.drawable.msg_message, getString(R.string.ShowInChat), () -> {
             o.dismiss();
-            dismiss();
+            dismissImmediately();
             PlayerActions.showInChat(activity, mo);
         });
         o.addGap();
@@ -1109,18 +1434,25 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
     }
 
     private void applySystemBars(boolean force) {
+        if (morphProgress >= 0f || closing) {
+            return;
+        }
         boolean light = colors.lightStatusBar();
         if (!force && lightBars != null && lightBars == light) {
             return;
         }
         lightBars = light;
+        setBars(light, light);
+    }
+
+    private void setBars(boolean lightStatus, boolean lightNav) {
         if (getWindow() != null) {
-            AndroidUtilities.setLightStatusBar(getWindow(), light);
-            AndroidUtilities.setLightNavigationBar(this, light);
+            AndroidUtilities.setLightStatusBar(getWindow(), lightStatus);
+            AndroidUtilities.setLightNavigationBar(this, lightNav);
         }
         if (Build.VERSION.SDK_INT >= 26) {
-            AndroidUtilities.setLightStatusBar(container, light);
-            AndroidUtilities.setLightNavigationBar(container, light);
+            AndroidUtilities.setLightStatusBar(container, lightStatus);
+            AndroidUtilities.setLightNavigationBar(container, lightNav);
         }
     }
 

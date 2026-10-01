@@ -32,14 +32,14 @@ public final class Md3Player {
     public static BottomSheet create(Context context, Theme.ResourcesProvider resourcesProvider) {
         if (handles(MediaController.getInstance().getPlayingMessageObject())) {
             if (PlayerSheet.instance != null) {
-                PlayerSheet.instance.dismiss();
+                PlayerSheet.instance.dismissImmediately();
             }
             return new PlayerSheet(context, resourcesProvider);
         }
         return new AudioPlayerAlert(context, resourcesProvider);
     }
 
-    public static void open(BaseFragment fragment) {
+    public static void open(BaseFragment fragment, PlayerMiniView source) {
         if (fragment == null || fragment.getParentActivity() == null) {
             return;
         }
@@ -47,7 +47,11 @@ public final class Md3Player {
         if (messageObject == null) {
             return;
         }
-        fragment.showDialog(create(fragment.getParentActivity(), fragment.getResourceProvider()));
+        BottomSheet sheet = create(fragment.getParentActivity(), fragment.getResourceProvider());
+        if (sheet instanceof PlayerSheet && source != null && source.canTransition()) {
+            ((PlayerSheet) sheet).setTransitionSource(source);
+        }
+        fragment.showDialog(sheet);
     }
 
     public static boolean hidesContextPlayer(BaseFragment fragment, MessageObject messageObject) {
