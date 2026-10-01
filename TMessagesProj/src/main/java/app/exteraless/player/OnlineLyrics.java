@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-public final class LrcLib {
+public final class OnlineLyrics {
 
     public static final int OK = 0;
     public static final int NOT_FOUND = 1;
@@ -69,14 +69,27 @@ public final class LrcLib {
         }
     }
 
-    private static final String BASE = "https://lrclib.net/api/";
+    private static final class Found {
+        final Lyrics lyrics;
+
+        Found(Lyrics lyrics) {
+            this.lyrics = lyrics;
+        }
+    }
+
+    private static final String LRCLIB = "https://lrclib.net/api/";
+    private static final String LRCMUX = "https://api.lrcmux.dev/get";
+    private static final String LRCLIB_NAME = "LRCLIB";
+    private static final int CACHE_VERSION = 2;
+    private static final int MAX_DURATION_DIFF = 3;
+    private static final int MAX_FALLBACK_DURATION_DIFF = 5;
     private static final Pattern AUDIO_EXT = Pattern.compile("\\.(mp3|m4a|flac|ogg|oga|opus|wav|aac|alac|wma)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern DECORATION = Pattern.compile("\\s*[(\\[][^)\\]]*(official|lyric|video|audio|visualizer|remaster|hq|hd)[^)\\]]*[)\\]]", Pattern.CASE_INSENSITIVE);
-    private static final DispatchQueue queue = new DispatchQueue("lrclib");
+    private static final DispatchQueue queue = new DispatchQueue("lyrics");
     private static final LruCache<String, Lyrics> memory = new LruCache<>(24);
     private static final HashSet<String> missing = new HashSet<>();
 
-    private LrcLib() {
+    private OnlineLyrics() {
     }
 
     private static String clean(String s) {
@@ -112,10 +125,12 @@ public final class LrcLib {
         }
         queue.postRunnable(() -> {
             Lyrics disk = readDisk(key);
-            if (disk != null) {
-                memory.put(key, disk);
-            }
-            AndroidUtilities.runOnUIThread(() -> callback.onResult(disk, disk != null ? OK : NOT_FOUND));
+            AndroidUtilities.runOnUIThread(() -> {
+                if (disk != null) {
+                    memory.put(key, disk);
+                }
+                callback.onResult(disk, disk != null ? OK : NOT_FOUND);
+            });
         });
     }
 
@@ -130,20 +145,34 @@ public final class LrcLib {
             Lyrics result = readDisk(key);
             int status = OK;
             if (result == null) {
+                boolean failed = false;
+                Found primary = null;
                 try {
-                    JSONObject best = request(query);
-                    if (best == null) {
-                        status = NOT_FOUND;
-                    } else {
-                        writeDisk(key, best);
-                        result = fromJson(best);
-                        if (result == null) {
-                            status = NOT_FOUND;
-                        }
-                    }
+                    primary = requestLrclib(query);
                 } catch (Throwable e) {
                     FileLog.e(e);
-                    status = ERROR;
+                    failed = true;
+                }
+                if (primary != null && (primary.lyrics.synced || primary.lyrics.instrumental)) {
+                    result = primary.lyrics;
+                } else {
+                    Found fallback = null;
+                    try {
+                        fallback = requestLrcmux(query);
+                    } catch (Throwable e) {
+                        FileLog.e(e);
+                        failed = true;
+                    }
+                    if (fallback != null && (fallback.lyrics.synced || primary == null)) {
+                        result = fallback.lyrics;
+                    } else if (primary != null) {
+                        result = primary.lyrics;
+                    }
+                }
+                if (result != null) {
+                    writeDisk(key, result);
+                } else {
+                    status = failed ? ERROR : NOT_FOUND;
                 }
             }
             final Lyrics lyrics = result;
@@ -160,9 +189,9 @@ public final class LrcLib {
         });
     }
 
-    private static JSONObject request(Query q) throws Exception {
+    private static Found requestLrclib(Query q) throws Exception {
         if (!TextUtils.isEmpty(q.artist)) {
-            StringBuilder url = new StringBuilder(BASE).append("get?artist_name=").append(enc(q.artist))
+            StringBuilder url = new StringBuilder(LRCLIB).append("get?artist_name=").append(enc(q.artist))
                     .append("&track_name=").append(enc(q.title));
             if (!TextUtils.isEmpty(q.album)) {
                 url.append("&album_name=").append(enc(q.album));
@@ -172,13 +201,13 @@ public final class LrcLib {
             }
             String body = get(url.toString());
             if (body != null) {
-                JSONObject obj = new JSONObject(body);
-                if (hasLyrics(obj)) {
-                    return obj;
+                Found found = fromLrclib(new JSONObject(body));
+                if (found != null) {
+                    return found;
                 }
             }
         }
-        StringBuilder url = new StringBuilder(BASE).append("search?track_name=").append(enc(q.title));
+        StringBuilder url = new StringBuilder(LRCLIB).append("search?track_name=").append(enc(q.title));
         if (!TextUtils.isEmpty(q.artist)) {
             url.append("&artist_name=").append(enc(q.artist));
         }
@@ -187,44 +216,99 @@ public final class LrcLib {
             return null;
         }
         JSONArray arr = new JSONArray(body);
-        JSONObject best = null;
+        Found best = null;
         int bestScore = Integer.MIN_VALUE;
         for (int i = 0; i < arr.length(); i++) {
             JSONObject o = arr.optJSONObject(i);
-            if (o == null || !hasLyrics(o)) {
+            Found found = o == null ? null : fromLrclib(o);
+            if (found == null) {
                 continue;
             }
-            int score = 0;
-            if (!TextUtils.isEmpty(o.optString("syncedLyrics", null)) && !o.isNull("syncedLyrics")) {
-                score += 40;
-            }
+            int score = found.lyrics.synced ? 40 : 0;
             if (q.duration > 0 && o.has("duration")) {
                 int diff = (int) Math.abs(Math.round(o.optDouble("duration", 0)) - q.duration);
-                score -= diff <= 3 ? diff : 20 + Math.min(diff, 60);
+                score -= diff <= MAX_DURATION_DIFF ? diff : 20 + Math.min(diff, 60);
             }
             if (score > bestScore) {
                 bestScore = score;
-                best = o;
+                best = found;
             }
         }
         return best;
     }
 
-    private static boolean hasLyrics(JSONObject o) {
-        return o.optBoolean("instrumental", false)
-                || !o.isNull("syncedLyrics") && !TextUtils.isEmpty(o.optString("syncedLyrics", null))
-                || !o.isNull("plainLyrics") && !TextUtils.isEmpty(o.optString("plainLyrics", null));
+    private static String optString(JSONObject o, String name) {
+        if (o == null || o.isNull(name)) {
+            return null;
+        }
+        String s = o.optString(name, null);
+        return TextUtils.isEmpty(s) ? null : s;
     }
 
-    private static Lyrics fromJson(JSONObject o) {
+    private static Found fromLrclib(JSONObject o) {
         if (o.optBoolean("instrumental", false)) {
-            return Lyrics.instrumental(Lyrics.SOURCE_LRCLIB);
+            return new Found(Lyrics.instrumental(Lyrics.SOURCE_ONLINE, LRCLIB_NAME));
         }
-        Lyrics synced = o.isNull("syncedLyrics") ? null : Lyrics.parse(o.optString("syncedLyrics", null), Lyrics.SOURCE_LRCLIB);
+        Lyrics synced = Lyrics.parse(optString(o, "syncedLyrics"), Lyrics.SOURCE_ONLINE, LRCLIB_NAME);
         if (synced != null && synced.synced) {
-            return synced;
+            return new Found(synced);
         }
-        return o.isNull("plainLyrics") ? synced : Lyrics.parse(o.optString("plainLyrics", null), Lyrics.SOURCE_LRCLIB);
+        Lyrics plain = Lyrics.parse(optString(o, "plainLyrics"), Lyrics.SOURCE_ONLINE, LRCLIB_NAME);
+        if (plain != null) {
+            return new Found(plain);
+        }
+        return synced != null ? new Found(synced) : null;
+    }
+
+    private static Found requestLrcmux(Query q) throws Exception {
+        StringBuilder url = new StringBuilder(LRCMUX).append("?title=").append(enc(q.title)).append("&level=line&format=json");
+        if (!TextUtils.isEmpty(q.artist)) {
+            url.append("&artist=").append(enc(q.artist));
+        }
+        if (!TextUtils.isEmpty(q.album)) {
+            url.append("&album=").append(enc(q.album));
+        }
+        if (q.duration > 0) {
+            url.append("&duration=").append(q.duration);
+        }
+        String body = get(url.toString());
+        if (body == null) {
+            return null;
+        }
+        JSONObject o = new JSONObject(body);
+        JSONObject track = o.optJSONObject("track");
+        JSONObject meta = o.optJSONObject("meta");
+        if (q.duration > 0 && track != null) {
+            int duration = track.optInt("duration", 0);
+            if (duration > 0 && Math.abs(duration - q.duration) > MAX_FALLBACK_DURATION_DIFF) {
+                return null;
+            }
+        }
+        JSONObject source = meta != null ? meta.optJSONObject("source") : null;
+        String sourceName = source != null ? optString(source, "name") : null;
+        String provider = sourceName != null ? "lrcmux · " + sourceName : "lrcmux";
+        if (meta != null && meta.optBoolean("instrumental", false)) {
+            return new Found(Lyrics.instrumental(Lyrics.SOURCE_ONLINE, provider));
+        }
+        JSONArray lines = o.optJSONArray("lines");
+        if (lines == null || lines.length() == 0) {
+            return null;
+        }
+        boolean synced = meta != null && !"none".equals(meta.optString("level"));
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < lines.length(); i++) {
+            JSONObject line = lines.optJSONObject(i);
+            if (line == null) {
+                continue;
+            }
+            if (synced) {
+                long start = Math.max(0, line.optLong("start", 0));
+                text.append(String.format(Locale.US, "[%02d:%02d.%02d]", start / 60000, start / 1000 % 60, start % 1000 / 10));
+            }
+            text.append(line.optString("text", "")).append('\n');
+        }
+        Lyrics lyrics = Lyrics.parse(text.toString(), Lyrics.SOURCE_ONLINE, provider);
+        return lyrics == null ? null : new Found(lyrics);
     }
 
     private static String enc(String s) throws Exception {
@@ -243,7 +327,7 @@ public final class LrcLib {
                 return null;
             }
             if (code < 200 || code >= 300) {
-                throw new IllegalStateException("lrclib http " + code);
+                throw new IllegalStateException("lyrics http " + code + " " + url);
             }
             try (InputStream in = connection.getInputStream()) {
                 return readAll(in);
@@ -277,31 +361,41 @@ public final class LrcLib {
             if (f == null || !f.exists()) {
                 return null;
             }
+            JSONObject o;
             try (FileInputStream in = new FileInputStream(f)) {
-                return fromJson(new JSONObject(readAll(in)));
+                o = new JSONObject(readAll(in));
             }
+            if (o.optInt("v", 1) < CACHE_VERSION) {
+                Found legacy = fromLrclib(o);
+                return legacy != null && (legacy.lyrics.synced || legacy.lyrics.instrumental) ? legacy.lyrics : null;
+            }
+            String provider = optString(o, "provider");
+            if (provider == null) {
+                provider = LRCLIB_NAME;
+            }
+            if (o.optBoolean("instrumental", false)) {
+                return Lyrics.instrumental(Lyrics.SOURCE_ONLINE, provider);
+            }
+            return Lyrics.parse(optString(o, "text"), Lyrics.SOURCE_ONLINE, provider);
         } catch (Throwable e) {
             FileLog.e(e);
             return null;
         }
     }
 
-    private static void writeDisk(String key, JSONObject o) {
+    private static void writeDisk(String key, Lyrics lyrics) {
         try {
             File f = cacheFile(key);
             if (f == null) {
                 return;
             }
-            JSONObject slim = new JSONObject();
-            slim.put("instrumental", o.optBoolean("instrumental", false));
-            if (!o.isNull("syncedLyrics")) {
-                slim.put("syncedLyrics", o.optString("syncedLyrics", null));
-            }
-            if (!o.isNull("plainLyrics")) {
-                slim.put("plainLyrics", o.optString("plainLyrics", null));
-            }
+            JSONObject o = new JSONObject();
+            o.put("v", CACHE_VERSION);
+            o.put("provider", lyrics.provider);
+            o.put("instrumental", lyrics.instrumental);
+            o.put("text", lyrics.toText());
             try (FileOutputStream out = new FileOutputStream(f)) {
-                out.write(slim.toString().getBytes(StandardCharsets.UTF_8));
+                out.write(o.toString().getBytes(StandardCharsets.UTF_8));
             }
         } catch (Throwable e) {
             FileLog.e(e);

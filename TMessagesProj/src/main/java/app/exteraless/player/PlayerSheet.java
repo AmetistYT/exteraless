@@ -798,7 +798,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         lyricsPanel.setVisibility(f <= 0f ? View.GONE : View.VISIBLE);
     }
 
-    private LrcLib.Query query(MessageObject mo) {
+    private OnlineLyrics.Query query(MessageObject mo) {
         String album = null;
         if (PlayerArt.isPlaying(mo)) {
             AudioInfo info = MediaController.getInstance().getAudioInfo();
@@ -806,7 +806,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
                 album = info.getAlbum();
             }
         }
-        return new LrcLib.Query(mo.getMusicAuthor(false), mo.getMusicTitle(false), album, (int) Math.round(mo.getDuration()));
+        return new OnlineLyrics.Query(mo.getMusicAuthor(false), mo.getMusicTitle(false), album, (int) Math.round(mo.getDuration()));
     }
 
     private long positionMs() {
@@ -832,20 +832,20 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
                 return;
             }
         }
-        LrcLib.Query q = query(mo);
+        OnlineLyrics.Query q = query(mo);
         if (!q.valid()) {
             lyricsView.showState(LyricsView.STATE_NOT_FOUND);
             sourceView.setText(null);
             return;
         }
-        Lyrics cached = LrcLib.cached(q);
+        Lyrics cached = OnlineLyrics.cached(q);
         if (cached != null) {
             showLyrics(cached);
             return;
         }
         lyricsView.showState(LyricsView.STATE_LOADING);
         sourceView.setText(null);
-        LrcLib.loadCached(q, (lyrics, status) -> {
+        OnlineLyrics.loadCached(q, (lyrics, status) -> {
             if (!TextUtils.equals(key, currentKey)) {
                 return;
             }
@@ -865,25 +865,25 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             return;
         }
         String key = currentKey;
-        LrcLib.Query q = query(mo);
+        OnlineLyrics.Query q = query(mo);
         if (!q.valid()) {
             lyricsView.showState(LyricsView.STATE_NOT_FOUND);
             return;
         }
-        if (LrcLib.knownMissing(q)) {
+        if (OnlineLyrics.knownMissing(q)) {
             lyricsView.showState(LyricsView.STATE_NOT_FOUND);
             return;
         }
         lyricsView.showState(LyricsView.STATE_LOADING);
         sourceView.setText(null);
-        LrcLib.fetch(q, (lyrics, status) -> {
+        OnlineLyrics.fetch(q, (lyrics, status) -> {
             if (!TextUtils.equals(key, currentKey)) {
                 return;
             }
             if (lyrics != null) {
                 showLyrics(lyrics);
             } else {
-                lyricsView.showState(status == LrcLib.ERROR ? LyricsView.STATE_ERROR : LyricsView.STATE_NOT_FOUND);
+                lyricsView.showState(status == OnlineLyrics.ERROR ? LyricsView.STATE_ERROR : LyricsView.STATE_NOT_FOUND);
             }
         });
     }
@@ -891,17 +891,15 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
     private void showLyrics(Lyrics lyrics) {
         if (lyrics.instrumental) {
             lyricsView.showState(LyricsView.STATE_INSTRUMENTAL);
-            sourceView.setText(lyrics.source == Lyrics.SOURCE_LRCLIB ? "LRCLIB" : null);
+            sourceView.setText(lyrics.provider);
             return;
         }
         lyricsView.setLyrics(lyrics, positionMs());
-        int res;
-        if (lyrics.source == Lyrics.SOURCE_LRCLIB) {
-            res = lyrics.synced ? R.string.OEPlayerSourceSyncedLrclib : R.string.OEPlayerSourcePlainLrclib;
+        if (lyrics.source == Lyrics.SOURCE_ONLINE) {
+            sourceView.setText(LocaleController.formatString(lyrics.synced ? R.string.OEPlayerSourceSynced : R.string.OEPlayerSourcePlain, lyrics.provider));
         } else {
-            res = lyrics.synced ? R.string.OEPlayerSourceSyncedFile : R.string.OEPlayerSourcePlainFile;
+            sourceView.setText(getString(lyrics.synced ? R.string.OEPlayerSourceSyncedFile : R.string.OEPlayerSourcePlainFile));
         }
-        sourceView.setText(getString(res));
     }
 
     private void openQueue() {

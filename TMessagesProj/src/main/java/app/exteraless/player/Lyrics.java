@@ -4,13 +4,14 @@ import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class Lyrics {
 
     public static final int SOURCE_FILE = 0;
-    public static final int SOURCE_LRCLIB = 1;
+    public static final int SOURCE_ONLINE = 1;
 
     public static final class Line {
         public final long time;
@@ -31,16 +32,30 @@ public final class Lyrics {
     public final boolean synced;
     public final boolean instrumental;
     public final int source;
+    public final String provider;
 
-    private Lyrics(ArrayList<Line> lines, boolean synced, boolean instrumental, int source) {
+    private Lyrics(ArrayList<Line> lines, boolean synced, boolean instrumental, int source, String provider) {
         this.lines = lines;
         this.synced = synced;
         this.instrumental = instrumental;
         this.source = source;
+        this.provider = provider;
     }
 
-    public static Lyrics instrumental(int source) {
-        return new Lyrics(new ArrayList<>(), false, true, source);
+    public static Lyrics instrumental(int source, String provider) {
+        return new Lyrics(new ArrayList<>(), false, true, source, provider);
+    }
+
+    public String toText() {
+        StringBuilder sb = new StringBuilder();
+        for (Line line : lines) {
+            if (synced) {
+                long t = Math.max(0, line.time);
+                sb.append(String.format(Locale.US, "[%02d:%02d.%02d]", t / 60000, t / 1000 % 60, t % 1000 / 10));
+            }
+            sb.append(line.text).append('\n');
+        }
+        return sb.toString();
     }
 
     public boolean isEmpty() {
@@ -48,6 +63,10 @@ public final class Lyrics {
     }
 
     public static Lyrics parse(String text, int source) {
+        return parse(text, source, null);
+    }
+
+    public static Lyrics parse(String text, int source, String provider) {
         if (TextUtils.isEmpty(text)) {
             return null;
         }
@@ -94,7 +113,7 @@ public final class Lyrics {
                 }
                 out.add(l);
             }
-            return out.isEmpty() ? null : new Lyrics(out, true, false, source);
+            return out.isEmpty() ? null : new Lyrics(out, true, false, source, provider);
         }
         ArrayList<Line> plain = new ArrayList<>();
         for (String row : raw) {
@@ -110,7 +129,7 @@ public final class Lyrics {
         while (!plain.isEmpty() && plain.get(plain.size() - 1).text.isEmpty()) {
             plain.remove(plain.size() - 1);
         }
-        return plain.isEmpty() ? null : new Lyrics(plain, false, false, source);
+        return plain.isEmpty() ? null : new Lyrics(plain, false, false, source, provider);
     }
 
     private static long toMillis(String min, String sec, String frac) {
