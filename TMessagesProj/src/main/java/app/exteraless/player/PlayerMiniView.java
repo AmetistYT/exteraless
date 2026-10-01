@@ -35,12 +35,11 @@ import org.telegram.ui.Components.LayoutHelper;
 public class PlayerMiniView extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
 
     public static final int HEIGHT_DP = 64;
-    private static final CubicBezierInterpolator EMPHASIZED = new CubicBezierInterpolator(0.2, 0, 0, 1);
 
     private final BaseFragment fragment;
     private final Theme.ResourcesProvider resourcesProvider;
-    private final boolean dark;
-    private final int fallbackSeed;
+    private boolean dark;
+    private int seed;
     private final LinearLayout card;
     private final GradientDrawable cardBg = new GradientDrawable();
     private final CoverImage cover;
@@ -52,10 +51,8 @@ public class PlayerMiniView extends FrameLayout implements NotificationCenter.No
     private final PlayerIcon nextIcon = PlayerIcon.fill(PlayerIcon.NEXT, 24);
     private final PlayerIcon closeIcon = PlayerIcon.stroke(PlayerIcon.CLOSE, 22);
     private PlayerColors colors;
-    private ValueAnimator colorAnimator;
     private ValueAnimator showAnimator;
     private MessageObject current;
-    private String currentKey;
     private boolean shown;
     private float showProgress;
     private float hostFactor = 1f;
@@ -67,8 +64,8 @@ public class PlayerMiniView extends FrameLayout implements NotificationCenter.No
         this.fragment = fragment;
         this.resourcesProvider = resourcesProvider;
         dark = PlayerColors.isDark(resourcesProvider);
-        fallbackSeed = PlayerColors.fallbackSeed(resourcesProvider);
-        colors = PlayerColors.fromSeed(fallbackSeed, dark);
+        seed = PlayerColors.fallbackSeed(resourcesProvider);
+        colors = PlayerColors.fromSeed(seed, dark);
         setClipChildren(false);
         setClipToPadding(false);
 
@@ -92,11 +89,6 @@ public class PlayerMiniView extends FrameLayout implements NotificationCenter.No
 
         cover = new CoverImage(context, 22);
         cover.setRadius(dp(12));
-        cover.setListener(fallbackSeed, (mo, seed) -> {
-            if (mo == current) {
-                animateColors(PlayerColors.fromSeed(seed, dark));
-            }
-        });
         card.addView(cover, LayoutHelper.createLinear(44, 44));
 
         LinearLayout texts = new LinearLayout(context);
@@ -208,9 +200,6 @@ public class PlayerMiniView extends FrameLayout implements NotificationCenter.No
             nc.removeObserver(this, NotificationCenter.messagePlayingProgressDidChanged);
             nc.removeObserver(this, NotificationCenter.fileLoaded);
         }
-        if (colorAnimator != null) {
-            colorAnimator.cancel();
-        }
     }
 
     @Override
@@ -227,7 +216,18 @@ public class PlayerMiniView extends FrameLayout implements NotificationCenter.No
         }
     }
 
+    private void checkThemeColors() {
+        boolean themeDark = PlayerColors.isDark(resourcesProvider);
+        int themeSeed = PlayerColors.fallbackSeed(resourcesProvider);
+        if (themeDark != dark || themeSeed != seed) {
+            dark = themeDark;
+            seed = themeSeed;
+            applyColors(PlayerColors.fromSeed(seed, dark));
+        }
+    }
+
     public void update(boolean animated) {
+        checkThemeColors();
         MessageObject mo = MediaController.getInstance().getPlayingMessageObject();
         boolean want = Md3Player.miniEnabled() && mo != null && mo.isMusic() && mo.getId() != 0;
         if (want) {
@@ -238,22 +238,11 @@ public class PlayerMiniView extends FrameLayout implements NotificationCenter.No
     }
 
     private void bind(MessageObject mo) {
-        String key = PlayerArt.key(mo);
-        boolean changed = !TextUtils.equals(key, currentKey);
         current = mo;
-        currentKey = key;
         titleView.setText(mo.getMusicTitle());
         artistView.setText(mo.getMusicAuthor());
         cover.setMessage(mo);
         playButton.setMessage(mo);
-        if (changed) {
-            Integer seed = PlayerArt.cachedSeed(mo);
-            if (seed != null) {
-                animateColors(PlayerColors.fromSeed(seed, dark));
-            } else if (PlayerArt.fileCover(mo) == null && PlayerArt.fullLocation(mo) == null && PlayerArt.thumbLocation(mo) == null) {
-                animateColors(PlayerColors.fromSeed(fallbackSeed, dark));
-            }
-        }
         playButton.setContentDescription(getString(MediaController.getInstance().isMessagePaused() ? R.string.AccActionPlay : R.string.AccActionPause));
     }
 
@@ -282,22 +271,6 @@ public class PlayerMiniView extends FrameLayout implements NotificationCenter.No
         showAnimator.setDuration(value ? 450 : 300);
         showAnimator.setInterpolator(value ? new CubicBezierInterpolator(0.05, 0.7, 0.1, 1) : new CubicBezierInterpolator(0.3, 0, 0.8, 0.15));
         showAnimator.start();
-    }
-
-    private void animateColors(PlayerColors target) {
-        if (colorAnimator != null) {
-            colorAnimator.cancel();
-        }
-        PlayerColors from = colors;
-        if (!isAttachedToWindow() || showProgress == 0f) {
-            applyColors(target);
-            return;
-        }
-        colorAnimator = ValueAnimator.ofFloat(0f, 1f);
-        colorAnimator.addUpdateListener(a -> applyColors(PlayerColors.lerp(from, target, (float) a.getAnimatedValue())));
-        colorAnimator.setDuration(600);
-        colorAnimator.setInterpolator(EMPHASIZED);
-        colorAnimator.start();
     }
 
     private void applyColors(PlayerColors c) {

@@ -3,7 +3,6 @@ package app.exteraless.player;
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -23,16 +22,12 @@ import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 
 public class PlayerBarView extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
 
     public static final int HEIGHT_DP = 52;
-    private static final CubicBezierInterpolator EMPHASIZED = new CubicBezierInterpolator(0.2, 0, 0, 1);
 
-    private final boolean dark;
-    private final int fallbackSeed;
     private final CoverImage cover;
     private final TextView titleView;
     private final TextView artistView;
@@ -41,16 +36,11 @@ public class PlayerBarView extends FrameLayout implements NotificationCenter.Not
     private final ImageView closeButton;
     private final PlayerIcon nextIcon = PlayerIcon.fill(PlayerIcon.NEXT, 22);
     private final PlayerIcon closeIcon = PlayerIcon.stroke(PlayerIcon.CLOSE, 20);
-    private PlayerColors colors;
-    private ValueAnimator colorAnimator;
     private MessageObject current;
-    private String currentKey;
 
     public PlayerBarView(Context context, Theme.ResourcesProvider resourcesProvider, Runnable onOpen, Runnable onClose) {
         super(context);
-        dark = PlayerColors.isDark(resourcesProvider);
-        fallbackSeed = PlayerColors.fallbackSeed(resourcesProvider);
-        colors = PlayerColors.fromSeed(fallbackSeed, dark);
+        PlayerColors theme = PlayerColors.fromSeed(PlayerColors.fallbackSeed(resourcesProvider), PlayerColors.isDark(resourcesProvider));
 
         setBackground(Theme.getSelectorDrawable(false));
         setOnClickListener(v -> onOpen.run());
@@ -58,11 +48,6 @@ public class PlayerBarView extends FrameLayout implements NotificationCenter.Not
 
         cover = new CoverImage(context, 18);
         cover.setRadius(dp(10));
-        cover.setListener(fallbackSeed, (mo, seed) -> {
-            if (mo == current) {
-                animateColors(PlayerColors.fromSeed(seed, dark));
-            }
-        });
         addView(cover, LayoutHelper.createFrame(36, 36, Gravity.LEFT | Gravity.CENTER_VERTICAL, 12, 0, 0, 0));
 
         LinearLayout texts = new LinearLayout(context);
@@ -121,7 +106,9 @@ public class PlayerBarView extends FrameLayout implements NotificationCenter.Not
         nextButton.setBackground(Theme.createSelectorDrawable(ripple, Theme.RIPPLE_MASK_CIRCLE_20DP));
         closeButton.setBackground(Theme.createSelectorDrawable(ripple, Theme.RIPPLE_MASK_CIRCLE_20DP));
         playButton.setBackground(Theme.createSelectorDrawable(ripple, Theme.RIPPLE_MASK_CIRCLE_20DP));
-        applyColors(colors);
+        int accent = Theme.getColor(Theme.key_inappPlayerPlayPause, resourcesProvider);
+        playButton.setColors(accent, ColorUtils.setAlphaComponent(accent, 51), accent);
+        cover.setColors(theme.primaryContainer, theme.onPrimaryContainer);
     }
 
     @Override
@@ -147,9 +134,6 @@ public class PlayerBarView extends FrameLayout implements NotificationCenter.Not
             nc.removeObserver(this, NotificationCenter.messagePlayingProgressDidChanged);
             nc.removeObserver(this, NotificationCenter.fileLoaded);
         }
-        if (colorAnimator != null) {
-            colorAnimator.cancel();
-        }
     }
 
     @Override
@@ -171,10 +155,7 @@ public class PlayerBarView extends FrameLayout implements NotificationCenter.Not
         if (mo == null || !mo.isMusic()) {
             return;
         }
-        String key = PlayerArt.key(mo);
-        boolean changed = !TextUtils.equals(key, currentKey);
         current = mo;
-        currentKey = key;
         titleView.setText(mo.getMusicTitle());
         artistView.setText(mo.getMusicAuthor());
         cover.setMessage(mo);
@@ -182,35 +163,5 @@ public class PlayerBarView extends FrameLayout implements NotificationCenter.Not
         boolean paused = MediaController.getInstance().isMessagePaused();
         playButton.setPlaying(!paused, isAttachedToWindow());
         playButton.setContentDescription(getString(paused ? R.string.AccActionPlay : R.string.AccActionPause));
-        if (changed) {
-            Integer seed = PlayerArt.cachedSeed(mo);
-            if (seed != null) {
-                animateColors(PlayerColors.fromSeed(seed, dark));
-            } else if (PlayerArt.fileCover(mo) == null && PlayerArt.fullLocation(mo) == null && PlayerArt.thumbLocation(mo) == null) {
-                animateColors(PlayerColors.fromSeed(fallbackSeed, dark));
-            }
-        }
-    }
-
-    private void animateColors(PlayerColors target) {
-        if (colorAnimator != null) {
-            colorAnimator.cancel();
-        }
-        PlayerColors from = colors;
-        if (!isAttachedToWindow()) {
-            applyColors(target);
-            return;
-        }
-        colorAnimator = ValueAnimator.ofFloat(0f, 1f);
-        colorAnimator.addUpdateListener(a -> applyColors(PlayerColors.lerp(from, target, (float) a.getAnimatedValue())));
-        colorAnimator.setDuration(600);
-        colorAnimator.setInterpolator(EMPHASIZED);
-        colorAnimator.start();
-    }
-
-    private void applyColors(PlayerColors c) {
-        colors = c;
-        cover.setColors(c.primaryContainer, c.onPrimaryContainer);
-        playButton.setColors(c.primary, ColorUtils.setAlphaComponent(c.primary, 51), c.primary);
     }
 }
