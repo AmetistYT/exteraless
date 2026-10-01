@@ -21,6 +21,8 @@
     <string name="OEGeneralFilterZalgo">Filtrar «zalgo»</string>
     <string name="OEGeneralFilterZalgoInfo">Elimina los signos combinantes apilados que rompen el diseño del texto. Ejemplo: %1$s</string>
     <string name="OEGeneralSpeedHeader">Aceleración de descarga</string>
+    <string name="OEGeneralNetworkSpeedHeader">Red y descargas</string>
+    <string name="OEGeneralBackupHeader">Copia de seguridad</string>
     <string name="OEGeneralSpeedOff">Desactivada</string>
     <string name="OEGeneralSpeedFast">Rápida</string>
     <string name="OEGeneralSpeedUltra">Ultra</string>

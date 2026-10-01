@@ -21,6 +21,8 @@
     <string name="OEGeneralFilterZalgo">Filtruj „zalgo”</string>
     <string name="OEGeneralFilterZalgoInfo">Usuwa nawarstwione znaki łączone, które psują układ tekstu. Przykład: %1$s</string>
     <string name="OEGeneralSpeedHeader">Przyspieszenie pobierania</string>
+    <string name="OEGeneralNetworkSpeedHeader">Sieć i pobieranie</string>
+    <string name="OEGeneralBackupHeader">Kopia zapasowa</string>
     <string name="OEGeneralSpeedOff">Wyłączone</string>
     <string name="OEGeneralSpeedFast">Szybkie</string>
     <string name="OEGeneralSpeedUltra">Ultra</string>

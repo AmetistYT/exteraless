@@ -27,6 +27,8 @@
 
     <!-- Download Speed Boost -->
     <string name="OEGeneralSpeedHeader">Ускорение загрузки</string>
+    <string name="OEGeneralNetworkSpeedHeader">Сеть и загрузка</string>
+    <string name="OEGeneralBackupHeader">Резервная копия</string>
     <string name="OEGeneralSpeedOff">Выкл.</string>
     <string name="OEGeneralSpeedFast">Быстро</string>
     <string name="OEGeneralSpeedUltra">Ультра</string>

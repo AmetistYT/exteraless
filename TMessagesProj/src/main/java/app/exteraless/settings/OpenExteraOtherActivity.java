@@ -84,6 +84,7 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
     private boolean sensitiveEnabled;
     private boolean sensitiveCanChange;
 
+    private int backupHeaderRow;
     private int exportEtgRow;
     private int importEtgRow;
     private int etgDividerRow;
@@ -137,18 +138,19 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
 
         experimentalHeaderRow = addRow("experimentalHeader");
         localPremiumRow = addRow("localPremium");
-        unlimitedPinnedDialogsRow = addRow("unlimitedPinnedDialogs", "UnlimitedPinnedDialogs");
+        unlimitedPinnedDialogsRow = -1;
         voiceEnhancementsRow = addRow("noiseSuppressAndVoiceEnhance", "NoiseSuppressAndVoiceEnhance");
         enhancedVideoBitrateRow = addRow("enhancedVideoBitrate", "EnhancedVideoBitrate");
         sensitiveContentRow = addRow("sensitiveDisableFiltering", "SensitiveDisableFiltering");
         experimentalDividerRow = addRow();
 
+        backupHeaderRow = addRow("backupHeader");
         exportEtgRow = addRow("exportEtgSettings");
         importEtgRow = addRow("importEtgSettings");
         etgDividerRow = addRow();
 
-        glyphRow = addRow("glyph");
-        glyphDividerRow = addRow();
+        glyphRow = -1;
+        glyphDividerRow = -1;
 
         resetSettingsRow = addRow("resetSettings");
         deleteAccountRow = addRow("deleteAccount");
@@ -494,7 +496,9 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
             switch (holder.getItemViewType()) {
                 case TYPE_HEADER: {
                     HeaderCell cell = (HeaderCell) holder.itemView;
-                    if (position == nagramHeaderRow) {
+                    if (position == backupHeaderRow) {
+                        cell.setText(getString(R.string.OEGeneralBackupHeader));
+                    } else if (position == nagramHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralNagramHeader));
                     } else if (position == experimentalHeaderRow) {
                         cell.setText(getString(R.string.Experimental));
@@ -582,7 +586,7 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
         @Override
         public int getItemViewType(int position) {
             if (position == nagramHeaderRow || position == googleHeaderRow
-                    || position == experimentalHeaderRow) {
+                    || position == experimentalHeaderRow || position == backupHeaderRow) {
                 return TYPE_HEADER;
             } else if (position == nagramDividerRow || position == experimentalDividerRow
                     || position == etgDividerRow) {

@@ -21,6 +21,8 @@
     <string name="OEGeneralFilterZalgo">تصفية نص «Zalgo»</string>
     <string name="OEGeneralFilterZalgoInfo">يزيل علامات التركيب المتراكمة التي تفسد تخطيط النص. مثال: %1$s</string>
     <string name="OEGeneralSpeedHeader">تسريع التنزيل</string>
+    <string name="OEGeneralNetworkSpeedHeader">الشبكة والتنزيلات</string>
+    <string name="OEGeneralBackupHeader">النسخ الاحتياطي</string>
     <string name="OEGeneralSpeedOff">إيقاف</string>
     <string name="OEGeneralSpeedFast">سريع</string>
     <string name="OEGeneralSpeedUltra">فائق</string>

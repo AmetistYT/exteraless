@@ -422,7 +422,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         dateOfForwardedMsgRow = addRow("dateOfForwardedMsg", "DateOfForwardedMsg");
         showTimeHintRow = addRow("showTimeHint", "ShowTimeHint");
         rememberAllRepliesRow = addRow("rememberAllBackMessages", "rememberAllBackMessages");
-        translateInSheetRow = addRow("translateInSheet");
+        translateInSheetRow = -1;
         chatMenuGroupRow = addRow("chatMenu");
         if (chatMenuExpanded) {
             chatMenuAdminsRow = addRow();

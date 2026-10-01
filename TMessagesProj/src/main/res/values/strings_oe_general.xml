@@ -30,6 +30,8 @@
 
     <!-- Download Speed Boost -->
     <string name="OEGeneralSpeedHeader">Download Speed Boost</string>
+    <string name="OEGeneralNetworkSpeedHeader">Network and downloads</string>
+    <string name="OEGeneralBackupHeader">Backup</string>
     <string name="OEGeneralSpeedOff">Off</string>
     <string name="OEGeneralSpeedFast">Fast</string>
     <string name="OEGeneralSpeedUltra">Ultra</string>

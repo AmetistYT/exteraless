@@ -45,6 +45,7 @@ public class SettingsHelper {
     private static final Map<String, String> SEARCH_TITLE_ALIASES = new HashMap<>();
     private static final Map<String, String> TRANSLATOR_ROWS = new HashMap<>();
     private static final Map<String, String> NAGRAM_ROWS = new HashMap<>();
+    private static final Map<String, String> MOVED_ROWS = new HashMap<>();
 
     static {
         SEARCH_TITLE_ALIASES.put("OEGeneral:lastfm", "OEGeneralLastFm");
@@ -56,6 +57,12 @@ public class SettingsHelper {
         SEARCH_TITLE_ALIASES.put("OEChats:disableGreeting", "OEChatsDisableGreetingSticker");
         SEARCH_TITLE_ALIASES.put("OEChats:hideKeyboardOnScroll", "HideKeyboardOnChatScroll");
         SEARCH_TITLE_ALIASES.put("OEChats:transcribeProvider", "PremiumPreviewVoiceToText");
+        SEARCH_TITLE_ALIASES.put("OEGeneral:translator", "TranslatorSettings");
+        SEARCH_TITLE_ALIASES.put("OEGeneral:translateInSheet", "OEChatsTranslateInSheet");
+        SEARCH_TITLE_ALIASES.put("OEGeneral:glyph", "OEGlyphTitle");
+        MOVED_ROWS.put("chats:translateInSheet", "general");
+        MOVED_ROWS.put("other:unlimitedPinnedDialogs", "general");
+        MOVED_ROWS.put("other:glyph", "general");
         TRANSLATOR_ROWS.put("translateButton", "showTranslate");
         TRANSLATOR_ROWS.put("translateChatButton", "TelegramUIAutoTranslate");
         TRANSLATOR_ROWS.put("translationProvider", "translationProvider");
@@ -144,7 +151,19 @@ public class SettingsHelper {
         BaseNekoSettingsActivity neko_fragment = null;
         BaseNekoXSettingsActivity nekox_fragment = null;
         OpenExteraAppNavigationActivity navigation_fragment = null;
-        final String screen = exteraless ? segments.get(1) : nagramScreen(segments.size() == 1 ? null : segments.get(1), row);
+        String screen = exteraless ? segments.get(1) : nagramScreen(segments.size() == 1 ? null : segments.get(1), row);
+        if (screen == null && segments.size() == 2 && segments.get(1).startsWith("exteraless_")) {
+            String base = segments.get(1).substring("exteraless_".length());
+            if (row != null && MOVED_ROWS.containsKey(base + ":" + row)) {
+                screen = base;
+            }
+        }
+        if (screen != null && row != null) {
+            String moved = MOVED_ROWS.get(screen + ":" + row);
+            if (moved != null) {
+                screen = moved;
+            }
+        }
         if (screen != null) {
             switch (screen) {
                 case "settings":
