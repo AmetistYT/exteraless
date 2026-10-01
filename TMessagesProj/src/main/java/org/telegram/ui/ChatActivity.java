@@ -50679,7 +50679,7 @@ public class ChatActivity extends BaseFragment implements
         if (parentFragment == null) {
             return false;
         }
-        if (parentFragment.isThreadChat() && !parentFragment.isTopic || parentFragment.isReport()) {
+        if (parentFragment.isThreadChat() && !parentFragment.isTopic || parentFragment.isReport() || UserObject.isReplyUser(parentFragment.getCurrentUser())) {
             return false;
         }
         return parentFragment.getChatMode() != ChatActivity.MODE_SEARCH && parentFragment.getChatMode() != ChatActivity.MODE_SAVED;
