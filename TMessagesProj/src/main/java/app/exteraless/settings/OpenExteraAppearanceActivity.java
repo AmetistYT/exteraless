@@ -78,7 +78,6 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private int appearanceHeaderRow;
     private int fabShapeRow;
     private int useSystemFontsRow;
-    private int useSystemEmojiRow;
     private int gooeyAvatarRow;
     private int customThemesRow;
     private int appearanceDividerRow;
@@ -223,7 +222,6 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         appearanceHeaderRow = addRow("appearanceHeader");
         fabShapeRow = addRow("fabShape");
         useSystemFontsRow = addRow("useSystemFonts");
-        useSystemEmojiRow = addRow("useSystemEmoji");
         // Material Design 3 — сворачиваемая группа, как у exteraGram
         // (AppearancePreferencesActivity: asExteraExpandableSwitch + пять asRoundCheckbox).
         // Прежние отдельные селекторы «стиль переключателей» и «стиль слайдеров»
@@ -798,9 +796,6 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             item = NekoConfig.typeface;
             restart = true;
             clearTypefaces = true;
-        } else if (position == useSystemEmojiRow) {
-            item = NekoConfig.useSystemEmoji;
-            rebuild = true;
         } else if (position == gooeyAvatarRow) {
             item = AppearanceConfig.gooeyAvatarAnimation;
         } else if (position == customThemesRow) {
@@ -960,8 +955,6 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                                 AppearanceConfig.INSTANCE.centerTitle(), true);
                     } else if (position == useSystemFontsRow) {
                         cell.setTextAndCheck(getString(R.string.OEAppearanceUseSystemFonts), NekoConfig.typeface.Bool(), true);
-                    } else if (position == useSystemEmojiRow) {
-                        cell.setTextAndCheck(getString(R.string.OEAppearanceUseSystemEmoji), NekoConfig.useSystemEmoji.Bool(), true);
                     } else if (position == gooeyAvatarRow) {
                         cell.setTextAndCheck(getString(R.string.OEAppearanceGooeyAvatar), AppearanceConfig.gooeyAvatarAnimation.Bool(), true);
                     } else if (position == customThemesRow) {
@@ -1109,7 +1102,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     } else if (position == iconPacksRow) {
                         cell.setTextAndValueAndIcon(getString(R.string.OEAppearanceIconPacks), getString(R.string.OEAppearanceIconPacksInfo), R.drawable.msg_sticker, true);
                     } else if (position == emojiSetsRow) {
-                        cell.setTextAndValueAndIcon(getString(R.string.EmojiSets), getString(R.string.OEAppearanceEmojiSetsInfo), R.drawable.msg_emoji_smiles, true);
+                        cell.setTextAndValueAndIcon(getString(R.string.EmojiSets), getString(NekoConfig.useSystemEmoji.Bool()
+                                ? R.string.OEAppearanceUseSystemEmoji : R.string.OEAppearanceEmojiSetsInfo), R.drawable.msg_emoji_smiles, true);
                     } else if (position == pillStackRow) {
                         cell.setTextAndValueAndIcon(getString(R.string.OEAppearancePillStack), getString(R.string.OEAppearancePillStackInfo), R.drawable.outline_header_search, false);
                     }
@@ -1393,6 +1387,9 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     public void onResume() {
         super.onResume();
         AndroidUtilities.runOnUIThread(this::invalidatePreviews);
+        if (listAdapter != null && emojiSetsRow >= 0) {
+            listAdapter.notifyItemChanged(emojiSetsRow);
+        }
     }
 
     @Override

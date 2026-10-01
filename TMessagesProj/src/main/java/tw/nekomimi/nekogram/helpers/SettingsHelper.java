@@ -159,7 +159,8 @@ public class SettingsHelper {
                     }
                     break;
                 case "appearance":
-                    fragment = neko_fragment = new OpenExteraAppearanceActivity();
+                    fragment = neko_fragment = "useSystemEmoji".equals(row)
+                            ? new NekoEmojiSettingsActivity() : new OpenExteraAppearanceActivity();
                     break;
                 case "chats":
                     fragment = neko_fragment = new OpenExteraChatsActivity();
@@ -216,7 +217,8 @@ public class SettingsHelper {
                     }
                     break;
                 case "exteraless_appearance":
-                    fragment = neko_fragment = new OpenExteraAppearanceActivity();
+                    fragment = neko_fragment = "useSystemEmoji".equals(row)
+                            ? new NekoEmojiSettingsActivity() : new OpenExteraAppearanceActivity();
                     break;
                 case "exteraless_chats":
                     fragment = neko_fragment = new OpenExteraChatsActivity();
@@ -368,6 +370,13 @@ public class SettingsHelper {
                         uid + entry.getKey(), title, e_title, f_title, drawable, open));
             }
         }
+
+        items.add(new SettingsSearchResult(29000, getString(R.string.OEAppearanceUseSystemEmoji), e_title,
+                getString(R.string.EmojiSets), R.drawable.msg_emoji_smiles, () -> {
+                    NekoEmojiSettingsActivity emoji = new NekoEmojiSettingsActivity();
+                    callback.presentFragment(emoji);
+                    AndroidUtilities.runOnUIThread(() -> emoji.scrollToRow("useSystemEmoji", null));
+                }));
 
         String n_title = getString(R.string.Language);
         for (BaseNekoXSettingsActivity fragment: fragments) {
