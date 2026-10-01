@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="OEChatsHideTimeOnStickers">إخفاء الوقت على الملصقات</string>
+    <string name="OEChatsStickerTime">الوقت على الملصقات</string>
+    <string name="OEChatsStickerTimeSide">على الجانب</string>
+    <string name="OEChatsStickerTimeHidden">مخفي</string>
     <string name="OEChatsReplies">الردود</string>
     <string name="OEChatsReplyColors">ألوان الخلفية</string>
     <string name="OEChatsReplyEmoji">الإيموجي</string>

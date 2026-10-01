@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Строки экрана «Chats» раздела exteraless. -->
 <resources>
-    <string name="OEChatsHideTimeOnStickers">Hide Time on Stickers</string>
+    <string name="OEChatsStickerTime">Time on Stickers</string>
+    <string name="OEChatsStickerTimeSide">On the Side</string>
+    <string name="OEChatsStickerTimeHidden">Hidden</string>
 
     <string name="OEChatsReplies">Replies</string>
     <string name="OEChatsReplyColors">Background Colors</string>

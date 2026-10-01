@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="OEChatsHideTimeOnStickers">隐藏贴纸上的时间</string>
+    <string name="OEChatsStickerTime">贴纸上的时间</string>
+    <string name="OEChatsStickerTimeSide">在侧边</string>
+    <string name="OEChatsStickerTimeHidden">隐藏</string>
     <string name="OEChatsReplies">回复</string>
     <string name="OEChatsReplyColors">背景颜色</string>
     <string name="OEChatsReplyEmoji">表情</string>

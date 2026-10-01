@@ -107,7 +107,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
 
     // Sticker Size
     private int stickerSizeRow;
-    private int hideTimeOnStickersRow;
+    private int stickerTimeRow;
     private int repliesGroupRow;
     private int replyColorsRow;
     private int replyEmojiRow;
@@ -325,7 +325,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         super.updateRows();
 
         stickerSizeRow = addRow("stickerSize");
-        hideTimeOnStickersRow = addRow("hideTimeOnStickers");
+        stickerTimeRow = addRow("stickerTime", "hideTimeOnStickers");
         repliesGroupRow = addRow("replies");
         if (repliesExpanded) {
             replyColorsRow = addRow();
@@ -1093,6 +1093,14 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 .setConfigBool(index == ChatsConfig.BOTTOM_BUTTON_HIDE);
     }
 
+    private CharSequence[] stickerTimeOptions() {
+        return new CharSequence[]{
+                getString(R.string.Default),
+                getString(R.string.OEChatsStickerTimeSide),
+                getString(R.string.OEChatsStickerTimeHidden)
+        };
+    }
+
     private CharSequence[] bottomButtonOptions() {
         return new CharSequence[]{
                 getString(R.string.Hide),
@@ -1428,6 +1436,15 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         } else if (position == doubleTapReactionRow) {
             DoubleTapCell.SetReactionCell.showSelectStatusDialog((DoubleTapCell.SetReactionCell) view, this);
             return;
+        } else if (position == stickerTimeRow) {
+            showOptions(view, stickerTimeOptions(), index -> {
+                ChatsConfig.setStickerTimeMode(index);
+                listAdapter.notifyItemChanged(position);
+                if (stickerSizeCell != null) {
+                    stickerSizeCell.invalidate();
+                }
+            });
+            return;
         } else if (position == bottomButtonRow) {
             showOptions(view, bottomButtonOptions(), index -> {
                 setBottomButton(index);
@@ -1539,8 +1556,6 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                     listAdapter.notifyItemInserted(inlineMathCurrencyRow);
                 }
             }
-        } else if (position == hideTimeOnStickersRow && stickerSizeCell != null) {
-            stickerSizeCell.invalidate();
         } else if (position == removeMessageTailRow) {
             // Пузырь рисуется закешированным drawable — без сброса эффекта не видно.
             // Обнуление и пересоздание — строго вместе: Theme.createChatResources
@@ -1692,7 +1707,6 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     }
 
     private ConfigItem configForRow(int position) {
-        if (position == hideTimeOnStickersRow) return NekoConfig.hideTimeForSticker;
         if (position == replyColorsRow) return ChatsConfig.replyColors;
         if (position == replyEmojiRow) return ChatsConfig.replyEmoji;
         if (position == replyBackgroundRow) return ChatsConfig.replyBackground;
@@ -2335,9 +2349,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         }
 
         private void bindCheck(TextCheckCell cell, int position) {
-            if (position == hideTimeOnStickersRow) {
-                cell.setTextAndCheck(getString(R.string.OEChatsHideTimeOnStickers), NekoConfig.hideTimeForSticker.Bool(), true);
-            } else if (position == adminShortcutsRow) {
+            if (position == adminShortcutsRow) {
                 cell.setTextAndCheck(getString(R.string.OEChatsAdminShortcuts), isQuickAdminShortcuts(), true);
             } else if (position == disableGreetingRow) {
                 cell.setTextAndCheck(getString(R.string.OEChatsDisableGreetingSticker), NekoConfig.dontSendGreetingSticker.Bool(), true);
@@ -2476,6 +2488,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             } else if (position == doubleTapOutgoingRow) {
                 cell.setTextAndValue(getString(R.string.DoubleTapOutgoing),
                         DoubleTap.doubleTapActionMap.get(NaConfig.INSTANCE.getDoubleTapActionOut().Int()), doubleTapReactionRow != -1);
+            } else if (position == stickerTimeRow) {
+                CharSequence[] options = stickerTimeOptions();
+                cell.setTextAndValue(getString(R.string.OEChatsStickerTime),
+                        options[clampIndex(ChatsConfig.stickerTimeMode(), options.length)], true);
             } else if (position == bottomButtonRow) {
                 CharSequence[] options = bottomButtonOptions();
                 cell.setTextAndValue(getString(R.string.OEChatsBottomButton),
@@ -2604,7 +2620,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
 
         private boolean isSettings(int position) {
             return position == doubleTapIncomingRow || position == doubleTapOutgoingRow
-                    || position == bottomButtonRow || position == cameraTypeRow
+                    || position == bottomButtonRow || position == cameraTypeRow || position == stickerTimeRow
                     || position == videoMessagesCameraRow || position == doubleTapSeekDurationRow
                     || position == videoPlayerDecoderRow
                     || position == searchHashtagChatRow || position == searchHashtagChannelRow

@@ -37,6 +37,30 @@ object ChatsConfig {
     @JvmField
     val stickerShape = addConfig("OEChatsStickerShape", ConfigItem.configTypeInt, 1)
 
+    @JvmField
+    val stickerTimeSide = addConfig("OEChatsStickerTimeSide", ConfigItem.configTypeBool, false)
+
+    const val STICKER_TIME_DEFAULT = 0
+    const val STICKER_TIME_SIDE = 1
+    const val STICKER_TIME_HIDDEN = 2
+
+    @JvmStatic
+    fun stickerTimeMode(): Int {
+        ensureLoaded()
+        return when {
+            NekoConfig.hideTimeForSticker.Bool() -> STICKER_TIME_HIDDEN
+            stickerTimeSide.Bool() -> STICKER_TIME_SIDE
+            else -> STICKER_TIME_DEFAULT
+        }
+    }
+
+    @JvmStatic
+    fun setStickerTimeMode(mode: Int) {
+        ensureLoaded()
+        NekoConfig.hideTimeForSticker.setConfigBool(mode == STICKER_TIME_HIDDEN)
+        stickerTimeSide.setConfigBool(mode == STICKER_TIME_SIDE)
+    }
+
     // ---- Ответы ----
 
     /** Цветной фон блока ответа. */

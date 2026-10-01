@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="OEChatsHideTimeOnStickers">Ocultar la hora en los stickers</string>
+    <string name="OEChatsStickerTime">Hora en los stickers</string>
+    <string name="OEChatsStickerTimeSide">Al lado</string>
+    <string name="OEChatsStickerTimeHidden">Oculta</string>
     <string name="OEChatsReplies">Respuestas</string>
     <string name="OEChatsReplyColors">Colores de fondo</string>
     <string name="OEChatsReplyEmoji">Emojis</string>
