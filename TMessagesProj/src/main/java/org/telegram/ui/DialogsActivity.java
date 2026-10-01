@@ -9112,8 +9112,22 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
     }
 
+    private float miniPlayerInset;
+    private int miniPlayerPadding;
+
+    public void setMiniPlayerInset(float inset, int padding) {
+        if (miniPlayerInset != inset) {
+            miniPlayerInset = inset;
+            updateFloatingButtonOffset();
+        }
+        if (miniPlayerPadding != padding) {
+            miniPlayerPadding = padding;
+            checkUi_chatListViewPaddingsBottom();
+        }
+    }
+
     private void updateFloatingButtonOffset() {
-        final float top = -navigationBarHeight - additionFloatingButtonOffset - additionalFloatingTranslation;
+        final float top = -navigationBarHeight - additionFloatingButtonOffset - Math.max(additionalFloatingTranslation, miniPlayerInset);
         final float baseTranslationY = top
             - floatingButtonPanOffset;
 
@@ -14735,7 +14749,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         } else if (communityId != 0) {
             return navigationBarHeight + dp(12 + 48 + 12);
         } else {
-            return navigationBarHeight + additionNavigationBarHeight + getListViewFloatingTabsPadding();
+            return navigationBarHeight + additionNavigationBarHeight + getListViewFloatingTabsPadding() + miniPlayerPadding;
         }
     }
 

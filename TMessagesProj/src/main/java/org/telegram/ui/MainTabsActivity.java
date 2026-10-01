@@ -172,6 +172,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     private boolean dropCallsFragmentAfterPageScroll;
 
     private UpdateLayoutWrapper updateLayoutWrapper;
+    private app.exteraless.player.PlayerMiniView miniPlayer;
     private FrameLayout tabsViewWrapper;
     private MainTabsLayout tabsView;
     private BlurredBackgroundDrawable tabsViewBackground;
@@ -258,7 +259,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             @Override
             public int getBottomOffset(int tag) {
                 // В M3 всегда 64
-                return navigationBarHeight + (NaConfig.INSTANCE.getHideBottomNavigationBar().Bool() ? 0 : dp(MainTabsUiHelper.getTabsFabOffsetDp()));
+                return navigationBarHeight + (NaConfig.INSTANCE.getHideBottomNavigationBar().Bool() ? 0 : dp(MainTabsUiHelper.getTabsFabOffsetDp())) + (miniPlayer != null ? (int) miniPlayer.getVisibleOffset() : 0);
             }
         };
 
@@ -333,6 +334,9 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     @Override
     public void onResume() {
         super.onResume();
+        if (miniPlayer != null) {
+            miniPlayer.update(true);
+        }
         blur3_updateColors();
         checkContactsTabBadge();
         checkUnreadCount(true);
@@ -458,6 +462,10 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         fadeView.setBackground(fadeDrawable);
 
         contentView.addView(fadeView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 0, Gravity.BOTTOM));
+
+        miniPlayer = new app.exteraless.player.PlayerMiniView(context, this, resourceProvider);
+        miniPlayer.setOffsetListener(this::onMiniPlayerOffsetChanged);
+        contentView.addView(miniPlayer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, app.exteraless.player.PlayerMiniView.HEIGHT_DP + 16, Gravity.BOTTOM));
 
         tabsViewWrapper = new FrameLayout(context);
         tabsViewWrapper.setOnClickListener(v -> {});
@@ -1253,7 +1261,27 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         fadeView.setVisibility(alpha > 0 ? View.VISIBLE : View.GONE);
     }
 
+    private void checkUi_miniPlayer() {
+        if (miniPlayer == null || updateLayoutWrapper == null) {
+            return;
+        }
+        final boolean hidden = NaConfig.INSTANCE.getHideBottomNavigationBar().Bool();
+        final int updateLayoutHeight = updateLayoutWrapper.isUpdateLayoutVisible() ? dp(UpdateLayoutWrapper.HEIGHT) : 0;
+        final int tabsHeight = hidden ? 0 : dp(MainTabsUiHelper.getTabsViewHeightDp());
+        final int gap = hidden || MainTabsUiHelper.isMaterial3NavigationBar() ? dp(12) : dp(4);
+        final float factor = hidden ? 1f : animatorTabsVisible.getFloatValue();
+        miniPlayer.setHostPosition(-(navigationBarHeight + updateLayoutHeight + tabsHeight + gap - dp(12)), factor);
+        onMiniPlayerOffsetChanged();
+    }
+
+    private void onMiniPlayerOffsetChanged() {
+        if (dialogsActivity != null && miniPlayer != null) {
+            dialogsActivity.setMiniPlayerInset(miniPlayer.getVisibleOffset(), miniPlayer.getTargetOffset());
+        }
+    }
+
     private void checkUi_tabsPosition() {
+        checkUi_miniPlayer();
         if (tabsView == null) return;
         if (NaConfig.INSTANCE.getHideBottomNavigationBar().Bool()) {
             tabsView.setVisibility(View.GONE);

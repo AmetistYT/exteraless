@@ -257,6 +257,30 @@ object AppearanceConfig {
         return newNavigationBarStyle.Bool()
     }
 
+    @JvmField
+    val md3Player =
+        addConfig("OEAppearanceMd3Player", ConfigItem.configTypeBool, true)
+
+    @JvmStatic
+    fun md3Player(): Boolean {
+        ensureLoaded()
+        return md3Player.Bool()
+    }
+
+    @JvmField
+    val md3MiniPlayer =
+        addConfig("OEAppearanceMd3MiniPlayer", ConfigItem.configTypeBool, true)
+
+    @JvmStatic
+    fun md3MiniPlayer(): Boolean {
+        ensureLoaded()
+        return md3MiniPlayer.Bool()
+    }
+
+    @JvmField
+    val lrclibAllowed =
+        addConfig("OEPlayerLrclibAllowed", ConfigItem.configTypeBool, false)
+
     /** Широкая нижняя панель как в Telegram iOS. Уступает M3-панели, если включены обе. */
     @JvmField
     val iosNavigationBarStyle =

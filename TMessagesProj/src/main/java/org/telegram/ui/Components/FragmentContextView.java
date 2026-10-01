@@ -773,9 +773,9 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                     if (messageObject.isMusic() || messageObject.isVoice()) {
                         final Activity activity = AndroidUtilities.findActivity(getContext());
                         if (activity instanceof LaunchActivity) {
-                            new AudioPlayerAlert(activity, resourcesProvider).show();
+                            app.exteraless.player.Md3Player.create(activity, resourcesProvider).show();
                         } else if (AndroidUtilities.isContextSafe(LaunchActivity.instance)) {
-                            new AudioPlayerAlert(LaunchActivity.instance, resourcesProvider).show();
+                            app.exteraless.player.Md3Player.create(LaunchActivity.instance, resourcesProvider).show();
                         }
                     } else {
                         long dialogId = 0;
@@ -1848,7 +1848,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             }
         }
         boolean wasVisible = visible;
-        if (messageObject == null || messageObject.getId() == 0 || messageObject.isVideo()) {
+        if (messageObject == null || messageObject.getId() == 0 || messageObject.isVideo() || app.exteraless.player.Md3Player.hidesContextPlayer(fragment, messageObject)) {
             lastMessageObject = null;
             boolean callAvailable = supportsCalls && VoIPService.getSharedInstance() != null && !VoIPService.getSharedInstance().isHangingUp() && VoIPService.getSharedInstance().getCallState() != VoIPService.STATE_WAITING_INCOMING && !GroupCallPip.isShowing();
             if (!isPlayingVoice() && !callAvailable && chatActivity != null && !GroupCallPip.isShowing()) {

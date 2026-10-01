@@ -114,6 +114,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private int md3ChatHeaderRow;
     private int md3NavBarRow;
     private int md3ListItemsRow;
+    private int md3PlayerRow;
+    private int md3MiniPlayerRow;
     private boolean md3Expanded;
     private int iosGroupRow;
     private int iosNavBarRow;
@@ -213,8 +215,11 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             md3ChatHeaderRow = addRow("md3ChatHeader");
             md3NavBarRow = addRow("md3NavBar");
             md3ListItemsRow = addRow("md3ListItems");
+            md3PlayerRow = addRow("md3Player");
+            md3MiniPlayerRow = addRow("md3MiniPlayer");
         } else {
             md3LoadingRow = md3SliderRow = md3SwitchRow = md3ChatHeaderRow = md3NavBarRow = md3ListItemsRow = -1;
+            md3PlayerRow = md3MiniPlayerRow = -1;
         }
         iosGroupRow = addRow("iosStyles");
         if (iosExpanded) {
@@ -295,7 +300,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
      *
      * rebuildAllFragmentViews(false, ...) намеренно пропускает последний фрагмент
      * стека — то есть ровно тот, который открыт. Свои строки поэтому обновляем
-     * сами: галочки внутри группы и счётчик «N/6» ставятся при привязке, а стиль
+     * сами: галочки внутри группы и счётчик «N/8» ставятся при привязке, а стиль
      * переключателей и слайдеров читается при отрисовке.
      */
     private void notifyRow(int row) {
@@ -583,6 +588,14 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             AppearanceConfig.m3ListItems.setConfigBool(!AppearanceConfig.m3ListItems.Bool());
             onM3ListItemsChanged();
             rebuildAllAndSelf(view, AppearanceConfig.m3ListItems.Bool());
+            return;
+        } else if (position == md3PlayerRow) {
+            AppearanceConfig.md3Player.setConfigBool(!AppearanceConfig.md3Player.Bool());
+            rebuildAllAndSelf(view, AppearanceConfig.md3Player.Bool());
+            return;
+        } else if (position == md3MiniPlayerRow) {
+            AppearanceConfig.md3MiniPlayer.setConfigBool(!AppearanceConfig.md3MiniPlayer.Bool());
+            rebuildAllAndSelf(view, AppearanceConfig.md3MiniPlayer.Bool());
             return;
         } else if (position == iosGroupRow) {
             iosExpanded = !iosExpanded;
@@ -934,7 +947,13 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                                 AppearanceConfig.newNavigationBarStyle.Bool(), true, true);
                     } else if (position == md3ListItemsRow) {
                         cell.setText(getString(R.string.OEAppearanceM3ListItems), "",
-                                AppearanceConfig.m3ListItems.Bool(), false, true);
+                                AppearanceConfig.m3ListItems.Bool(), true, true);
+                    } else if (position == md3PlayerRow) {
+                        cell.setText(getString(R.string.OEAppearanceMd3Player), "",
+                                AppearanceConfig.md3Player.Bool(), true, true);
+                    } else if (position == md3MiniPlayerRow) {
+                        cell.setText(getString(R.string.OEAppearanceMd3MiniPlayer), "",
+                                AppearanceConfig.md3MiniPlayer.Bool(), false, true);
                     } else if (position == iosNavBarRow) {
                         cell.setText(getString(R.string.OEAppearanceIosNavigationBarStyle), "",
                                 AppearanceConfig.iosNavigationBarStyle.Bool(), true, true);
@@ -1061,6 +1080,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             } else if (position == md3LoadingRow || position == md3SliderRow
                     || position == md3SwitchRow || position == md3ChatHeaderRow
                     || position == md3NavBarRow || position == md3ListItemsRow
+                    || position == md3PlayerRow || position == md3MiniPlayerRow
                     || position == iosNavBarRow || position == iosChatHeaderRow) {
                 return TYPE_ROUND_CHECK;
             } else if (position == dividerStyleRow || position == glassOutlineRow
@@ -1072,8 +1092,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         }
     }
 
-    /** Сколько стилей MD3 включено. Счётчик «N/6» рядом с шевроном. */
-    private static final int MD3_STYLE_COUNT = 6;
+    /** Сколько стилей MD3 включено. Счётчик «N/8» рядом с шевроном. */
+    private static final int MD3_STYLE_COUNT = 8;
     /** Значение селектора NagramX, соответствующее Material Design 3. */
     private static final int STYLE_MD3 = 2;
 
@@ -1089,6 +1109,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         if (AppearanceConfig.newChatHeaderStyle.Bool()) n++;
         if (AppearanceConfig.newNavigationBarStyle.Bool()) n++;
         if (AppearanceConfig.m3ListItems.Bool()) n++;
+        if (AppearanceConfig.md3Player.Bool()) n++;
+        if (AppearanceConfig.md3MiniPlayer.Bool()) n++;
         return n;
     }
 
@@ -1143,6 +1165,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         AppearanceConfig.newChatHeaderStyle.setConfigBool(enable);
         AppearanceConfig.newNavigationBarStyle.setConfigBool(enable);
         AppearanceConfig.m3ListItems.setConfigBool(enable);
+        AppearanceConfig.md3Player.setConfigBool(enable);
+        AppearanceConfig.md3MiniPlayer.setConfigBool(enable);
         onM3ListItemsChanged();
         if (enable) {
             AppearanceConfig.iosNavigationBarStyle.setConfigBool(false);
@@ -1153,7 +1177,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         if (avatarCornersPreviewCell != null) {
             avatarCornersPreviewCell.invalidate();
         }
-        // Перезапуск не нужен: все шесть стилей читаются при отрисовке или при создании вьюх.
+        // Перезапуск не нужен: все восемь стилей читаются при отрисовке или при создании вьюх.
         rebuildAll();
         rebuildRowsAndNotify();
     }
