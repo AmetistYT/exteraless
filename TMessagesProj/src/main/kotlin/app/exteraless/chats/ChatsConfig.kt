@@ -205,6 +205,24 @@ object ChatsConfig {
     @JvmField
     val translateInSheet = addConfig("OEChatsTranslateInSheet", ConfigItem.configTypeBool, false)
 
+    @JvmField
+    val stripTrackingOnOpen = addConfig("OEChatsStripTrackingOnOpen", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val stripTrackingOnPaste = addConfig("OEChatsStripTrackingOnPaste", ConfigItem.configTypeBool, true)
+
+    @JvmStatic
+    fun stripTrackingOnOpen(): Boolean {
+        ensureLoaded()
+        return stripTrackingOnOpen.Bool()
+    }
+
+    @JvmStatic
+    fun stripTrackingOnPaste(): Boolean {
+        ensureLoaded()
+        return stripTrackingOnPaste.Bool()
+    }
+
     // ---- Камера (расширенные) ----
 
     /** Запоминать последнюю использованную камеру (только UI). */

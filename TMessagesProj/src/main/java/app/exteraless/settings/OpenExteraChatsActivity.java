@@ -19,10 +19,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
+import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
@@ -32,6 +34,7 @@ import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextCheckCell2;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.SeekBarView;
@@ -50,6 +53,7 @@ import app.exteraless.chats.StickerShapeCell;
 import app.exteraless.chats.TextStyleDialog;
 import app.exteraless.chats.WideChannelPostsPreviewCell;
 import app.exteraless.icons.BaseIconPacks;
+import app.exteraless.links.LinkCleaner;
 import kotlin.Unit;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.config.ConfigItem;
@@ -104,6 +108,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private boolean premiumElementsExpanded;
     private boolean deleteMenuExpanded;
     private boolean askWhenExpanded;
+    private boolean stripTrackingExpanded;
 
     // Sticker Size
     private int stickerSizeRow;
@@ -260,6 +265,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int askBeforeCallRow;
     private int repeatConfirmRow;
     private int disableClickCommandToSendRow;
+    private int stripTrackingGroupRow;
+    private int stripTrackingOpenRow;
+    private int stripTrackingPasteRow;
+    private int trackingFilterRow;
     private int linkConfirmationsDividerRow;
 
     private int channelPostsHeaderRow;
@@ -534,6 +543,14 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         } else {
             confirmAVMessageRow = askBeforeCallRow = repeatConfirmRow = disableClickCommandToSendRow = -1;
         }
+        stripTrackingGroupRow = addRow("stripTracking");
+        if (stripTrackingExpanded) {
+            stripTrackingOpenRow = addRow();
+            stripTrackingPasteRow = addRow();
+        } else {
+            stripTrackingOpenRow = stripTrackingPasteRow = -1;
+        }
+        trackingFilterRow = addRow("trackingFilter");
         linkConfirmationsDividerRow = addRow();
 
         channelPostsHeaderRow = addRow("channelPostsHeader");
@@ -1018,6 +1035,57 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         reloadList();
     }
 
+    private static ConfigItem[] stripTrackingItems() {
+        return new ConfigItem[]{ChatsConfig.stripTrackingOnOpen, ChatsConfig.stripTrackingOnPaste};
+    }
+
+    private void toggleAllStripTracking() {
+        ConfigItem[] items = stripTrackingItems();
+        setAll(items, selectedCount(items) == 0);
+        reloadList();
+        LinkCleaner.preloadIfEnabled();
+    }
+
+    private void showTrackingFilterOptions(View view) {
+        boolean override = LinkCleaner.isUsingOverride();
+        CharSequence[] options = override
+                ? new CharSequence[]{getString(R.string.OEChatsTrackingFilterUpdate), getString(R.string.OEChatsTrackingFilterRevert)}
+                : new CharSequence[]{getString(R.string.OEChatsTrackingFilterUpdate)};
+        showOptions(view, options, index -> {
+            if (index == 0) {
+                updateTrackingFilter();
+            } else {
+                Utilities.globalQueue.postRunnable(() -> {
+                    LinkCleaner.resetToBundled();
+                    AndroidUtilities.runOnUIThread(this::onTrackingFilterChanged);
+                });
+            }
+        });
+    }
+
+    private void updateTrackingFilter() {
+        Utilities.globalQueue.postRunnable(() -> {
+            int result;
+            try {
+                result = LinkCleaner.fetchLatest() ? R.string.OEChatsTrackingFilterUpdated : R.string.OEChatsTrackingFilterLatest;
+            } catch (Exception e) {
+                FileLog.e(e);
+                result = R.string.OEChatsTrackingFilterFailed;
+            }
+            final int text = result;
+            AndroidUtilities.runOnUIThread(() -> {
+                onTrackingFilterChanged();
+                BulletinFactory.of(this).createSimpleBulletin(text == R.string.OEChatsTrackingFilterFailed ? R.raw.error : R.raw.done, getString(text)).show();
+            });
+        });
+    }
+
+    private void onTrackingFilterChanged() {
+        if (listAdapter != null && trackingFilterRow >= 0) {
+            listAdapter.notifyItemChanged(trackingFilterRow);
+        }
+    }
+
     // ---- Настройки, которые лежат не в ConfigItem ----
 
     /** «Быстрый свайп-переход» — это ключи NekoConfig.disableSwipeToNext*, только наоборот. */
@@ -1419,6 +1487,13 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             askWhenExpanded = !askWhenExpanded;
             reloadList();
             return;
+        } else if (position == stripTrackingGroupRow) {
+            stripTrackingExpanded = !stripTrackingExpanded;
+            reloadList();
+            return;
+        } else if (position == trackingFilterRow) {
+            showTrackingFilterOptions(view);
+            return;
         }
 
         if (groupHeaderFor(position) != -1) {
@@ -1608,6 +1683,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 stickerSizeCell.invalidate();
             }
             rebuildChats();
+        } else if (header == stripTrackingGroupRow) {
+            LinkCleaner.preloadIfEnabled();
         }
     }
 
@@ -1670,6 +1747,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         } else if (position == confirmAVMessageRow || position == askBeforeCallRow
                 || position == repeatConfirmRow || position == disableClickCommandToSendRow) {
             return askWhenGroupRow;
+        } else if (position == stripTrackingOpenRow || position == stripTrackingPasteRow) {
+            return stripTrackingGroupRow;
         }
         return -1;
     }
@@ -1818,6 +1897,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == fixLinkPreviewRow) return NaConfig.INSTANCE.getFixLinkPreview();
         if (position == disableLinkPreviewRow) return NekoConfig.disableLinkPreviewByDefault;
         if (position == confirmAVMessageRow) return NekoConfig.confirmAVMessage;
+        if (position == stripTrackingOpenRow) return ChatsConfig.stripTrackingOnOpen;
+        if (position == stripTrackingPasteRow) return ChatsConfig.stripTrackingOnPaste;
         if (position == askBeforeCallRow) return NekoConfig.askBeforeCall;
         if (position == repeatConfirmRow) return NekoConfig.repeatConfirm;
         if (position == disableClickCommandToSendRow) return NaConfig.INSTANCE.getDisableClickCommandToSend();
@@ -2167,6 +2248,12 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndCheck(getString(R.string.OEChatsAskWhen), selected > 0, askWhenExpanded);
                 cell.setCollapseArrow(ratio(selected, items.length), !askWhenExpanded, sameGroup(cell, R.string.OEChatsAskWhen),
                         OpenExteraChatsActivity.this::toggleAllAskWhen);
+            } else if (position == stripTrackingGroupRow) {
+                ConfigItem[] items = stripTrackingItems();
+                int selected = selectedCount(items);
+                cell.setTextAndCheck(getString(R.string.OEChatsStripTracking), selected > 0, stripTrackingExpanded);
+                cell.setCollapseArrow(ratio(selected, items.length), !stripTrackingExpanded, sameGroup(cell, R.string.OEChatsStripTracking),
+                        OpenExteraChatsActivity.this::toggleAllStripTracking);
             }
         }
 
@@ -2341,6 +2428,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setText(getString(R.string.OEChatsAskWhenRepeating), "", NekoConfig.repeatConfirm.Bool(), true, true);
             } else if (position == disableClickCommandToSendRow) {
                 cell.setText(getString(R.string.OEChatsAskWhenBotCommands), "", NaConfig.INSTANCE.getDisableClickCommandToSend().Bool(), false, true);
+            } else if (position == stripTrackingOpenRow) {
+                cell.setText(getString(R.string.OEChatsStripTrackingOnOpen), "", ChatsConfig.stripTrackingOnOpen.Bool(), true, true);
+            } else if (position == stripTrackingPasteRow) {
+                cell.setText(getString(R.string.OEChatsStripTrackingOnPaste), "", ChatsConfig.stripTrackingOnPaste.Bool(), false, true);
             }
             cell.setPad(1);
             // По умолчанию ячейка этого типа красит текст серым; вложенные пункты
@@ -2482,6 +2573,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         private void bindSettings(TextSettingsCell cell, int position) {
             if (position == textStyleRow) {
                 cell.setText(getString(R.string.TextStyle), false);
+            } else if (position == trackingFilterRow) {
+                String updated = LinkCleaner.lastUpdated();
+                cell.setTextAndValue(getString(R.string.OEChatsTrackingFilter),
+                        updated == null ? "AdGuard" : LocaleController.formatString(R.string.OEChatsTrackingFilterValue, updated), false);
             } else if (position == doubleTapIncomingRow) {
                 cell.setTextAndValue(getString(R.string.DoubleTapIncoming),
                         DoubleTap.doubleTapActionMap.get(NaConfig.INSTANCE.getDoubleTapAction().Int()), true);
@@ -2548,6 +2643,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setText(getString(R.string.OEChatsHideSendAsPeerInfo));
             } else if (position == stickersDividerRow) {
                 cell.setText(getString(R.string.OEChatsHideReactionsInfo));
+            } else if (position == linkConfirmationsDividerRow) {
+                cell.setText(getString(R.string.OEChatsStripTrackingInfo));
             } else if (position == messagesDividerRow) {
                 cell.setText(getString(R.string.OEChatsGlassMessageMenuInfo));
             } else if (position == channelPostsDividerRow) {
@@ -2615,7 +2712,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                     || position == mediaViewerMenuGroupRow || position == actionBarButtonsGroupRow
                     || position == extendedSettingsGroupRow || position == pauseGroupRow
                     || position == premiumElementsGroupRow || position == deleteMenuGroupRow
-                    || position == askWhenGroupRow;
+                    || position == askWhenGroupRow || position == stripTrackingGroupRow;
         }
 
         private boolean isSettings(int position) {
@@ -2627,7 +2724,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                     || position == openLinkConfirmationRow || position == transcribeProviderRow
                     || position == cloudflareCredentialsRow || position == geminiApiKeyRow
                     || position == openAiCredentialsRow || position == voskModelsRow
-                    || position == textStyleRow;
+                    || position == textStyleRow || position == trackingFilterRow;
         }
     }
 }

@@ -132,6 +132,17 @@
     <string name="OEChatsAskWhenCalling">Звонке</string>
     <string name="OEChatsAskWhenRepeating">Повторе сообщений</string>
     <string name="OEChatsAskWhenBotCommands">Отправке команд ботам</string>
+    <string name="OEChatsStripTracking">Убирать трекинг из ссылок</string>
+    <string name="OEChatsStripTrackingOnOpen">При открытии ссылок</string>
+    <string name="OEChatsStripTrackingOnPaste">При вставке ссылок</string>
+    <string name="OEChatsStripTrackingInfo">Убирает из ссылок метки слежки вроде utm_source и fbclid по фильтру AdGuard URL Tracking.</string>
+    <string name="OEChatsTrackingFilter">Фильтр трекинга</string>
+    <string name="OEChatsTrackingFilterValue">AdGuard, %1$s</string>
+    <string name="OEChatsTrackingFilterUpdate">Обновить фильтр</string>
+    <string name="OEChatsTrackingFilterRevert">Вернуть встроенный фильтр</string>
+    <string name="OEChatsTrackingFilterUpdated">Фильтр обновлён</string>
+    <string name="OEChatsTrackingFilterLatest">Фильтр уже свежий</string>
+    <string name="OEChatsTrackingFilterFailed">Не удалось обновить фильтр</string>
     <string name="OEChatsHdrPhotos">HDR-фото</string>
     <string name="OEChatsHdrPhotosInfo">Показывать HDR-фото в полной яркости. Выключите, если фото темнеют.</string>
     <string name="SendLockedCustomEmojiAsSticker">Премиум-эмодзи как стикеры</string>

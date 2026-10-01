@@ -122,6 +122,17 @@
     <string name="OEChatsAskWhenCalling">拨打电话</string>
     <string name="OEChatsAskWhenRepeating">复读消息</string>
     <string name="OEChatsAskWhenBotCommands">发送机器人指令</string>
+    <string name="OEChatsStripTracking">移除链接中的跟踪参数</string>
+    <string name="OEChatsStripTrackingOnOpen">打开链接时</string>
+    <string name="OEChatsStripTrackingOnPaste">粘贴链接时</string>
+    <string name="OEChatsStripTrackingInfo">使用 AdGuard URL Tracking 过滤器移除链接中的 utm_source、fbclid 等跟踪参数。</string>
+    <string name="OEChatsTrackingFilter">跟踪过滤器</string>
+    <string name="OEChatsTrackingFilterValue">AdGuard，%1$s</string>
+    <string name="OEChatsTrackingFilterUpdate">更新过滤器</string>
+    <string name="OEChatsTrackingFilterRevert">使用内置过滤器</string>
+    <string name="OEChatsTrackingFilterUpdated">过滤器已更新</string>
+    <string name="OEChatsTrackingFilterLatest">过滤器已是最新</string>
+    <string name="OEChatsTrackingFilterFailed">无法更新过滤器</string>
     <string name="OEChatsHdrPhotos">HDR 照片</string>
     <string name="OEChatsHdrPhotosInfo">以完整亮度显示 HDR 照片。若照片发暗，请关闭。</string>
     <string name="OEChatsTranslateInSheet">Telegram 翻译窗口</string>

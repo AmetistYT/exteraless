@@ -1796,7 +1796,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                             } else if ((text.startsWith("http://") || text.startsWith("https://")) && !TextUtils.isEmpty(subject)) {
                                 text = subject + "\n" + text;
                             }
-                            sendingText = text;
+                            sendingText = app.exteraless.links.LinkCleaner.cleanString(text);
                         } else if (!TextUtils.isEmpty(subject)) {
                             sendingText = subject;
                         }

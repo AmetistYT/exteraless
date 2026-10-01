@@ -134,6 +134,17 @@
     <string name="OEChatsAskWhenCalling">Calling</string>
     <string name="OEChatsAskWhenRepeating">Repeating messages</string>
     <string name="OEChatsAskWhenBotCommands">Sending bot commands</string>
+    <string name="OEChatsStripTracking">Remove tracking from links</string>
+    <string name="OEChatsStripTrackingOnOpen">When opening links</string>
+    <string name="OEChatsStripTrackingOnPaste">When pasting links</string>
+    <string name="OEChatsStripTrackingInfo">Removes tracking parameters such as utm_source and fbclid from links using the AdGuard URL Tracking filter.</string>
+    <string name="OEChatsTrackingFilter">Tracking filter</string>
+    <string name="OEChatsTrackingFilterValue">AdGuard, %1$s</string>
+    <string name="OEChatsTrackingFilterUpdate">Update filter</string>
+    <string name="OEChatsTrackingFilterRevert">Use built-in filter</string>
+    <string name="OEChatsTrackingFilterUpdated">Filter updated</string>
+    <string name="OEChatsTrackingFilterLatest">Filter is already up to date</string>
+    <string name="OEChatsTrackingFilterFailed">Couldn\'t update the filter</string>
     <string name="OEChatsHdrPhotos">HDR photos</string>
     <string name="OEChatsHdrPhotosInfo">Show HDR photos at full brightness. Turn this off if photos look dark.</string>
     <string name="SendLockedCustomEmojiAsSticker">Premium Emoji as Stickers</string>

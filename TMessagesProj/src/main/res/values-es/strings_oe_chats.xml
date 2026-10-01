@@ -122,6 +122,17 @@
     <string name="OEChatsAskWhenCalling">Llamar</string>
     <string name="OEChatsAskWhenRepeating">Repetir mensajes</string>
     <string name="OEChatsAskWhenBotCommands">Enviar comandos de bots</string>
+    <string name="OEChatsStripTracking">Quitar el rastreo de los enlaces</string>
+    <string name="OEChatsStripTrackingOnOpen">Al abrir enlaces</string>
+    <string name="OEChatsStripTrackingOnPaste">Al pegar enlaces</string>
+    <string name="OEChatsStripTrackingInfo">Quita de los enlaces parámetros de rastreo como utm_source y fbclid con el filtro AdGuard URL Tracking.</string>
+    <string name="OEChatsTrackingFilter">Filtro de rastreo</string>
+    <string name="OEChatsTrackingFilterValue">AdGuard, %1$s</string>
+    <string name="OEChatsTrackingFilterUpdate">Actualizar filtro</string>
+    <string name="OEChatsTrackingFilterRevert">Usar el filtro integrado</string>
+    <string name="OEChatsTrackingFilterUpdated">Filtro actualizado</string>
+    <string name="OEChatsTrackingFilterLatest">El filtro ya está actualizado</string>
+    <string name="OEChatsTrackingFilterFailed">No se pudo actualizar el filtro</string>
     <string name="OEChatsHdrPhotos">Fotos HDR</string>
     <string name="OEChatsHdrPhotosInfo">Muestra las fotos HDR con brillo completo. Desactívalo si las fotos se ven oscuras.</string>
     <string name="OEChatsTranslateInSheet">Ventana de traducción de Telegram</string>

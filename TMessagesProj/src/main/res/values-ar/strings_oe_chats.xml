@@ -124,6 +124,17 @@
     <string name="OEChatsAskWhenCalling">الاتصال</string>
     <string name="OEChatsAskWhenRepeating">تكرار الرسائل</string>
     <string name="OEChatsAskWhenBotCommands">إرسال أوامر البوت</string>
+    <string name="OEChatsStripTracking">إزالة التتبع من الروابط</string>
+    <string name="OEChatsStripTrackingOnOpen">عند فتح الروابط</string>
+    <string name="OEChatsStripTrackingOnPaste">عند لصق الروابط</string>
+    <string name="OEChatsStripTrackingInfo">يزيل من الروابط معلمات التتبع مثل utm_source و fbclid باستخدام مرشح AdGuard URL Tracking.</string>
+    <string name="OEChatsTrackingFilter">مرشح التتبع</string>
+    <string name="OEChatsTrackingFilterValue">AdGuard، %1$s</string>
+    <string name="OEChatsTrackingFilterUpdate">تحديث المرشح</string>
+    <string name="OEChatsTrackingFilterRevert">استخدام المرشح المدمج</string>
+    <string name="OEChatsTrackingFilterUpdated">تم تحديث المرشح</string>
+    <string name="OEChatsTrackingFilterLatest">المرشح محدَّث بالفعل</string>
+    <string name="OEChatsTrackingFilterFailed">تعذّر تحديث المرشح</string>
     <string name="OEChatsHdrPhotos">صور HDR</string>
     <string name="OEChatsHdrPhotosInfo">عرض صور HDR بكامل السطوع. أوقف هذا الخيار إذا بدت الصور داكنة.</string>
     <string name="SendLockedCustomEmojiAsSticker">إيموجي Premium كملصقات</string>
