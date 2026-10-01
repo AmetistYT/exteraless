@@ -18,7 +18,7 @@
     <string name="OEPlayerFindLyrics">Buscar en línea</string>
     <string name="OEPlayerLyricsSearching">Buscando la letra…</string>
     <string name="OEPlayerLyricsNotFound">Letra no encontrada</string>
-    <string name="OEPlayerLyricsNotFoundText">Ni LRCLIB ni lrcmux tienen la letra de esta canción.</string>
+    <string name="OEPlayerLyricsNotFoundText">Ninguno de los proveedores devolvió la letra de esta canción.</string>
     <string name="OEPlayerLyricsError">No se pudo cargar la letra</string>
     <string name="OEPlayerLyricsErrorText">Comprueba la conexión e inténtalo de nuevo.</string>
     <string name="OEPlayerRetry">Reintentar</string>

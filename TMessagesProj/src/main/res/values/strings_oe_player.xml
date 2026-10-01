@@ -18,7 +18,7 @@
     <string name="OEPlayerFindLyrics">Search online</string>
     <string name="OEPlayerLyricsSearching">Searching for lyrics…</string>
     <string name="OEPlayerLyricsNotFound">Lyrics not found</string>
-    <string name="OEPlayerLyricsNotFoundText">Neither LRCLIB nor lrcmux has lyrics for this track.</string>
+    <string name="OEPlayerLyricsNotFoundText">None of the providers returned lyrics for this track.</string>
     <string name="OEPlayerLyricsError">Couldn\'t load lyrics</string>
     <string name="OEPlayerLyricsErrorText">Check your connection and try again.</string>
     <string name="OEPlayerRetry">Try again</string>

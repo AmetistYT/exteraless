@@ -18,7 +18,7 @@
     <string name="OEPlayerFindLyrics">Szukaj w sieci</string>
     <string name="OEPlayerLyricsSearching">Szukanie tekstu…</string>
     <string name="OEPlayerLyricsNotFound">Nie znaleziono tekstu</string>
-    <string name="OEPlayerLyricsNotFoundText">Ani LRCLIB, ani lrcmux nie mają tekstu tego utworu.</string>
+    <string name="OEPlayerLyricsNotFoundText">Żaden z dostawców nie zwrócił tekstu tego utworu.</string>
     <string name="OEPlayerLyricsError">Nie udało się wczytać tekstu</string>
     <string name="OEPlayerLyricsErrorText">Sprawdź połączenie i spróbuj ponownie.</string>
     <string name="OEPlayerRetry">Ponów</string>

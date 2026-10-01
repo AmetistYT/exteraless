@@ -18,7 +18,7 @@
     <string name="OEPlayerFindLyrics">البحث عبر الإنترنت</string>
     <string name="OEPlayerLyricsSearching">جارٍ البحث عن الكلمات…</string>
     <string name="OEPlayerLyricsNotFound">لم يُعثر على الكلمات</string>
-    <string name="OEPlayerLyricsNotFoundText">لا توجد كلمات لهذا المقطع في LRCLIB ولا في lrcmux.</string>
+    <string name="OEPlayerLyricsNotFoundText">لم يُرجع أيٌّ من المزوّدين كلمات لهذا المقطع.</string>
     <string name="OEPlayerLyricsError">تعذّر تحميل الكلمات</string>
     <string name="OEPlayerLyricsErrorText">تحقق من الاتصال وحاول مرة أخرى.</string>
     <string name="OEPlayerRetry">إعادة المحاولة</string>
