@@ -97,15 +97,19 @@ public class AyuSavePreferences {
                 return !fromUser.bot || NaConfig.INSTANCE.getSaveDeletedMessageForBotUser().Bool();
             } else {
                 final MessagesStorage messagesStorage = MessagesStorage.getInstance(accountId);
-                final CountDownLatch countDownLatch = new CountDownLatch(1);
                 final TLRPC.User[] user = {null};
-                messagesStorage.getStorageQueue().postRunnable(() -> {
+                if (Thread.currentThread() == messagesStorage.getStorageQueue()) {
                     user[0] = messagesStorage.getUser(userId);
-                    countDownLatch.countDown();
-                });
-                try {
-                    countDownLatch.await();
-                } catch (Exception ignored) {
+                } else {
+                    final CountDownLatch countDownLatch = new CountDownLatch(1);
+                    messagesStorage.getStorageQueue().postRunnable(() -> {
+                        user[0] = messagesStorage.getUser(userId);
+                        countDownLatch.countDown();
+                    });
+                    try {
+                        countDownLatch.await();
+                    } catch (Exception ignored) {
+                    }
                 }
                 if (user[0] != null) {
                     return !user[0].bot || NaConfig.INSTANCE.getSaveDeletedMessageForBotUser().Bool();
