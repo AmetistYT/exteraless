@@ -459,6 +459,7 @@ public final class XposedHooks {
      */
     static PyResult callPython(String pluginId, PyObject callable,
                                XC_MethodHook.MethodHookParam param, HookStats stats) {
+        app.exteraless.plugins.PythonThreadState.onCall();
         PluginsWatchdog watchdog = watchdog();
         final boolean profiling = HookStats.enabled && stats != null;
         final boolean main = profiling && HookStats.isMainThread();

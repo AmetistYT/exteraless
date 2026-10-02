@@ -1,3 +1,4 @@
+import _thread
 import ast
 import builtins
 import contextlib
@@ -5,6 +6,7 @@ import importlib.util
 import json
 import re
 import sys
+import threading
 import types
 from pathlib import Path
 
@@ -240,6 +242,24 @@ def test_bind_hook_skips_sides_left_to_method_hook(sdk):
         assert json.loads(profile.snapshot())['hooks']['7'][0] == 1
     finally:
         profile.stop()
+
+
+def test_thread_state_pin_keeps_only_foreign_thread_states(sdk, monkeypatch):
+    state = load_module(monkeypatch, 'extera_utils.thread_state')
+    assert state.pin() is True
+    assert state._ensure is None
+
+    results = []
+    done = threading.Event()
+
+    def foreign():
+        results.append(state.pin())
+        done.set()
+
+    _thread.start_new_thread(foreign, ())
+    assert done.wait(5)
+    assert results == [True]
+    assert callable(state._ensure)
 
 
 def test_first_sdk_import_and_permission_lookup_do_not_reenter(loader, monkeypatch, tmp_path):

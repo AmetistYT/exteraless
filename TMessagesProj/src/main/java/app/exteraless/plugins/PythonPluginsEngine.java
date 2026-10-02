@@ -8,6 +8,7 @@ import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 
+import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 import org.telegram.ui.Components.UItem;
 
@@ -118,6 +119,7 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
                 Python.getInstance().getModule("sys").callAttr("setswitchinterval", 0.001);
                 loader = Python.getInstance().getModule("extera_utils.plugin_loader");
                 started = true;
+                AndroidUtilities.runOnUIThread(PythonThreadState::pinCurrentThread);
                 // Dev-сервер (порт 42690) — только в developer mode; реализован в plugin_loader.
                 if (PluginsController.getInstance().isDeveloperMode()) {
                     try {
