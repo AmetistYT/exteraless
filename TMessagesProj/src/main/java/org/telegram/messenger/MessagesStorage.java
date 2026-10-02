@@ -19268,7 +19268,10 @@ public class MessagesStorage extends BaseController {
         if (value == -1) {
             value = 0;
             if (dialogId < 0) {
-                TLRPC.Chat chat = getChat(-dialogId);
+                TLRPC.Chat chat = getMessagesController().getChat(-dialogId);
+                if (chat == null) {
+                    chat = getChat(-dialogId);
+                }
                 if (chat != null && chat.forum) {
                     value |= FORUM_TYPE_CHAT;
                     if (chat.forum_tabs) {
@@ -19279,7 +19282,10 @@ public class MessagesStorage extends BaseController {
                     value |= FORUM_TYPE_DIRECT;
                 }
             } else {
-                TLRPC.User user = getUser(dialogId);
+                TLRPC.User user = getMessagesController().getUser(dialogId);
+                if (user == null) {
+                    user = getUser(dialogId);
+                }
                 if (user != null && user.bot_forum_view) {
                     value |= FORUM_TYPE_BOT;
                 }
