@@ -2148,6 +2148,10 @@ public class MessageObject {
     }
 
     protected void checkBigAnimatedEmoji() {
+        checkBigAnimatedEmoji(true);
+    }
+
+    private void checkBigAnimatedEmoji(boolean generate) {
         emojiAnimatedSticker = null;
         emojiAnimatedStickerId = null;
         if (emojiOnlyCount == 1 && !(getMedia(messageOwner) instanceof TLRPC.TL_messageMediaWebPage) && !(getMedia(messageOwner) instanceof TLRPC.TL_messageMediaInvoice) && (getMedia(messageOwner) instanceof TLRPC.TL_messageMediaEmpty || getMedia(messageOwner) == null) && this.messageOwner.grouped_id == 0) {
@@ -2193,7 +2197,9 @@ public class MessageObject {
             }
         }
         if (emojiAnimatedSticker == null && emojiAnimatedStickerId == null) {
-            generateLayout(null);
+            if (generate) {
+                generateLayout(null);
+            }
         } else if (isSticker()) {
             type = TYPE_STICKER;
         } else if (isAnimatedSticker()) {
@@ -7032,7 +7038,7 @@ public class MessageObject {
                 replaceEmojiToLottieFrame(messageText, emojiOnly);
             }
             checkEmojiOnly(emojiOnly);
-            checkBigAnimatedEmoji();
+            checkBigAnimatedEmoji(false);
             setType();
             generateLayout(fromUser);
             if (caption != null) {
