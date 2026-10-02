@@ -10,6 +10,13 @@ package com.exteragram.messenger.plugins;
  */
 public abstract class PluginsController {
 
+    public final java.util.Map<String, PythonPluginsEngine> engines = new java.util.AbstractMap<String, PythonPluginsEngine>() {
+        @Override
+        public java.util.Set<Entry<String, PythonPluginsEngine>> entrySet() {
+            return new java.util.HashMap<String, PythonPluginsEngine>(getEngines()).entrySet();
+        }
+    };
+
     public static PluginsController getInstance() {
         return app.exteraless.plugins.PluginsController.getInstance();
     }
