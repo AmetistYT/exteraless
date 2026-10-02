@@ -214,6 +214,34 @@ def test_base_hook_built_from_callbacks_exposes_hook_methods(sdk):
     assert hook.before_hooked_method('x') is None
 
 
+def test_bind_hook_skips_sides_left_to_method_hook(sdk):
+    seen = []
+
+    class AfterOnly(sdk.base.MethodHook):
+        def after_hooked_method(self, param):
+            seen.append(param.result)
+
+    hook = AfterOnly()
+    assert sdk.base.bind_hook(hook, 'before_hooked_method') is None
+    after = sdk.base.bind_hook(hook, 'after_hooked_method', 7)
+    after(types.SimpleNamespace(getResult=lambda: 'r'))
+    assert seen == ['r']
+
+    functional = sdk.base.BaseHook(before=lambda param: seen.append('before'))
+    sdk.base.bind_hook(functional, 'before_hooked_method')(object())
+    assert seen[-1] == 'before'
+    assert sdk.base.bind_hook(functional, 'after_hooked_method') is None
+    assert sdk.base.bind_hook(sdk.base.MethodReplacement(), 'replace_hooked_method') is not None
+
+    profile = sys.modules['extera_utils.hook_profile']
+    profile.start()
+    try:
+        after(types.SimpleNamespace(getResult=lambda: 'p'))
+        assert json.loads(profile.snapshot())['hooks']['7'][0] == 1
+    finally:
+        profile.stop()
+
+
 def test_first_sdk_import_and_permission_lookup_do_not_reenter(loader, monkeypatch, tmp_path):
     native = types.ModuleType('app.exteraless.plugins')
     permissions, imports = [], []

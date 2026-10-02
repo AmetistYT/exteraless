@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import app.exteraless.plugins.Plugin;
 import app.exteraless.plugins.PluginsController;
+import app.exteraless.plugins.xposed.HookStats;
 
 public final class JankProfiler {
 
@@ -236,12 +237,14 @@ public final class JankProfiler {
         };
         ((Application) ApplicationLoader.applicationContext).registerActivityLifecycleCallbacks(lifecycleCallbacks);
         attachWindow(activity.getWindow());
+        HookStats.start();
         Looper.getMainLooper().setMessageLogging(printer);
         new Thread(this::sample, "JankProfiler").start();
     }
 
     private void finish(Utilities.Callback<File> onReady) {
         Looper.getMainLooper().setMessageLogging(null);
+        HookStats.stop();
         ((Application) ApplicationLoader.applicationContext).unregisterActivityLifecycleCallbacks(lifecycleCallbacks);
         for (Window window : new ArrayList<>(windows)) {
             detachWindow(window);
@@ -573,6 +576,12 @@ public final class JankProfiler {
         for (Map.Entry<String, SlowStats> entry : slowScreens) {
             out.append("  ").append(entry.getKey()).append(": ").append(entry.getValue().count)
                     .append(" messages, ").append(entry.getValue().ns / 1_000_000).append(" ms\n");
+        }
+
+        try {
+            HookStats.appendReport(out);
+        } catch (Throwable t) {
+            FileLog.e(t);
         }
 
         appendTop(out, "top self frames (all code)", selfAll);

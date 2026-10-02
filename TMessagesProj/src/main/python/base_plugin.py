@@ -289,9 +289,25 @@ class HookParam:
         return f"HookParam({object.__getattribute__(self, '_param')!r})"
 
 
-def dispatch_hook(handler, attr, param):
-    """Entry point for the Java hook bridge: calls *handler.attr(param)*."""
-    return getattr(handler, attr)(HookParam(param))
+def bind_hook(handler, attr, stat_id=-1):
+    fn = getattr(handler, attr, None)
+    if fn is None or not callable(fn):
+        return None
+    base = getattr(MethodHook, attr, None)
+    if base is not None and getattr(fn, "__func__", None) is base:
+        return None
+    profile = _internal("hook_profile")
+
+    def call(param):
+        if not profile.active:
+            return fn(HookParam(param))
+        start = profile.clock()
+        try:
+            return fn(HookParam(param))
+        finally:
+            profile.record(stat_id, profile.clock() - start)
+
+    return call
 
 
 def _filter_value(value):
