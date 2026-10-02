@@ -22385,6 +22385,7 @@ public class ChatActivity extends BaseFragment implements
                 getMediaDataController().loadReplyMessagesForMessages(messArr, dialog_id, chatMode, 0, null, classGuid, null);
             }
             int approximateHeightSum = 0;
+            final boolean measureApproximateHeight = load_type == 2 && first_unread_id != 0;
             if (!chatWasReset && (load_type == 2 || load_type == 1) && messArr.isEmpty() && !isCache) {
                 forwardEndReached[0] = true;
             }
@@ -22554,7 +22555,7 @@ public class ChatActivity extends BaseFragment implements
                         }
                     }
                 }
-                if (approximateHeightSum <= AndroidUtilities.displaySize.y / 2) {
+                if (measureApproximateHeight && approximateHeightSum <= AndroidUtilities.displaySize.y / 2) {
                     approximateHeightSum += getHeightForMessage(obj, false);
                 }
                 if (currentUser != null) {
