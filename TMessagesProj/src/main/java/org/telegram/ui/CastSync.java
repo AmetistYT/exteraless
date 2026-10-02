@@ -26,6 +26,7 @@ import org.telegram.messenger.MediaController;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.BaseFragment;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,6 +46,17 @@ public class CastSync {
 
     private static volatile CastContext sharedCastContext;
     private static boolean castContextRequested;
+    private static final ArrayList<Utilities.Callback<CastContext>> castContextCallbacks = new ArrayList<>();
+
+    public static void getCastContext(Utilities.Callback<CastContext> callback) {
+        final CastContext castContext = castContext();
+        if (castContext != null) {
+            callback.run(castContext);
+            return;
+        }
+        castContextCallbacks.add(callback);
+        requestCastContext();
+    }
 
     private static CastContext castContext() {
         if (sharedCastContext == null && Looper.myLooper() == Looper.getMainLooper()) {
@@ -66,13 +78,20 @@ public class CastSync {
                 .addOnSuccessListener(result -> {
                     sharedCastContext = result;
                     check(type);
+                    final ArrayList<Utilities.Callback<CastContext>> callbacks = new ArrayList<>(castContextCallbacks);
+                    castContextCallbacks.clear();
+                    for (Utilities.Callback<CastContext> callback : callbacks) {
+                        callback.run(result);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     castContextRequested = false;
+                    castContextCallbacks.clear();
                     FileLog.e(e);
                 });
         } catch (Exception e) {
             castContextRequested = false;
+            castContextCallbacks.clear();
             FileLog.e(e);
         }
     }

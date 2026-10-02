@@ -154,7 +154,6 @@ import androidx.media3.common.text.CueGroup;
 import org.telegram.ui.AspectRatioFrameLayout;
 import androidx.media3.exoplayer.video.VideoFrameMetadataListener;
 import androidx.media3.common.VideoSize;
-import com.google.android.gms.cast.framework.CastContext;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
@@ -6060,20 +6059,22 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 }
             }
         };
-        boolean castAvailable = true;
-        try {
-            castItemButton.setRouteSelector(CastContext.getSharedInstance(activityContext).getMergedSelector());
-        } catch (Exception e) {
-            FileLog.e(e);
-            castAvailable = false;
-        }
         castItemButton.setVisibility(View.INVISIBLE);
-        if (castAvailable) {
-            castItem = videoItem.addSubItem(gallery_menu_chromecast, R.drawable.menu_video_chromecast, getString(R.string.VideoPlayerChromecast));
-            castItem.setEnabledByColor(false, 0xFFFFFFFF, 0xFF73B4EC);
-            castItem.setSelectorColor(0x0fffffff);
-            castItem.addView(castItemButton, 0, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
-        }
+        castItem = videoItem.addSubItem(gallery_menu_chromecast, R.drawable.menu_video_chromecast, getString(R.string.VideoPlayerChromecast));
+        castItem.setEnabledByColor(false, 0xFFFFFFFF, 0xFF73B4EC);
+        castItem.setSelectorColor(0x0fffffff);
+        castItem.addView(castItemButton, 0, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        videoItem.hideSubItem(gallery_menu_chromecast);
+        final ActionBarMenuItem castMenuItem = videoItem;
+        final CastMediaRouteButton castRouteButton = castItemButton;
+        CastSync.getCastContext(castContext -> {
+            try {
+                castRouteButton.setRouteSelector(castContext.getMergedSelector());
+                castMenuItem.showSubItem(gallery_menu_chromecast);
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        });
 
         chooseSubtitlesLayout = new ChooseSubtitlesLayout(activityContext, videoItem.getPopupLayout().getSwipeBack(), new ChooseSubtitlesLayout.Callback() {
             @Override
