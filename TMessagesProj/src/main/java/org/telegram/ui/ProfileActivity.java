@@ -9402,6 +9402,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             checkCanSendStoryForPosting();
         } else if (id == NotificationCenter.updateInterfaces) {
             int mask = (Integer) args[0];
+            if (isPaused()) {
+                pendingInterfaceUpdateMask |= mask;
+                return;
+            }
             boolean infoChanged = (mask & MessagesController.UPDATE_MASK_AVATAR) != 0 || (mask & MessagesController.UPDATE_MASK_NAME) != 0 || (mask & MessagesController.UPDATE_MASK_STATUS) != 0 || (mask & MessagesController.UPDATE_MASK_EMOJI_STATUS) != 0;
             if (userId != 0) {
                 if (infoChanged) {
@@ -9916,9 +9920,22 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
     }
 
+    private int pendingInterfaceUpdateMask;
+
     @Override
     public void onResume() {
         super.onResume();
+        if (pendingInterfaceUpdateMask != 0) {
+            final int mask = pendingInterfaceUpdateMask;
+            pendingInterfaceUpdateMask = 0;
+            if (chatId != 0) {
+                if ((mask & MessagesController.UPDATE_MASK_CHAT) != 0) {
+                    updateListAnimated(true);
+                } else if ((mask & (MessagesController.UPDATE_MASK_CHAT_AVATAR | MessagesController.UPDATE_MASK_CHAT_NAME | MessagesController.UPDATE_MASK_CHAT_MEMBERS | MessagesController.UPDATE_MASK_STATUS | MessagesController.UPDATE_MASK_EMOJI_STATUS)) != 0) {
+                    updateOnlineCount(false);
+                }
+            }
+        }
         if (sharedMediaLayout != null) {
             sharedMediaLayout.onResume();
         }
