@@ -3252,6 +3252,10 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         return false;
     }
 
+    public void invalidateLastDrawnState() {
+        updateHelper.lastDrawnDialogId = 0;
+    }
+
     public void animateArchiveAvatar() {
         if (avatarDrawable.getAvatarType() != AvatarDrawable.AVATAR_TYPE_ARCHIVED) {
             return;

@@ -491,6 +491,25 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
+        public void updateListAfterChat(long dialogId) {
+            AndroidUtilities.cancelRunOnUIThread(updateListRunnable);
+            if (!dialogsItemAnimator.isRunning()) {
+                listView.setItemAnimator(null);
+            }
+            updateListRunnable.run();
+            final int position = dialogsAdapter.findDialogPosition(dialogId);
+            if (position < 0) {
+                return;
+            }
+            for (int i = 0; i < listView.getChildCount(); i++) {
+                final View child = listView.getChildAt(i);
+                if (child instanceof DialogCell && ((DialogCell) child).getDialogId() == dialogId) {
+                    ((DialogCell) child).invalidateLastDrawnState();
+                }
+            }
+            dialogsAdapter.notifyItemChanged(position);
+        }
+
         public void updateList(boolean animated) {
             if (isPaused) {
                 return;
@@ -7253,8 +7272,14 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             blurredView.setBackground(null);
         }
         if (viewPages != null) {
+            final BaseFragment lastFragment = parentLayout != null ? parentLayout.getLastFragment() : null;
+            final long returnedDialogId = lastFragment instanceof ChatActivity ? ((ChatActivity) lastFragment).getDialogId() : 0;
             for (int a = 0; a < viewPages.length; a++) {
-                viewPages[a].dialogsAdapter.notifyDataSetChanged();
+                if (returnedDialogId != 0 && viewPages[a].getVisibility() == View.VISIBLE) {
+                    viewPages[a].updateListAfterChat(returnedDialogId);
+                } else {
+                    viewPages[a].dialogsAdapter.notifyDataSetChanged();
+                }
             }
         }
         if (commentView != null) {
