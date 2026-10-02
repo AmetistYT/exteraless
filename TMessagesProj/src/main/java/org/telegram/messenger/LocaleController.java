@@ -62,6 +62,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
 
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.shamsicalendar.PersianDate;
@@ -433,6 +434,7 @@ public class LocaleController {
 
 
     private static HashMap<Integer, String> resourcesCacheMap = new HashMap<>();
+    private static final ConcurrentHashMap<String, Integer> stringResIds = new ConcurrentHashMap<>();
 
     private HashMap<String, PluralRules> allRules = new HashMap<>();
 
@@ -1511,7 +1513,7 @@ public class LocaleController {
     public static String getServerString(String key) {
         String value = getInstance().localeValues.get(key);
         if (value == null) {
-            int resourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(key, "string", ApplicationLoader.applicationContext.getPackageName());
+            int resourceId = getStringResId(key);
             if (resourceId != 0) {
                 value = ApplicationLoader.applicationContext.getString(resourceId);
             }
@@ -1559,7 +1561,16 @@ public class LocaleController {
     }
 
     public static int getStringResId(String key) {
-        return ApplicationLoader.applicationContext.getResources().getIdentifier(key, "string", ApplicationLoader.applicationContext.getPackageName());
+        if (key == null) {
+            return 0;
+        }
+        Integer cached = stringResIds.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        int resourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(key, "string", ApplicationLoader.applicationContext.getPackageName());
+        stringResIds.put(key, resourceId);
+        return resourceId;
     }
 
     public static String nullable(String val) {
@@ -1573,8 +1584,8 @@ public class LocaleController {
         }
         String param = getInstance().stringForQuantity(getInstance().currentPluralRules.quantityForNumber(plural));
         param = key + "_" + param;
-        int resourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(param, "string", ApplicationLoader.applicationContext.getPackageName());
-        int fallbackResourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(key + "_other", "string", ApplicationLoader.applicationContext.getPackageName());
+        int resourceId = getStringResId(param);
+        int fallbackResourceId = getStringResId(key + "_other");
         return getString(param, key + "_other", resourceId, fallbackResourceId);
     }
 
@@ -1584,8 +1595,8 @@ public class LocaleController {
         }
         String param = getInstance().stringForQuantity(getInstance().currentPluralRules.quantityForNumber(plural));
         param = key + "_" + param;
-        int resourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(param, "string", ApplicationLoader.applicationContext.getPackageName());
-        int fallbackResourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(key + "_other", "string", ApplicationLoader.applicationContext.getPackageName());
+        int resourceId = getStringResId(param);
+        int fallbackResourceId = getStringResId(key + "_other");
         Object[] argsWithPlural = new Object[args.length + 1];
         argsWithPlural[0] = plural;
         System.arraycopy(args, 0, argsWithPlural, 1, args.length);
@@ -1598,8 +1609,8 @@ public class LocaleController {
         }
         String param = getInstance().stringForQuantity(getInstance().currentPluralRules.quantityForNumber(plural));
         param = key + "_" + param;
-        int resourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(param, "string", ApplicationLoader.applicationContext.getPackageName());
-        int fallbackResourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(key + "_other", "string", ApplicationLoader.applicationContext.getPackageName());
+        int resourceId = getStringResId(param);
+        int fallbackResourceId = getStringResId(key + "_other");
         Object[] argsWithPlural = new Object[args.length + 1];
         argsWithPlural[0] = plural;
         System.arraycopy(args, 0, argsWithPlural, 1, args.length);
@@ -1660,12 +1671,12 @@ public class LocaleController {
             }
             if (value == null) {
                 try {
-                    int resourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(param, "string", ApplicationLoader.applicationContext.getPackageName());
+                    int resourceId = getStringResId(param);
                     value = ApplicationLoader.applicationContext.getString(resourceId);
                 } catch (Exception e2) {}
             }
             if (value == null) {
-                int resourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(key + "_other", "string", ApplicationLoader.applicationContext.getPackageName());
+                int resourceId = getStringResId(key + "_other");
                 value = ApplicationLoader.applicationContext.getString(resourceId);
             }
             value = value.replace("%d", "%1$s");

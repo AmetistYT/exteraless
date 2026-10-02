@@ -9698,7 +9698,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 updateProfileData(false);
             }
         } else if (id == NotificationCenter.updateSearchSettings) {
-            if (searchAdapter != null) {
+            if (searchAdapter != null && searchAdapter.searchArray != null) {
                 searchAdapter.searchArray = searchAdapter.onCreateSearchArray(ProfileActivity.this);
                 searchAdapter.recentSearches.clear();
                 searchAdapter.updateSearchArray();
@@ -13258,6 +13258,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
     private Animator searchExpandTransition(boolean enter) {
         if (enter) {
+            searchAdapter.ensureSearchArray();
             AndroidUtilities.requestAdjustResize(getParentActivity(), classGuid);
             AndroidUtilities.setAdjustResizeToNothing(getParentActivity(), classGuid);
         }
@@ -15197,6 +15198,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             this.fragment = fragment;
             this.currentAccount = fragment.getCurrentAccount();
             mContext = context;
+        }
+
+        private void ensureSearchArray() {
+            if (searchArray != null) {
+                return;
+            }
             searchArray = onCreateSearchArray(fragment);
             updateSearchArray();
         }
@@ -15802,6 +15809,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
 
         public void search(String text) {
+            ensureSearchArray();
             lastSearchString = text;
             if (searchRunnable != null) {
                 Utilities.searchQueue.cancelRunnable(searchRunnable);
