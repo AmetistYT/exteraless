@@ -257,7 +257,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -19249,24 +19248,32 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             } else if (currentMessageObject.messageOwner.post) {
                 currentChat = messagesController.getChat(currentMessageObject.messageOwner.peer_id.channel_id);
             }
-            if (currentUser == null && currentMessageObject.isAyuDeleted()) {
-                long userId = currentMessageObject.messageOwner.from_id.user_id;
-                final MessagesStorage messagesStorage = MessagesStorage.getInstance(currentAccount);
-                final CountDownLatch countDownLatch = new CountDownLatch(1);
-                messagesStorage.getStorageQueue().postRunnable(() -> {
-                    currentUser = messagesStorage.getUser(userId);
-                    countDownLatch.countDown();
-                });
-                try {
-                    countDownLatch.await();
-                } catch (Exception e) {
-                    FileLog.e(e);
-                }
-                if (currentUser != null) {
-                    messagesController.putUser(currentUser, true);
-                }
+            if (currentUser == null && currentMessageObject.isAyuDeleted() && currentMessageObject.messageOwner.from_id != null) {
+                loadDeletedMessageAuthor(currentMessageObject, currentMessageObject.messageOwner.from_id.user_id);
             }
         }
+    }
+
+    private static final HashSet<Long> deletedAuthorRequests = new HashSet<>();
+
+    private void loadDeletedMessageAuthor(MessageObject messageObject, long userId) {
+        final int account = currentAccount;
+        if (userId == 0 || !deletedAuthorRequests.add(userId * UserConfig.MAX_ACCOUNT_COUNT + account)) {
+            return;
+        }
+        final MessagesStorage messagesStorage = MessagesStorage.getInstance(account);
+        messagesStorage.getStorageQueue().postRunnable(() -> {
+            final TLRPC.User user = messagesStorage.getUser(userId);
+            if (user == null) {
+                return;
+            }
+            AndroidUtilities.runOnUIThread(() -> {
+                MessagesController.getInstance(account).putUser(user, true);
+                if (currentMessageObject == messageObject) {
+                    forceResetMessageObject();
+                }
+            });
+        });
     }
 
     private void setMessageObjectInternal(MessageObject messageObject) {
