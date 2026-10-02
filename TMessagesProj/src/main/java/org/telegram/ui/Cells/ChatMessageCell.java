@@ -1888,6 +1888,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     private int lastRepliesCount;
     private float selectedBackgroundProgress;
     private boolean lastTranslated;
+    private boolean lastOwnerTranslated;
 
     public float viewTop;
     public int backgroundHeight;
@@ -1902,6 +1903,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     public final TransitionParams transitionParams = new TransitionParams();
     private boolean edited;
     private boolean ayuDeleted;
+    private boolean lastAyuDeleted;
     private boolean imageDrawn;
     private boolean photoImageOutOfBounds;
 
@@ -6993,13 +6995,15 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             messageChanged = true;
         }
         boolean transChanged = false;
-        if (lastTranslated != messageObject.messageOwner.translated) {
-            lastTranslated = messageObject.messageOwner.translated;
+        if (lastOwnerTranslated != messageObject.messageOwner.translated) {
+            lastOwnerTranslated = messageObject.messageOwner.translated;
             transChanged = true;
         }
 
         ayuDeleted = messageObject.isAyuDeleted();
-        if (messageChanged || dataChanged || groupChanged || pollChanged || widthChanged && messageObject.isPoll() || isPhotoDataChanged(messageObject) || pinnedBottom != bottomNear || pinnedTop != topNear || transChanged || bookmarkChanged || ayuDeleted) {
+        final boolean ayuDeletedChanged = ayuDeleted != lastAyuDeleted;
+        lastAyuDeleted = ayuDeleted;
+        if (messageChanged || dataChanged || groupChanged || pollChanged || widthChanged && messageObject.isPoll() || isPhotoDataChanged(messageObject) || pinnedBottom != bottomNear || pinnedTop != topNear || transChanged || bookmarkChanged || ayuDeletedChanged) {
             postRunnableHolder.clear();
 
             if (stickerSetIcons != null) {
