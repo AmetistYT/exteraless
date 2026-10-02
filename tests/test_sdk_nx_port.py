@@ -1204,3 +1204,97 @@ def test_sdk_keeps_stock_java_attribute_lookup(loader, monkeypatch):
     with pytest.raises(AttributeError):
         obj.pluginsDir
     assert getattr(obj, 'enabled', None) is None
+
+
+def _fake_reflecting_root(loader, members):
+    reflected = []
+
+    class Root:
+        def __getattribute__(self, name):
+            cls = type(self)
+            if not (name[:2] == '__' or name in cls.__dict__):
+                reflected.append(name)
+                member = members.get(name)
+                if member is not None:
+                    type.__setattr__(cls, name, member)
+            return object.__getattribute__(self, name)
+
+        def __setattr__(self, name, value):
+            cls = type(self)
+            if not (name[:2] == '__' or name in cls.__dict__):
+                reflected.append(name)
+            object.__setattr__(self, name, value)
+
+    type.__setattr__(Root, '__getattr__', loader._java_getattr(None))
+    type.__setattr__(Root, '__setattr__', loader._java_setattr(Root.__dict__['__setattr__']))
+    return Root, reflected
+
+
+def test_proxy_instance_attribute_is_reflected_once(loader, monkeypatch):
+    monkeypatch.setattr(loader, '_direct_plugin_caller', lambda: None)
+    root, reflected = _fake_reflecting_root(loader, {})
+
+    class Listener(root):
+        def run(self):
+            self.calls += 1
+
+    listener = Listener()
+    listener.calls = 0
+    for _ in range(5):
+        listener.run()
+    assert listener.calls == 5
+    assert reflected.count('calls') == 1
+    assert Listener().__dict__ == {}
+    with pytest.raises(AttributeError):
+        Listener().calls
+
+
+def test_missing_java_attribute_is_reflected_once(loader, monkeypatch):
+    monkeypatch.setattr(loader, '_direct_plugin_caller', lambda: None)
+    root, reflected = _fake_reflecting_root(loader, {})
+
+    class View(root):
+        pass
+
+    view = View()
+    for _ in range(3):
+        assert getattr(view, 'missing', None) is None
+        assert not hasattr(view, 'missing')
+    assert reflected.count('missing') == 1
+    with pytest.raises(AttributeError):
+        View.missing
+    assert getattr(view, '__missing__', None) is None
+    assert '__missing__' not in View.__dict__
+    assert View.mro()[0] is View
+
+
+def test_absent_marker_yields_to_later_class_attributes(loader, monkeypatch):
+    monkeypatch.setattr(loader, '_direct_plugin_caller', lambda: None)
+    root, reflected = _fake_reflecting_root(loader, {})
+
+    class View(root):
+        pass
+
+    view = View()
+    assert getattr(view, 'helper', None) is None
+    type.__setattr__(root, 'helper', lambda self: 'patched')
+    assert view.helper() == 'patched'
+    assert View.helper(view) == 'patched'
+
+
+def test_getter_fields_survive_absent_markers(loader, monkeypatch):
+    monkeypatch.setattr(loader, '_direct_plugin_caller', lambda: 'some_plugin')
+    members = {'getText': _JavaMethodStub(lambda self: 'hello')}
+    root, reflected = _fake_reflecting_root(loader, members)
+
+    class TextView(root):
+        pass
+
+    view = TextView()
+    for _ in range(3):
+        assert view.text == 'hello'
+        assert getattr(view, 'hint', None) is None
+    assert reflected.count('text') == 1
+    assert reflected.count('getText') == 1
+    assert reflected.count('getHint') == 1
+    assert reflected.count('isHint') == 1

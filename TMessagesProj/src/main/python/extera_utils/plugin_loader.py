@@ -1444,12 +1444,61 @@ def _is_python_method(value) -> bool:
     return isinstance(value, types.MethodType) and isinstance(value.__func__, types.FunctionType)
 
 
+_TYPE_ATTRS = frozenset(dir(type))
+_NOT_FOUND = object()
+
+
+def _bind_class_value(value, obj, owner):
+    getter = getattr(type(value), "__get__", None)
+    return value if getter is None else getter(value, obj, owner)
+
+
+class _AbsentJavaMember:
+    __slots__ = ("name",)
+
+    def __init__(self, name):
+        self.name = name
+
+    def __get__(self, obj, owner=None):
+        if owner is None:
+            owner = type(obj)
+        for klass in owner.__mro__:
+            value = klass.__dict__.get(self.name, _NOT_FOUND)
+            if value is not _NOT_FOUND and not isinstance(value, _AbsentJavaMember):
+                return _bind_class_value(value, obj, owner)
+        if obj is not None:
+            raise AttributeError(f"'{owner.__name__}' object has no attribute '{self.name}'",
+                                 name=self.name, obj=obj)
+        for klass in type(owner).__mro__:
+            value = klass.__dict__.get(self.name, _NOT_FOUND)
+            if value is not _NOT_FOUND:
+                return _bind_class_value(value, owner, type(owner))
+        raise AttributeError(f"type object '{owner.__name__}' has no attribute '{self.name}'",
+                             name=self.name, obj=owner)
+
+
+def _note_absent_java_member(cls, name):
+    if name[:2] == "__" or name.startswith("_chaquopy") or name in _TYPE_ATTRS:
+        return
+    try:
+        if isinstance(cls.__dict__.get(name), _AbsentJavaMember):
+            return
+        for klass in cls.__mro__:
+            value = klass.__dict__.get(name, _NOT_FOUND)
+            if value is not _NOT_FOUND and not isinstance(value, _AbsentJavaMember):
+                return
+        type.__setattr__(cls, name, _AbsentJavaMember(name))
+    except Exception:
+        pass
+
+
 def _java_getter_value(obj, name):
     lookup = type(obj).__getattribute__
     for candidate in _getter_candidates(name):
         try:
             method = lookup(obj, candidate)
         except AttributeError:
+            _note_absent_java_member(type(obj), candidate)
             continue
         if _is_python_method(method):
             continue
@@ -1471,6 +1520,7 @@ def _java_getattr(original):
                 return original(self, name)
             except AttributeError:
                 pass
+        _note_absent_java_member(type(self), name)
         if name[:1].isalpha() and _direct_plugin_caller() is not None:
             value = _java_getter_value(self, name)
             if value is not _NO_GETTER:
@@ -1478,6 +1528,18 @@ def _java_getattr(original):
         return type(self).__getattribute__(self, name)
 
     return __getattr__
+
+
+def _java_setattr(original):
+    def __setattr__(self, name, value):
+        original(self, name, value)
+        try:
+            if name in object.__getattribute__(self, "__dict__"):
+                _note_absent_java_member(type(self), name)
+        except Exception:
+            pass
+
+    return __setattr__
 
 
 _java_getters_installed = False
@@ -1495,6 +1557,12 @@ def _install_java_getters() -> None:
         _set_class_attr(root, "__getattr__", _java_getattr(original))
     except Exception as e:
         print(f"[exteraless:plugin_loader] java getters failed: {e}", file=sys.stderr)
+        return
+    try:
+        proxy = jclass("com.chaquo.python.PyProxy")
+        _set_class_attr(proxy, "__setattr__", _java_setattr(root.__setattr__))
+    except Exception as e:
+        print(f"[exteraless:plugin_loader] proxy attribute cache failed: {e}", file=sys.stderr)
 
 
 def _install_jclass_guard() -> None:
