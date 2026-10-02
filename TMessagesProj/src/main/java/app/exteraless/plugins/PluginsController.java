@@ -251,19 +251,20 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
      * Ключ на плагин, а не общий список: плагины удаляются и ставятся заново, и
      * общий список пришлось бы чистить от исчезнувших id вручную.
      */
-    public boolean isPluginPinned(String id) {
-        return id != null && preferences != null
-                && preferences.getBoolean("plugin_pinned_" + id, false);
+    public static boolean isPluginPinned(String id) {
+        SharedPreferences prefs = getInstance().preferences;
+        return id != null && prefs != null && prefs.getBoolean("plugin_pinned_" + id, false);
     }
 
-    public void setPluginPinned(String id, boolean pinned) {
-        if (id == null || preferences == null) {
+    public static void setPluginPinned(String id, boolean pinned) {
+        SharedPreferences prefs = getInstance().preferences;
+        if (id == null || prefs == null) {
             return;
         }
         if (pinned) {
-            preferences.edit().putBoolean("plugin_pinned_" + id, true).apply();
+            prefs.edit().putBoolean("plugin_pinned_" + id, true).apply();
         } else {
-            preferences.edit().remove("plugin_pinned_" + id).apply();
+            prefs.edit().remove("plugin_pinned_" + id).apply();
         }
     }
 
@@ -1075,6 +1076,17 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         app.exteraless.plugins.xposed.XposedHooks.addPluginUnhook(pluginId, unhook);
     }
 
+    @Override
+    public void addXposedHooks(String pluginId,
+                               java.util.ArrayList<de.robv.android.xposed.XC_MethodHook.Unhook> unhooks) {
+        if (unhooks == null) {
+            return;
+        }
+        for (de.robv.android.xposed.XC_MethodHook.Unhook unhook : unhooks) {
+            addXposedHook(pluginId, unhook);
+        }
+    }
+
     public void removeXposedHook(String pluginId, de.robv.android.xposed.XC_MethodHook.Unhook unhook) {
         app.exteraless.plugins.xposed.XposedHooks.removePluginUnhook(pluginId, unhook);
     }
@@ -1583,6 +1595,21 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void unregisterPluginHooks(String pluginId) {
+        removeHooksByPluginId(pluginId);
+        synchronized (menuItems) {
+            menuItems.removeIf(item -> item.pluginId.equals(pluginId));
+        }
+        // Подсистемы с собственными реестрами.
+        app.exteraless.plugins.files.FilesControllerJava.unregisterAllForPlugin(pluginId);
+        app.exteraless.plugins.intents.IntentsDispatcher.unregisterAllForPlugin(pluginId);
+        app.exteraless.plugins.utils.ClassProxyFactory.releaseAllForPlugin(pluginId);
+    }
+
+    @Override
+    public void removeHooksByPluginId(String pluginId) {
+        if (pluginId == null) {
+            return;
+        }
         sendMessageHooks.remove(pluginId);
         hookPriorities.keySet().removeIf(k -> k.endsWith('\u0001' + pluginId));
         synchronized (requestHooks) {
@@ -1598,14 +1625,23 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             dropPluginFrom(updatesContainerHooks, pluginId);
         }
         invalidateHookTargets();
-        synchronized (menuItems) {
-            menuItems.removeIf(item -> item.pluginId.equals(pluginId));
-        }
-        // Подсистемы с собственными реестрами.
         app.exteraless.plugins.xposed.XposedHooks.unhookAllForPlugin(pluginId);
-        app.exteraless.plugins.files.FilesControllerJava.unregisterAllForPlugin(pluginId);
-        app.exteraless.plugins.intents.IntentsDispatcher.unregisterAllForPlugin(pluginId);
-        app.exteraless.plugins.utils.ClassProxyFactory.releaseAllForPlugin(pluginId);
+    }
+
+    @Override
+    public void cleanupPlugin(String pluginId) {
+        unregisterPluginHooks(pluginId);
+        invalidatePluginSettings(pluginId);
+    }
+
+    @Override
+    public void addEventHook(String pluginId, String hookName, boolean matchSubstring, int priority) {
+        registerRequestHook(pluginId, hookName, matchSubstring, priority);
+    }
+
+    @Override
+    public void removeEventHook(String pluginId, String hookName) {
+        unregisterRequestHook(pluginId, hookName);
     }
 
     // ---------- диспетчеры (зовутся из ядра Telegram) ----------
@@ -1935,11 +1971,25 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         return null;
     }
 
-    public void removeMenuItem(String pluginId, String itemId) {
+    @Override
+    public boolean removeMenuItem(String pluginId, String itemId) {
+        boolean removed;
         synchronized (menuItems) {
-            menuItems.removeIf(i -> i.pluginId.equals(pluginId) && i.itemId.equals(itemId));
+            removed = menuItems.removeIf(i -> i.pluginId.equals(pluginId) && i.itemId.equals(itemId));
         }
         notifyMenuItemsUpdated();
+        return removed;
+    }
+
+    @Override
+    public void removeMenuItemsByPluginId(String pluginId) {
+        boolean removed;
+        synchronized (menuItems) {
+            removed = menuItems.removeIf(i -> i.pluginId.equals(pluginId));
+        }
+        if (removed) {
+            notifyMenuItemsUpdated();
+        }
     }
 
     /**
