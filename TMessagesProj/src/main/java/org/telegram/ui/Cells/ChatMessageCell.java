@@ -7429,6 +7429,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                             commentAvatarImages[A].setForUserOrChat(chat, commentAvatarDrawables[A]);
                                         } else {
                                             commentAvatarDrawables[A].setInfo(id, "", "");
+                                            commentAvatarImages[A].setImageBitmap((Drawable) null);
                                         }
                                     });
                                     commentAvatarImagesVisible[a] = true;
@@ -24055,20 +24056,28 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 if (commentAvatarImages != null) {
                     int toAdd = dp(17);
                     int ax = x + getExtraTextX();
+                    int rank = -1;
+                    for (int a = 0; a < commentAvatarImages.length; a++) {
+                        if (commentAvatarImagesVisible[a] && commentAvatarImages[a].hasImageSet()) {
+                            rank++;
+                        }
+                    }
+                    final int last = rank;
                     for (int a = commentAvatarImages.length - 1; a >= 0; a--) {
                         if (!commentAvatarImagesVisible[a] || !commentAvatarImages[a].hasImageSet()) {
                             continue;
                         }
-                        commentAvatarImages[a].setImageX(ax + toAdd * a);
+                        commentAvatarImages[a].setImageX(ax + toAdd * rank);
                         commentAvatarImages[a].setImageY(y - dp(4) + (pinnedBottom ? dp(2) : 0));
-                        if (a != commentAvatarImages.length - 1) {
+                        if (rank != last) {
                             canvas.drawCircle(commentAvatarImages[a].getCenterX(), commentAvatarImages[a].getCenterY(), dp(13), currentBackgroundDrawable.getPaint());
                         }
                         commentAvatarImages[a].draw(canvas);
                         drawnAvatars = true;
-                        if (a != 0) {
+                        if (rank != 0) {
                             avatarsOffset += 17;
                         }
+                        rank--;
                     }
                 }
                 if (getAlpha() != 1f) {
