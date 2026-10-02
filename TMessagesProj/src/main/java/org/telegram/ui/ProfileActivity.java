@@ -4709,6 +4709,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             } else if (position == bioRow) {
                 presentFragment(new UserInfoActivity());
             } else if (position == numberRow) {
+                if (NekoConfig.hidePhone.Bool()) {
+                    presentFragment(new ActionIntroActivity(ActionIntroActivity.ACTION_TYPE_CHANGE_PHONE_NUMBER));
+                    return;
+                }
                 TLRPC.User user = UserConfig.getInstance(currentAccount).getCurrentUser();
                 if (user == null || TextUtils.isEmpty(user.phone)) {
                     return;
@@ -11125,7 +11129,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (user != null && !user.restriction_reason.isEmpty()) {
                     restrictionReasonRow = rowCount++;
                 }
-                if (!isBot && (hasPhone || !hasInfo) && !hideNumber) {
+                if (!isBot && (hasPhone || !hasInfo) && !hideNumber && !(NekoConfig.hidePhone.Bool() && UserObject.isUserSelf(user))) {
                     phoneRow = rowCount++;
                 }
                 if (userInfo != null && !TextUtils.isEmpty(userInfo.about)) {
@@ -14278,7 +14282,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     } else if (position == numberRow) {
                         TLRPC.User user = UserConfig.getInstance(currentAccount).getCurrentUser();
                         String value;
-                        if (user != null && user.phone != null && user.phone.length() != 0 && !NekoConfig.hidePhone.Bool()) {
+                        if (NekoConfig.hidePhone.Bool()) {
+                            value = LocaleController.getString(R.string.MobileHidden);
+                        } else if (user != null && user.phone != null && user.phone.length() != 0) {
                             value = PhoneFormat.getInstance().format("+" + user.phone);
                         } else {
                             value = LocaleController.getString(R.string.NumberUnknown);
