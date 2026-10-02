@@ -2564,7 +2564,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         try {
-                            playerFinal.releasePlayer(true);
+                            playerFinal.releasePlayerDeferred(1000);
                         } catch (Exception e) {
                             FileLog.e(e);
                         }
@@ -2574,7 +2574,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 valueAnimator.start();
             } else {
                 try {
-                    audioPlayer.releasePlayer(true);
+                    audioPlayer.releasePlayerDeferred(1000);
                 } catch (Exception e) {
                     FileLog.e(e);
                 }
@@ -3075,7 +3075,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                         reporter.destroy();
                         reporter = null;
                     }try {
-                    audioPlayer.releasePlayer(true);
+                    audioPlayer.releasePlayerDeferred(1000);
                 } catch (Exception e) {
                     FileLog.e(e);
                 }
