@@ -38,4 +38,8 @@
     <string name="MainTabsHideCallsSettings">隐藏“通话”标签页</string>
     <string name="MainTabsHideProfile">隐藏个人资料标签页</string>
     <string name="OEBotWebViewUpdate">更新 WebView</string>
+    <string name="OEProfilerStart">启动卡顿分析器</string>
+    <string name="OEProfilerStop">停止分析器并分享报告</string>
+    <string name="OEProfilerStarted">分析器正在运行。照常使用应用，然后在这里停止。</string>
+    <string name="OEProfilerShareLast">分享上一次分析报告</string>
 </resources>

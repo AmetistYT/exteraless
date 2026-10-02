@@ -59,4 +59,8 @@
     <string name="MainTabsHideCallsSettings">Hide Calls tab</string>
     <string name="MainTabsHideProfile">Hide Profile tab</string>
     <string name="OEBotWebViewUpdate">Update WebView</string>
+    <string name="OEProfilerStart">Start jank profiler</string>
+    <string name="OEProfilerStop">Stop profiler and share report</string>
+    <string name="OEProfilerStarted">Profiler is running. Use the app as usual, then stop it here.</string>
+    <string name="OEProfilerShareLast">Share last profiler report</string>
 </resources>

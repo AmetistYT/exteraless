@@ -38,4 +38,8 @@
     <string name="MainTabsHideCallsSettings">Ukryj kartę Połączenia</string>
     <string name="MainTabsHideProfile">Ukryj kartę profilu</string>
     <string name="OEBotWebViewUpdate">Zaktualizuj WebView</string>
+    <string name="OEProfilerStart">Uruchom profiler przycięć</string>
+    <string name="OEProfilerStop">Zatrzymaj profiler i udostępnij raport</string>
+    <string name="OEProfilerStarted">Profiler działa. Korzystaj z aplikacji jak zwykle, a potem zatrzymaj go tutaj.</string>
+    <string name="OEProfilerShareLast">Udostępnij ostatni raport profilera</string>
 </resources>

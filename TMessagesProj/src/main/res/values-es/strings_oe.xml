@@ -38,4 +38,8 @@
     <string name="MainTabsHideCallsSettings">Ocultar pestaña Llamadas</string>
     <string name="MainTabsHideProfile">Ocultar pestaña de perfil</string>
     <string name="OEBotWebViewUpdate">Actualizar WebView</string>
+    <string name="OEProfilerStart">Iniciar el perfilador de tirones</string>
+    <string name="OEProfilerStop">Detener el perfilador y compartir el informe</string>
+    <string name="OEProfilerStarted">El perfilador está activo. Usa la app como siempre y luego detenlo aquí.</string>
+    <string name="OEProfilerShareLast">Compartir el último informe del perfilador</string>
 </resources>

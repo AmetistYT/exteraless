@@ -1,5 +1,7 @@
 package org.telegram.ui;
 
+import tw.nekomimi.nekogram.utils.ShareUtil;
+import app.exteraless.debug.JankProfiler;
 import app.exteraless.settings.OpenExteraSettingsActivity;
 
 import static org.telegram.messenger.AndroidUtilities.dp;
@@ -1621,6 +1623,24 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             return Unit.INSTANCE;
         });
 
+        builder.addItem(getString(JankProfiler.isRunning() ? R.string.OEProfilerStop : R.string.OEProfilerStart), R.drawable.msg_speed, (it) -> {
+            final Activity activity = getParentActivity();
+            if (JankProfiler.isRunning()) {
+                JankProfiler.stop(file -> shareProfilerReport(activity, file));
+            } else if (activity != null) {
+                JankProfiler.start(activity);
+                BulletinFactory.of(SettingsActivity.this).createSimpleBulletin(R.raw.info, getString(R.string.OEProfilerStarted)).show();
+            }
+            return Unit.INSTANCE;
+        });
+
+        if (!JankProfiler.isRunning() && JankProfiler.getLastReport() != null) {
+            builder.addItem(getString(R.string.OEProfilerShareLast), R.drawable.msg_share, (it) -> {
+                shareProfilerReport(getParentActivity(), JankProfiler.getLastReport());
+                return Unit.INSTANCE;
+            });
+        }
+
         {
         builder.addItem(getString(R.string.CheckUpdate), R.drawable.msg_search_solar, (it) -> {
             Browser.openUrl(getContext(), "tg://update");
@@ -1675,6 +1695,13 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         });
         }
         builder.show();
+    }
+
+    private static void shareProfilerReport(Activity activity, File file) {
+        if (activity == null || activity.isFinishing() || file == null || !file.exists()) {
+            return;
+        }
+        ShareUtil.shareFile(activity, file);
     }
 
     public void openDebugMenu() {

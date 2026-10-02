@@ -49,4 +49,8 @@
     <string name="MainTabsHideProfile">Скрыть вкладку профиля</string>
     <string name="OENowPlayingScrobbling">Сейчас играет</string>
     <string name="OEBotWebViewUpdate">Обновить WebView</string>
+    <string name="OEProfilerStart">Запустить профайлер</string>
+    <string name="OEProfilerStop">Остановить профайлер и отправить отчёт</string>
+    <string name="OEProfilerStarted">Профайлер запущен. Пользуйтесь приложением как обычно, потом остановите его здесь же.</string>
+    <string name="OEProfilerShareLast">Отправить последний отчёт профайлера</string>
 </resources>
