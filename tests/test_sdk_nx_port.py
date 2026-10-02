@@ -1027,3 +1027,60 @@ def test_custom_sub_page_rows_keep_their_identity_across_rebuilds(sdk, loader, m
     after = json.loads(loader.get_settings_json('test_plugin'))
     assert [row['row_id'] for row in before] == [row['row_id'] for row in after]
     assert before[0]['row_id'] != before[1]['row_id']
+
+
+class _Callable:
+
+    def __init__(self, fn):
+        self.fn = fn
+
+    def __call__(self, *args):
+        return self.fn(*args)
+
+
+class _JavaMethodStub:
+
+    def __init__(self, fn, static=False):
+        self.fn = fn
+        self.static = static
+
+    def __get__(self, obj, owner):
+        if obj is None:
+            return _Callable(lambda *args: self.fn(None, *args))
+        if self.static:
+            def through_instance(*args):
+                raise TypeError('static method called through an instance')
+            return _Callable(through_instance)
+        return _Callable(lambda *args: self.fn(obj, *args))
+
+
+def _fake_java_class(loader):
+    class FakeJava:
+        getPluginsDir = _JavaMethodStub(lambda self: '/plugins')
+        isEnabled = _JavaMethodStub(lambda self: True)
+        getEngines = _JavaMethodStub(lambda self: {'python': 'engine'}, static=True)
+
+        def getPythonOnly(self):
+            return 'python'
+
+    FakeJava.__getattr__ = loader._java_getattr(None)
+    return FakeJava
+
+
+def test_plugin_reads_java_getters_as_fields(loader, monkeypatch):
+    monkeypatch.setattr(loader, '_direct_plugin_caller', lambda: 'some_plugin')
+    obj = _fake_java_class(loader)()
+    assert obj.pluginsDir == '/plugins'
+    assert obj.enabled is True
+    assert obj.engines == {'python': 'engine'}
+    for name in ('pythonOnly', 'missing', '_hidden'):
+        with pytest.raises(AttributeError):
+            getattr(obj, name)
+
+
+def test_sdk_keeps_stock_java_attribute_lookup(loader, monkeypatch):
+    monkeypatch.setattr(loader, '_direct_plugin_caller', lambda: None)
+    obj = _fake_java_class(loader)()
+    with pytest.raises(AttributeError):
+        obj.pluginsDir
+    assert getattr(obj, 'enabled', None) is None

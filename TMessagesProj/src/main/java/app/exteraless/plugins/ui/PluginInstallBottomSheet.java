@@ -209,7 +209,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
             root.addView(openIn, LayoutHelper.createFrame(40, 40, Gravity.RIGHT | Gravity.TOP, 0, 10, 10, 0));
         }
         setCustomView(root);
-        applyButtonState();
+        applyButtonState(false);
     }
 
     private android.view.View createAiReview(Context context, File file, Plugin plugin,

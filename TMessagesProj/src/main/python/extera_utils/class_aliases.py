@@ -109,6 +109,8 @@ _EXACT = {
         "androidx.media3.common.PlaybackParameters",
     "com.google.android.exoplayer2.C":
         "androidx.media3.common.C",
+    "org.telegram.ui.Gifts.ProfileGiftsContainer$SelectGiftsBottomSheet":
+        "org.telegram.ui.Gifts.SelectGiftsBottomSheet",
 }
 
 _PREFIXES = (
@@ -148,11 +150,11 @@ def resolve(name):
 
 
 def _resolve_uncached(name):
-    if not _under_root(name):
-        return name
     exact = _EXACT.get(name)
     if exact is not None:
         return exact
+    if not _under_root(name):
+        return name
     outer, sep, nested = name.partition("$")
     exact = _EXACT.get(outer)
     if exact is not None:
@@ -357,12 +359,6 @@ _INSTANCE_SHAPED = {
         "secret": ("getSecret", "setSecret"),
         "link": "getLink",
     },
-    "app.exteraless.plugins.PluginsController": {
-        "pluginsDir": "getPluginsDir",
-        "preferences": "getPreferences",
-        "settings": "getSettings",
-        "engines": "getEngines",
-    },
 }
 
 _WRAP_RESULT = {
@@ -411,16 +407,6 @@ class _FieldShapedObject:
 
     def __repr__(self):
         return repr(object.__getattribute__(self, "_exteraless_java"))
-
-
-def instance_getters():
-    out = {}
-    for name, fields in _INSTANCE_SHAPED.items():
-        out[name] = {
-            field: target[0] if isinstance(target, (tuple, list)) else target
-            for field, target in fields.items()
-        }
-    return out
 
 
 def wrap_instance(obj, java_name):
