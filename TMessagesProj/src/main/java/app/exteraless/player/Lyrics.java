@@ -46,6 +46,10 @@ public final class Lyrics {
         return new Lyrics(new ArrayList<>(), false, true, source, provider);
     }
 
+    static Lyrics synced(ArrayList<Line> lines, int source, String provider) {
+        return new Lyrics(lines, true, false, source, provider);
+    }
+
     public String toText() {
         StringBuilder sb = new StringBuilder();
         for (Line line : lines) {

@@ -21,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -80,9 +81,12 @@ public final class OnlineLyrics {
     private static final String LRCLIB = "https://lrclib.net/api/";
     private static final String LRCMUX = "https://api.lrcmux.dev/get";
     private static final String LRCLIB_NAME = "LRCLIB";
-    private static final int CACHE_VERSION = 2;
+    private static final int CACHE_VERSION = 3;
     private static final int MAX_DURATION_DIFF = 3;
     private static final int MAX_FALLBACK_DURATION_DIFF = 5;
+    private static final int ALIGN_WINDOW = 4;
+    private static final float MIN_ALIGNED = 0.9f;
+    private static final Pattern NOT_WORD = Pattern.compile("[^\\p{L}\\p{N}]+");
     private static final Pattern AUDIO_EXT = Pattern.compile("\\.(mp3|m4a|flac|ogg|oga|opus|wav|aac|alac|wma)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern DECORATION = Pattern.compile("\\s*[(\\[][^)\\]]*(official|lyric|video|audio|visualizer|remaster|hq|hd)[^)\\]]*[)\\]]", Pattern.CASE_INSENSITIVE);
     private static final DispatchQueue queue = new DispatchQueue("lyrics");
@@ -165,12 +169,20 @@ public final class OnlineLyrics {
                     }
                     if (fallback != null && (fallback.lyrics.synced || primary == null)) {
                         result = fallback.lyrics;
+                        if (primary != null && fallback.lyrics.synced) {
+                            Lyrics punctuated = punctuate(fallback.lyrics, primary.lyrics);
+                            if (punctuated != null) {
+                                result = punctuated;
+                            }
+                        }
                     } else if (primary != null) {
                         result = primary.lyrics;
                     }
                 }
                 if (result != null) {
-                    writeDisk(key, result);
+                    if (!failed) {
+                        writeDisk(key, result);
+                    }
                 } else {
                     status = failed ? ERROR : NOT_FOUND;
                 }
@@ -311,6 +323,94 @@ public final class OnlineLyrics {
         return lyrics == null ? null : new Found(lyrics);
     }
 
+    private static String wordKey(String word) {
+        return NOT_WORD.matcher(word.toLowerCase(Locale.ROOT)).replaceAll("");
+    }
+
+    private static int firstLetter(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            if (Character.isLetter(s.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static String withCase(String token, String original) {
+        int t = firstLetter(token);
+        int o = firstLetter(original);
+        if (t < 0 || o < 0) {
+            return token;
+        }
+        boolean upper = Character.isUpperCase(original.charAt(o));
+        char c = token.charAt(t);
+        if (Character.isUpperCase(c) == upper) {
+            return token;
+        }
+        return token.substring(0, t) + (upper ? Character.toUpperCase(c) : Character.toLowerCase(c)) + token.substring(t + 1);
+    }
+
+    private static void appendWord(StringBuilder sb, String word) {
+        if (word.isEmpty()) {
+            return;
+        }
+        if (sb.length() > 0) {
+            sb.append(' ');
+        }
+        sb.append(word);
+    }
+
+    private static Lyrics punctuate(Lyrics timed, Lyrics plain) {
+        ArrayList<String> tokens = new ArrayList<>();
+        ArrayList<String> keys = new ArrayList<>();
+        for (Lyrics.Line line : plain.lines) {
+            for (String word : line.text.split("\\s+")) {
+                String key = wordKey(word);
+                if (!key.isEmpty()) {
+                    tokens.add(word);
+                    keys.add(key);
+                }
+            }
+        }
+        if (keys.isEmpty()) {
+            return null;
+        }
+        int pos = 0;
+        int total = 0;
+        int matched = 0;
+        ArrayList<Lyrics.Line> out = new ArrayList<>(timed.lines.size());
+        for (Lyrics.Line line : timed.lines) {
+            StringBuilder sb = new StringBuilder();
+            for (String word : line.text.split("\\s+")) {
+                String key = wordKey(word);
+                if (key.isEmpty()) {
+                    appendWord(sb, word);
+                    continue;
+                }
+                total++;
+                int hit = -1;
+                for (int j = pos, end = Math.min(pos + ALIGN_WINDOW, keys.size()); j < end; j++) {
+                    if (keys.get(j).equals(key)) {
+                        hit = j;
+                        break;
+                    }
+                }
+                if (hit < 0) {
+                    appendWord(sb, word);
+                    continue;
+                }
+                matched++;
+                appendWord(sb, withCase(tokens.get(hit), word));
+                pos = hit + 1;
+            }
+            out.add(new Lyrics.Line(line.time, sb.toString()));
+        }
+        if (total == 0 || matched < total * MIN_ALIGNED) {
+            return null;
+        }
+        return Lyrics.synced(out, timed.source, timed.provider + " + " + LRCLIB_NAME);
+    }
+
     private static String enc(String s) throws Exception {
         return URLEncoder.encode(s, "UTF-8").replace("+", "%20");
     }
@@ -365,13 +465,17 @@ public final class OnlineLyrics {
             try (FileInputStream in = new FileInputStream(f)) {
                 o = new JSONObject(readAll(in));
             }
-            if (o.optInt("v", 1) < CACHE_VERSION) {
+            int version = o.optInt("v", 1);
+            if (version < 2) {
                 Found legacy = fromLrclib(o);
                 return legacy != null && (legacy.lyrics.synced || legacy.lyrics.instrumental) ? legacy.lyrics : null;
             }
             String provider = optString(o, "provider");
             if (provider == null) {
                 provider = LRCLIB_NAME;
+            }
+            if (version < CACHE_VERSION && !LRCLIB_NAME.equals(provider)) {
+                return null;
             }
             if (o.optBoolean("instrumental", false)) {
                 return Lyrics.instrumental(Lyrics.SOURCE_ONLINE, provider);
