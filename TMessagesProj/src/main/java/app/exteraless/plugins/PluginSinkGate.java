@@ -68,6 +68,7 @@ public final class PluginSinkGate {
             "java.lang.Process",
             "app.exteraless.plugins.PluginPermissions",
             "app.exteraless.plugins.PluginTrustLevel",
+            "app.exteraless.plugins.PluginGrantStore",
             "app.exteraless.plugins.PluginSinkGate",
             "app.exteraless.plugins.PluginsWatchdog",
             "app.exteraless.plugins.PluginRuntime",
@@ -137,6 +138,7 @@ public final class PluginSinkGate {
         ok += hookNetwork(Socket.class, "connect", "connect to the network");
         ok += hookClassResolution();
         ok += hookMessengerSinks();
+        ok += hookGrantStore();
         ok += hookPythonCallbacks();
         FileLog.d("PluginSinkGate: " + ok + " hooks installed");
     }
@@ -404,6 +406,37 @@ public final class PluginSinkGate {
         count += hookWebView();
         count += hookIndirectDownloads();
         return count;
+    }
+
+    private static int hookGrantStore() {
+        final Class<?> owner = classForName("android.app.ContextImpl");
+        if (owner == null) {
+            return 0;
+        }
+        XC_MethodHook hook = new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                if (param.args == null || param.args.length == 0
+                        || !PluginGrantStore.isStore(param.args[0])) {
+                    return;
+                }
+                String pluginId = enterCheck();
+                if (pluginId == null) {
+                    return;
+                }
+                try {
+                    if (!PluginGrantStore.isOwnCall()) {
+                        deny(pluginId, owner.getName() + "." + param.method.getName(), "settings",
+                                String.valueOf(param.args[0]),
+                                "plugin permissions are not available to plugins", param);
+                    }
+                } finally {
+                    leaveCheck();
+                }
+            }
+        };
+        return hookAll(owner, "getSharedPreferences", hook)
+                + hookAll(owner, "deleteSharedPreferences", hook);
     }
 
     /**

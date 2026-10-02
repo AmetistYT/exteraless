@@ -459,6 +459,7 @@ _JAVA_CLASS_RULES = {
 _JAVA_CLASS_DENIED = frozenset({
     "app.exteraless.plugins.PluginPermissions",
     "app.exteraless.plugins.PluginTrustLevel",
+    "app.exteraless.plugins.PluginGrantStore",
     "app.exteraless.plugins.PluginSinkGate",
     "app.exteraless.plugins.PluginsWatchdog",
     "app.exteraless.plugins.PluginRuntime",

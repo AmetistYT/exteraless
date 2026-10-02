@@ -116,6 +116,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         initialized = true;
         appContext = context.getApplicationContext();
         preferences = appContext.getSharedPreferences(PluginsConstants.PREFS_NAME, Context.MODE_PRIVATE);
+        PluginGrantStore.get();
         watchdog = new PluginsWatchdog(preferences);
         getPluginsDir().mkdirs();
 
@@ -186,23 +187,30 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public boolean isUnsafeMode() {
-        if (unsafeMode == null) {
-            unsafeMode = preferences != null
-                    && preferences.getBoolean(PluginsConstants.KEY_UNSAFE_MODE, false);
+        Boolean cached = unsafeMode;
+        if (cached != null) {
+            return cached;
         }
-        return unsafeMode;
+        SharedPreferences store = PluginGrantStore.get();
+        if (store == null) {
+            return false;
+        }
+        cached = store.getBoolean(PluginsConstants.KEY_UNSAFE_MODE, false);
+        unsafeMode = cached;
+        return cached;
     }
 
     public void setUnsafeMode(boolean value) {
         unsafeMode = value;
-        if (preferences != null) {
-            preferences.edit().putBoolean(PluginsConstants.KEY_UNSAFE_MODE, value).apply();
+        SharedPreferences store = PluginGrantStore.get();
+        if (store != null) {
+            store.edit().putBoolean(PluginsConstants.KEY_UNSAFE_MODE, value).apply();
         }
         FileLog.w("PluginsController: unsafe mode " + (value ? "ON" : "off"));
         PythonPluginsEngine.getInstance().setUnsafeMode(value);
     }
 
-    private Boolean unsafeMode;
+    private volatile Boolean unsafeMode;
 
     public boolean isDeveloperMode() {
         return preferences != null && preferences.getBoolean(PluginsConstants.KEY_DEVELOPER_MODE, false);
@@ -338,6 +346,11 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         return renamed;
     }
 
+    private void markUnconsented(String id) {
+        PluginTrustLevel.setLevel(id, PluginTrustLevel.ISOLATED);
+        PluginDenialNotice.noteUnconsented(id);
+    }
+
     public synchronized void rescanPlugins() {
         if (!PythonPluginsEngine.getInstance().isStarted()) {
             return;
@@ -362,6 +375,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 continue;
             }
             seen.add(fresh.id);
+            if (!PluginPermissions.hasRecord(fresh.id)) {
+                markUnconsented(fresh.id);
+            }
             boolean enabled = preferences.getBoolean(
                     PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + fresh.id, true);
             Plugin existing = plugins.get(fresh.id);
@@ -893,12 +909,10 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 p.enabled = enabled;
                 preferences.edit().putBoolean(PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + id, enabled).apply();
                 // Согласие пользователя записывает диалог установки (PluginPermissions.setGranted).
-                // Если он этого не сделал, запись всё равно должна появиться: без неё
-                // свежепоставленный плагин уедет в режим совместимости, где ему дают всё.
-                // Объявленное считаем выданным, необъявленное — пустым набором.
+                // Если он этого не сделал (установка другим плагином, dev-сервер), плагин
+                // не получает ничего, а пользователю показывается, что он появился.
                 if (!PluginPermissions.hasRecord(id)) {
-                    PluginPermissions.setGranted(id,
-                            p.permissionsDeclared ? p.permissions : new ArrayList<>());
+                    markUnconsented(id);
                 }
                 synchronized (this) {
                     plugins.put(id, p);
