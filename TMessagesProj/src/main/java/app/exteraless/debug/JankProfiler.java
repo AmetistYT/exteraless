@@ -20,6 +20,7 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.LaunchActivity;
@@ -548,6 +549,9 @@ public final class JankProfiler {
         out.append("session: ").append(formatDuration(sessionMs)).append(running ? " (running)" : "").append('\n');
         out.append("sampling: trigger ").append(TRIGGER_NS / 1_000_000).append(" ms, interval ").append(SAMPLE_INTERVAL_MS)
                 .append(" ms, slow message >= ").append(SLOW_NS / 1_000_000).append(" ms\n");
+        out.append("debug logs: ").append(BuildVars.LOGS_ENABLED ? "on" : "off")
+                .append(", liquid glass: ").append(LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS) ? "on" : "off")
+                .append(", chat blur: ").append(LiteMode.isEnabled(LiteMode.FLAG_CHAT_BLUR) ? "on" : "off").append('\n');
         appendPlugins(out);
 
         final long messages = messageCount;
