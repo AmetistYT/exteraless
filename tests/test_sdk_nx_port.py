@@ -285,6 +285,29 @@ def test_bind_hook_skips_sides_left_to_method_hook(sdk):
         profile.stop()
 
 
+def test_tuple_hook_lists_methods_of_the_java_class(sdk, monkeypatch):
+    seen = []
+
+    class JavaClass:
+        def getDeclaredMethods(self):
+            seen.append('getDeclaredMethods')
+            return []
+
+    class ChatMessageCell:
+        @staticmethod
+        def getClass():
+            return JavaClass()
+
+    java = types.ModuleType('java')
+    java.jclass = lambda name: JavaClass
+    monkeypatch.setitem(sys.modules, 'java', java)
+    hook_utils = load_module(monkeypatch, 'hook_utils')
+    monkeypatch.setattr(hook_utils, '_class_type', None)
+    plugin = sdk.base.BasePlugin()
+    assert plugin.hook_method((ChatMessageCell, 'drawBackgroundInternal'), lambda param: None) is None
+    assert seen == ['getDeclaredMethods']
+
+
 def test_thread_state_pin_keeps_only_foreign_thread_states(sdk, monkeypatch):
     state = load_module(monkeypatch, 'extera_utils.thread_state')
     assert state.pin() is True

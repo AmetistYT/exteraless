@@ -848,7 +848,8 @@ class BasePlugin:
         if isinstance(method, (tuple, list)) and len(method) == 2:
             clazz = self._exteraless_resolve_class(method[0])
             name = str(method[1])
-            matches = [m for m in clazz.getDeclaredMethods()
+            from hook_utils import _as_class
+            matches = [m for m in _as_class(clazz).getDeclaredMethods()
                        if str(m.getName()) == name]
             if not matches:
                 self.log(f"hook_method: no declared method {name!r} on {clazz}")
