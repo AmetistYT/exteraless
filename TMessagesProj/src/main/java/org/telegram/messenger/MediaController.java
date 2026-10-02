@@ -4214,7 +4214,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         try {
             CastSync.check(CastSync.TYPE_MUSIC);
             if (!ignorePlayerUpdate) {
-                if (ChromecastController.getInstance().isCasting()) {
+                if (ChromecastController.isCastingActive()) {
                     ChromecastController.getInstance().setCurrentMediaAndCastIfNeeded(getCurrentChromecastMedia());
                 }
                 CastSync.setPlaying(true);
@@ -4490,7 +4490,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         try {
             CastSync.check(CastSync.TYPE_MUSIC);
             if (!ignorePlayerUpdate) {
-                if (ChromecastController.getInstance().isCasting()) {
+                if (ChromecastController.isCastingActive()) {
                     ChromecastController.getInstance().setCurrentMediaAndCastIfNeeded(getCurrentChromecastMedia());
                 }
                 CastSync.setPlaying(false);

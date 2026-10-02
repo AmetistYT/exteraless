@@ -8952,7 +8952,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         videoItem.toggleSubMenu();
         try {
             CastSync.check(CastSync.TYPE_PHOTOVIEWER);
-            if (ChromecastController.getInstance().isCasting()) {
+            if (ChromecastController.isCastingActive()) {
                 ChromecastController.getInstance().setCurrentMediaAndCastIfNeeded(getCurrentChromecastMedia());
             }
             if (videoPlayer != null) {
@@ -9164,7 +9164,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         if (lastQualityIndexSelected != qualityIndexSelected) {
             try {
                 CastSync.check(CastSync.TYPE_PHOTOVIEWER);
-                if (ChromecastController.getInstance().isCasting()) {
+                if (ChromecastController.isCastingActive()) {
                     ChromecastController.getInstance().setCurrentMediaAndCastIfNeeded(getCurrentChromecastMedia());
                 }
                 if (videoPlayer != null) {
@@ -15242,7 +15242,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         lastQualityIndexSelected = videoPlayer != null ? videoPlayer.getCurrentQualityIndex() : -1;
         try {
             CastSync.check(CastSync.TYPE_PHOTOVIEWER);
-            if (ChromecastController.getInstance().isCasting()) {
+            if (ChromecastController.isCastingActive()) {
                 ChromecastController.getInstance().setCurrentMediaAndCastIfNeeded(getCurrentChromecastMedia());
             }
             if (videoPlayer != null) {
@@ -20339,7 +20339,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
         try {
             CastSync.check(CastSync.TYPE_PHOTOVIEWER);
-            if (ChromecastController.getInstance().isCasting()) {
+            if (ChromecastController.isCastingActive()) {
                 ChromecastController.getInstance().setCurrentMediaAndCastIfNeeded(getCurrentChromecastMedia());
             }
         } catch (Exception e) {
