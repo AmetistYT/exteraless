@@ -502,6 +502,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         nc.addObserver(this, NotificationCenter.messagePlayingDidStart);
         nc.addObserver(this, NotificationCenter.messagePlayingProgressDidChanged);
         nc.addObserver(this, NotificationCenter.fileLoaded);
+        nc.addObserver(this, NotificationCenter.audioInfoLoaded);
         nc.addObserver(this, NotificationCenter.musicIdsLoaded);
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.messagePlayingSpeedChanged);
         applySystemBars(true);
@@ -912,6 +913,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         nc.removeObserver(this, NotificationCenter.messagePlayingDidStart);
         nc.removeObserver(this, NotificationCenter.messagePlayingProgressDidChanged);
         nc.removeObserver(this, NotificationCenter.fileLoaded);
+        nc.removeObserver(this, NotificationCenter.audioInfoLoaded);
         nc.removeObserver(this, NotificationCenter.musicIdsLoaded);
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.messagePlayingSpeedChanged);
         if (colorAnimator != null) {
@@ -946,6 +948,16 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             updateProgress();
         } else if (id == NotificationCenter.messagePlayingProgressDidChanged) {
             updateProgress();
+        } else if (id == NotificationCenter.audioInfoLoaded) {
+            MessageObject mo = current;
+            if (mo != null && PlayerArt.isPlaying(mo)) {
+                cover.setMessage(mo);
+                smallCover.setMessage(mo);
+                if (lyricsMode && lyricsView.getState() != LyricsView.STATE_LYRICS) {
+                    lyricsKey = null;
+                    loadLyrics();
+                }
+            }
         } else if (id == NotificationCenter.fileLoaded) {
             MessageObject mo = current;
             if (mo != null && mo.getDocument() != null && TextUtils.equals((String) args[0], FileLoader.getAttachFileName(mo.getDocument()))) {

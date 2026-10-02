@@ -120,6 +120,7 @@ public class PlayerBarView extends FrameLayout implements NotificationCenter.Not
             nc.addObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
             nc.addObserver(this, NotificationCenter.messagePlayingProgressDidChanged);
             nc.addObserver(this, NotificationCenter.fileLoaded);
+            nc.addObserver(this, NotificationCenter.audioInfoLoaded);
         }
         update();
     }
@@ -133,6 +134,7 @@ public class PlayerBarView extends FrameLayout implements NotificationCenter.Not
             nc.removeObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
             nc.removeObserver(this, NotificationCenter.messagePlayingProgressDidChanged);
             nc.removeObserver(this, NotificationCenter.fileLoaded);
+            nc.removeObserver(this, NotificationCenter.audioInfoLoaded);
         }
     }
 
@@ -140,6 +142,11 @@ public class PlayerBarView extends FrameLayout implements NotificationCenter.Not
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.messagePlayingProgressDidChanged) {
             playButton.invalidate();
+        } else if (id == NotificationCenter.audioInfoLoaded) {
+            MessageObject mo = current;
+            if (mo != null && PlayerArt.isPlaying(mo)) {
+                cover.setMessage(mo);
+            }
         } else if (id == NotificationCenter.fileLoaded) {
             MessageObject mo = current;
             if (mo != null && mo.getDocument() != null && TextUtils.equals((String) args[0], FileLoader.getAttachFileName(mo.getDocument()))) {
