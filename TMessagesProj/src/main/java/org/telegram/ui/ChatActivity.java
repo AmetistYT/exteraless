@@ -21910,6 +21910,17 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
+    private static void hookDeletedHistory(int account, long startId, long endId, int minVal, long dialogId, long topicId, int loadType, long threadId, boolean topic) {
+        if (startId > endId) {
+            long t = startId;
+            startId = endId;
+            endId = t;
+        }
+        if (startId != minVal || endId != minVal) {
+            AyuHistoryHook.doHookAsync(account, startId, endId, dialogId, 200, topicId, loadType, false, threadId, topic);
+        }
+    }
+
     private void didReceivedNotification_messagesDidLoad(int id, int account, final Object... args) {
         int guid = (Integer) args[10];
         if (guid != classGuid) {
@@ -22406,99 +22417,118 @@ public class ChatActivity extends BaseFragment implements
                 boolean isThreadChat = isThreadChat();
                 boolean isChannelComment = (isReplyChatComment || (isThreadChat && !isTopic));
 
-                int minVal = isSecretChat() ? Integer.MAX_VALUE : 0;
-                int maxVal = isSecretChat() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+                if (!isChannelComment && !isInScheduleMode() && chatMode != MODE_PINNED) {
+                    int minVal = isSecretChat() ? Integer.MAX_VALUE : 0;
+                    int maxVal = isSecretChat() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+                    int loadType = load_type;
+                    long threadId = threadMessageId;
+                    boolean topicChat = isTopic;
+                    boolean deferred = false;
 
-                long startId = minVal; // top message (startId < endId)
-                // ...deleted messages
-                long endId = minVal; // bottom message
+                    long startId = minVal; // top message (startId < endId)
+                    // ...deleted messages
+                    long endId = minVal; // bottom message
 
-                Pair<Integer, Integer> msgIds = AyuHistoryHook.getMinAndMaxIds(messArr);
+                    Pair<Integer, Integer> msgIds = AyuHistoryHook.getMinAndMaxIds(messArr);
 
-                if (!DialogObject.isEncryptedDialog(dialogId)) {
-                    if (!messArr.isEmpty()) {
-                        int msg1 = msgIds.first; // smaller
-                        int msg2 = msgIds.second; // bigger
+                    if (!DialogObject.isEncryptedDialog(dialogId)) {
+                        if (!messArr.isEmpty()) {
+                            int msg1 = msgIds.first; // smaller
+                            int msg2 = msgIds.second; // bigger
 
-                        startId = Math.min(msg1, msg2);
-                        endId = Math.max(msg1, msg2);
+                            startId = Math.min(msg1, msg2);
+                            endId = Math.max(msg1, msg2);
 
-                        TLRPC.Dialog dialog = getMessagesController().getDialog(dialogId);
+                            TLRPC.Dialog dialog = getMessagesController().getDialog(dialogId);
 
-                        TLRPC.TL_forumTopic topic = null;
-                        if (isTopic) {
-                            TLRPC.ChatFull chatFull = getCurrentChatInfo();
-                            if (chatFull != null) {
-                                topic = getMessagesController().getTopicsController().findTopic(chatFull.id, getTopicId());
-                            } else if (currentChat != null) {
-                                topic = getMessagesController().getTopicsController().findTopic(currentChat.id, getTopicId());
+                            TLRPC.TL_forumTopic topic = null;
+                            if (isTopic) {
+                                TLRPC.ChatFull chatFull = getCurrentChatInfo();
+                                if (chatFull != null) {
+                                    topic = getMessagesController().getTopicsController().findTopic(chatFull.id, getTopicId());
+                                } else if (currentChat != null) {
+                                    topic = getMessagesController().getTopicsController().findTopic(currentChat.id, getTopicId());
+                                }
+                            }
+
+                            long fallbackStartId = startId;
+                            long fallbackEndId = endId;
+                            if (messArr.size() == 1 && messArr.get(0).messageOwner instanceof TLRPC.TL_messageService) { // TL_messageService
+                                fallbackStartId = minVal;
+                                fallbackEndId = AyuUtils.getMinRealId(messages);
+                            } else if (messArr.size() < count && !isCache && (load_type == 2 || load_type == 1)) { // allows loading messages that are uppermore than the dialog
+                                fallbackStartId = minVal;
+                                fallbackEndId = Math.min(msg1, msg2);
+                            }
+
+                            if (dialog != null && DialogObject.isUserDialog(dialogId) && (startId == endId && endId == dialog.top_message) && messArr.size() <= 1) { // empty user dialog, so load as much as we can
+                                startId = minVal;
+                                endId = maxVal;
+                            } else if (dialog != null && dialog.top_message == endId || topic != null && topic.top_message == endId) { // allows loading messages that are under bottom messages
+                                endId = maxVal; // startId is the smallest in the current batch
+                            } else if (dialog != null) {
+                                deferred = true;
+                                final long batchStartId = startId;
+                                final long batchEndId = endId;
+                                final long otherStartId = fallbackStartId;
+                                final long otherEndId = fallbackEndId;
+                                final int topMessage = dialog.top_message;
+                                getMessagesStorage().getStorageQueue().postRunnable(() -> {
+                                    Pair<Integer, Integer> minMaxRes = getMessagesStorage().getMinAndMaxForDialog(dialogId);
+                                    if (minMaxRes.second == batchEndId && topMessage <= minMaxRes.second) {
+                                        hookDeletedHistory(currentAccount, batchStartId, maxVal, minVal, dialogId, topicId, loadType, threadId, topicChat);
+                                    } else {
+                                        hookDeletedHistory(currentAccount, otherStartId, otherEndId, minVal, dialogId, topicId, loadType, threadId, topicChat);
+                                    }
+                                });
+                            } else {
+                                startId = fallbackStartId;
+                                endId = fallbackEndId;
+                            }
+                        } else {
+                            if (!messages.isEmpty() && load_type != 1) { // for loading uppermore
+                                startId = minVal;
+                                endId = AyuUtils.getMinRealId(messages);
+                            } else if (DialogObject.isUserDialog(dialogId)) { // empty(new) user dialog, so load as much as we can
+                                startId = minVal;
+                                endId = maxVal;
+                            }
+                            if (isCache) {
+                                startId = minVal;
+                                endId = minVal;
                             }
                         }
+                    } else { // works for secret chats only, because they're all cached
+                        deferred = true;
+                        getMessagesStorage().getStorageQueue().postRunnable(() -> {
+                            Pair<Integer, Integer> secretRes = getMessagesStorage().getMinAndMaxForDialog(dialogId);
+                            int secretStartId = secretRes.second; // bigger
+                            int secretEndId = secretRes.first; // smaller
 
-                        Pair<Integer, Integer> minMaxRes = getMessagesStorage().getMinAndMaxForDialog(dialogId);
-                        if (dialog != null && DialogObject.isUserDialog(dialogId) && (startId == endId && endId == dialog.top_message) && messArr.size() <= 1) { // empty user dialog, so load as much as we can
-                            startId = minVal;
-                            endId = maxVal;
-                        } else if (isChannelComment) { // deleted messages loading in comments
-                            startId = threadMaxOutboxReadId == 0 ? minVal : threadMessageId;
-                            endId = threadMaxOutboxReadId == 0 ? minVal : threadMaxOutboxReadId;
-                        } else if (dialog != null && (dialog.top_message == endId || (minMaxRes.second == endId && dialog.top_message <= minMaxRes.second)) || topic != null && topic.top_message == endId) { // allows loading messages that are under bottom messages
-                            endId = maxVal; // startId is the smallest in the current batch
-                        } else if (messArr.size() == 1 && messArr.get(0).messageOwner instanceof TLRPC.TL_messageService) { // TL_messageService
-                            startId = minVal;
-                            endId = AyuUtils.getMinRealId(messages);
-                        } else if (messArr.size() < count && !isCache && (load_type == 2 || load_type == 1) && !messArr.isEmpty()) { // allows loading messages that are uppermore than the dialog
-                            startId = minVal;
-                            endId = Math.min(msg1, msg2);
-                        }
-                    } else {
-                        if (!messages.isEmpty() && load_type != 1) { // for loading uppermore
-                            startId = minVal;
-                            endId = AyuUtils.getMinRealId(messages);
-                        } else if (DialogObject.isUserDialog(dialogId)) { // empty(new) user dialog, so load as much as we can
-                            startId = minVal;
-                            endId = maxVal;
-                        }
-                        if (isCache) {
-                            startId = minVal;
-                            endId = minVal;
-                        }
+                            int msg1 = msgIds.second; // bigger
+                            int msg2 = msgIds.first; // smaller
+
+                            long secretStart;
+                            long secretEnd;
+                            if (Math.abs(secretStartId - secretEndId) == 1 || (secretStartId == msg1 && secretEndId == msg2)) { // empty dialog, so load as much as we can
+                                secretStart = minVal;
+                                secretEnd = maxVal;
+                            } else if (secretStartId == msg1) { // loaded up to top
+                                secretStart = minVal;
+                                secretEnd = msg2;
+                            } else if (secretEndId == msg2) { // loaded up to bottom
+                                secretStart = msg1;
+                                secretEnd = maxVal;
+                            } else { // just between some messages
+                                secretStart = msg1;
+                                secretEnd = msg2;
+                            }
+                            hookDeletedHistory(currentAccount, secretStart, secretEnd, minVal, dialogId, topicId, loadType, threadId, topicChat);
+                        });
                     }
-                } else { // works for secret chats only, because they're all cached
-                    Pair<Integer, Integer> secretRes = getMessagesStorage().getMinAndMaxForDialog(dialogId);
-                    int secretStartId = secretRes.second; // bigger
-                    int secretEndId = secretRes.first; // smaller
 
-                    int msg1 = msgIds.second; // bigger
-                    int msg2 = msgIds.first; // smaller
-
-                    if (Math.abs(secretStartId - secretEndId) == 1 || (secretStartId == msg1 && secretEndId == msg2)) { // empty dialog, so load as much as we can
-                        startId = minVal;
-                        endId = maxVal;
-                    } else if (secretStartId == msg1) { // loaded up to top
-                        startId = minVal;
-                        endId = msg2;
-                    } else if (secretEndId == msg2) { // loaded up to bottom
-                        startId = msg1;
-                        endId = maxVal;
-                    } else { // just between some messages
-                        startId = msg1;
-                        endId = msg2;
-                    }
-                }
-
-                if (startId > endId) {
-                    long t = startId;
-                    startId = endId;
-                    endId = t;
-                }
-
-                if (!isChannelComment && !isInScheduleMode() && chatMode != MODE_PINNED && (startId != minVal || endId != minVal)) {
-                    boolean needToReset = messArr.size() == count;
-                    int limit = 200;
-                    AyuHistoryHook.doHookAsync(currentAccount, startId, endId, dialogId, limit, topicId, load_type, isChannelComment, threadMessageId, isTopic);
-                    if (needToReset) {
-                        count = messArr.size();
+                    if (!deferred) {
+                        hookDeletedHistory(currentAccount, startId, endId, minVal, dialogId, topicId, loadType, threadId, topicChat);
                     }
                 }
             }
