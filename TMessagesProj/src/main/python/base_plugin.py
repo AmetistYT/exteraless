@@ -507,6 +507,7 @@ class BasePlugin:
     #: это поле у exteraGram, и без него у них падает всё, что обращается к
     #: контроллеру по id (обновление экрана настроек, поиск себя в реестре).
     id: Optional[str] = None
+    enabled: bool = True
 
     # ---- lifecycle (override in the subclass) ----
 

@@ -194,6 +194,47 @@ def test_loaded_plugin_instance_carries_its_metadata(loader, monkeypatch, tmp_pa
     assert instance.requirements == []
 
 
+def test_plugin_instance_is_enabled_until_unloaded(loader, monkeypatch, tmp_path):
+    plugin = tmp_path / 'flag_plugin.py'
+    plugin.write_text(
+        '__id__ = "flag_plugin"\n'
+        '__name__ = "Flag"\n'
+        '\n'
+        'from base_plugin import BasePlugin\n'
+        '\n'
+        '\n'
+        'class FlagPlugin(BasePlugin):\n'
+        '    pass\n')
+    own = tmp_path / 'own_flag_plugin.py'
+    own.write_text(
+        '__id__ = "own_flag_plugin"\n'
+        '__name__ = "Own flag"\n'
+        '\n'
+        'from base_plugin import BasePlugin\n'
+        '\n'
+        '\n'
+        'class OwnFlagPlugin(BasePlugin):\n'
+        '    def on_plugin_load(self):\n'
+        '        self.enabled = "custom"\n')
+    for name in ('flag_plugin', 'own_flag_plugin'):
+        monkeypatch.setitem(sys.modules, name, None)
+        monkeypatch.delitem(sys.modules, name)
+    monkeypatch.setattr(sys, 'path', [*sys.path])
+    monkeypatch.setattr(loader, '_install_sandbox', lambda: None)
+    monkeypatch.setattr(loader, '_plugins_dir_path', lambda: str(tmp_path))
+    for path, plugin_id in ((plugin, 'flag_plugin'), (own, 'own_flag_plugin')):
+        result = json.loads(loader.load_plugin(str(path), plugin_id))
+        assert result['ok'], result['error']
+    instance = loader.plugins['flag_plugin'].instance
+    own_instance = loader.plugins['own_flag_plugin'].instance
+    assert instance.enabled is True
+    assert own_instance.enabled == 'custom'
+    loader.unload_plugin('flag_plugin')
+    loader.unload_plugin('own_flag_plugin')
+    assert instance.enabled is False
+    assert own_instance.enabled == 'custom'
+
+
 def test_base_hook_built_from_callbacks_exposes_hook_methods(sdk):
     seen = []
     before_only = sdk.base.BaseHook(None, before=lambda param: seen.append(('before', param)),
@@ -500,6 +541,14 @@ def test_progress_style_keeps_the_current_dialog_builder(sdk, monkeypatch):
     assert created == [(context, 3, provider)]
     with pytest.raises(TypeError):
         alert.AlertDialogBuilder(context, alert_type=2, progress_style=3)
+
+
+def test_dialog_buttons_do_not_require_a_listener(sdk, monkeypatch):
+    import inspect
+    alert = load_module(monkeypatch, 'ui.alert')
+    for name in ('set_positive_button', 'set_negative_button', 'set_neutral_button'):
+        parameter = inspect.signature(getattr(alert.AlertDialogBuilder, name)).parameters['listener']
+        assert parameter.default is None
 
 
 def test_text_setting_has_both_eight_argument_layouts():

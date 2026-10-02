@@ -2287,6 +2287,22 @@ def _load_elyx_plugin(path: str, plugin_id: str) -> str:
         return _error_json(e)
 
 
+def _mark_disabled(instance) -> None:
+    if instance is None:
+        return
+    try:
+        if "enabled" in vars(instance):
+            return
+        for cls in type(instance).__mro__:
+            if "enabled" in vars(cls):
+                if cls is not BasePlugin:
+                    return
+                break
+        instance.enabled = False
+    except Exception:
+        pass
+
+
 def _unload_record(plugin_id: str, quiet: bool):
     record = plugins.pop(plugin_id, None)
     if record is None:
@@ -2298,6 +2314,7 @@ def _unload_record(plugin_id: str, quiet: bool):
             with plugin_context(plugin_id):
                 instance.on_plugin_unload()
     finally:
+        _mark_disabled(instance)
         try:
             if instance is not None and hasattr(instance, "_exteraless_cleanup_resources"):
                 with plugin_context(plugin_id):
