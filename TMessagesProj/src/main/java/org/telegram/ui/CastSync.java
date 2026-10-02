@@ -73,6 +73,13 @@ public class CastSync {
         final Context context = getContext();
         if (castContextRequested || context == null) return;
         castContextRequested = true;
+        Looper.getMainLooper().getQueue().addIdleHandler(() -> {
+            loadCastContext(context);
+            return false;
+        });
+    }
+
+    private static void loadCastContext(Context context) {
         try {
             CastContext.getSharedInstance(context, command -> Utilities.globalQueue.postRunnable(command))
                 .addOnSuccessListener(result -> {
