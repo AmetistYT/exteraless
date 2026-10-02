@@ -157,6 +157,7 @@ import org.telegram.ui.ActionBar.MessageDrawable;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.AvatarSpan;
 import org.telegram.ui.ChatActivity;
+import org.telegram.ui.LinkManager;
 import org.telegram.ui.Components.AnimatedEmojiDrawable;
 import org.telegram.ui.Components.AnimatedEmojiSpan;
 import org.telegram.ui.Components.AnimatedFileDrawable;
@@ -11182,6 +11183,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                     ));
                                 } catch (Exception ignore) {
                                 }
+                            }
+                            if (buttonTypeUrl != null) {
+                                botButton.isWebAppLink = LinkManager.isWebAppLink(buttonTypeUrl.url);
                             }
                         }
                         if (inlineButtons.hasSeparator(row)) {
