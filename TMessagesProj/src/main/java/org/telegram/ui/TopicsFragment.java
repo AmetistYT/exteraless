@@ -2929,6 +2929,18 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
 
     private class Adapter extends AdapterWithDiffUtils {
 
+        private final android.util.SparseArray<MessageObject> topMessages = new android.util.SparseArray<>();
+
+        private MessageObject topMessageObject(TLRPC.TL_forumTopic topic, TLRPC.Message tlMessage) {
+            MessageObject cached = topMessages.get(topic.id);
+            if (cached != null && cached.messageOwner == tlMessage) {
+                return cached;
+            }
+            MessageObject messageObject = new MessageObject(currentAccount, tlMessage, false, false);
+            topMessages.put(topic.id, messageObject);
+            return messageObject;
+        }
+
         @Override
         public int getItemViewType(int position) {
             if (position == getItemCount() - 1) {
@@ -3018,7 +3030,7 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
                 int newId = topic.id;
                 boolean animated = oldId == newId && dialogCell.position == position && animatedUpdateEnabled;
                 if (tlMessage != null) {
-                    MessageObject messageObject = new MessageObject(currentAccount, tlMessage, false, false);
+                    MessageObject messageObject = topMessageObject(topic, tlMessage);
                     if (getMessagesController().isMonoForum(-chatId)) {
                         dialogCell.isMonoForumTopicDialog = true;
                         dialogCell.drawAvatar = true;

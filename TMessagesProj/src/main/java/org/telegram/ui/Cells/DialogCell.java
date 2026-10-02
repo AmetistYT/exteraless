@@ -1185,6 +1185,9 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
     }
 
     public void setPinForced(boolean value) {
+        if (drawPinForced == value) {
+            return;
+        }
         drawPinForced = value;
         if (getMeasuredWidth() > 0 && getMeasuredHeight() > 0) {
             buildLayout();
