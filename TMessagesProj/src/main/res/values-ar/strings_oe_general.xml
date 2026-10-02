@@ -87,6 +87,8 @@
     <string name="OEGeneralGoogleHeader">Google</string>
     <string name="OEGeneralCrashReports">تقارير الأعطال</string>
     <string name="OEGeneralCrashReportsInfo">يرسل تتبعات الأعطال إلى Firebase Crashlytics حتى يمكن إصلاح المشاكل دون تقرير يدوي. معطّل افتراضيًا، ولا يغادر أي شيء الجهاز أثناء تعطيله.</string>
+    <string name="OEGeneralContentCapture">مشاركة محتوى الشاشة مع Android</string>
+    <string name="OEGeneralContentCaptureInfo">مطلوب لميزة Live Translate على Pixel واقتراحات النظام. أثناء التعطيل لا يرى النظام نص المحادثات وتُمرَّر القوائم بسلاسة أكبر.</string>
     <string name="OEGeneralMapsHeader">الخرائط</string>
     <string name="OEGeneralUseOsmMapInfo">يرسم منتقي الموقع والمواقع المباشرة باستخدام مربعات OpenStreetMap بدلًا من خرائط Google. أما معاينات المواقع داخل الرسائل فتأتي من خوادم Telegram.</string>
     <string name="OEGeneralMapProvider">مزوّد الخرائط</string>

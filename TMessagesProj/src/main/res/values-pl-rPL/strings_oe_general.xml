@@ -87,6 +87,8 @@
     <string name="OEGeneralGoogleHeader">Google</string>
     <string name="OEGeneralCrashReports">Raporty awarii</string>
     <string name="OEGeneralCrashReportsInfo">Wysyła ślady stosu awarii do Firebase Crashlytics, aby dało się je naprawić bez ręcznego zgłoszenia. Domyślnie wyłączone; dopóki jest wyłączone, nic nie opuszcza urządzenia.</string>
+    <string name="OEGeneralContentCapture">Udostępniaj treść ekranu Androidowi</string>
+    <string name="OEGeneralContentCaptureInfo">Potrzebne do Live Translate na Pixelu i podpowiedzi systemowych. Dopóki jest wyłączone, system nie widzi tekstu czatów, a listy przewijają się płynniej.</string>
     <string name="OEGeneralMapsHeader">Mapy</string>
     <string name="OEGeneralUseOsmMapInfo">Wybór miejsca i lokalizacje na żywo rysowane są kafelkami OpenStreetMap zamiast Map Google. Podglądy lokalizacji w wiadomościach nadal pochodzą z serwerów Telegrama.</string>
     <string name="OEGeneralMapProvider">Dostawca map</string>

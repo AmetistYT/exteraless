@@ -106,6 +106,8 @@
     <string name="OEGeneralGoogleHeader">Google</string>
     <string name="OEGeneralCrashReports">Crash reports</string>
     <string name="OEGeneralCrashReportsInfo">Sends crash stack traces to Firebase Crashlytics so failures can be fixed without a manual report. Off by default; nothing leaves the device while it is off.</string>
+    <string name="OEGeneralContentCapture">Share screen content with Android</string>
+    <string name="OEGeneralContentCaptureInfo">Needed for Pixel Live Translate and system on-screen suggestions. While off, the system does not see chat text and lists scroll smoother.</string>
     <string name="OEGeneralMapsHeader">Maps</string>
     <string name="OEGeneralUseOsmMapInfo">Draws the location picker and live locations with OpenStreetMap tiles instead of Google Maps. Location previews inside messages still come from Telegram servers.</string>
     <string name="OEGeneralMapProvider">Map provider</string>

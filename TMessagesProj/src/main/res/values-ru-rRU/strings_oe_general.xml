@@ -104,6 +104,8 @@
     <string name="OEGeneralGoogleHeader">Google</string>
     <string name="OEGeneralCrashReports">Отчёты о сбоях</string>
     <string name="OEGeneralCrashReportsInfo">Отправляет стек падений в Firebase Crashlytics, чтобы их чинили без ручных баг-репортов. По умолчанию выключено, и пока выключено, с устройства ничего не уходит.</string>
+    <string name="OEGeneralContentCapture">Доступ системы к тексту на экране</string>
+    <string name="OEGeneralContentCaptureInfo">Нужен для Live Translate на Pixel и системных подсказок. Пока выключено, система не видит текст чатов, а списки листаются плавнее.</string>
     <string name="OEGeneralMapsHeader">Карты</string>
     <string name="OEGeneralUseOsmMapInfo">Выбор места и трансляции геопозиции рисуются тайлами OpenStreetMap вместо Google Maps. Превью локаций в сообщениях по-прежнему приходят с серверов Telegram.</string>
     <string name="OEGeneralMapProvider">Провайдер карт</string>
