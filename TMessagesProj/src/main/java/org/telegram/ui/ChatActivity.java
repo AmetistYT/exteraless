@@ -34465,7 +34465,7 @@ public class ChatActivity extends BaseFragment implements
             chatLayoutManager.setCanScrollVertically(false);
             // openExtera: снимок экрана как источник блюра для меню
             // dimBehindView(v, true) идёт без блюра, поэтому scrimBlur3SourceBitmap иначе остался бы пустым.
-            if (glassMenu) {
+            if (glassMenu && scrimBlur3SourceBitmap.getBitmap() == null) {
                 GlassMenuHelper.captureBlur(scrimBlur3SourceBitmap, scrimBlur3Factory, fragmentView);
             }
             dimBehindView(v, true);
