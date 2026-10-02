@@ -6,6 +6,7 @@ import android.widget.LinearLayout;
 import android.view.View;
 
 import org.mvel2.MVEL;
+import org.mvel2.optimizers.OptimizerFactory;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.MessageObject;
@@ -48,6 +49,10 @@ import app.exteraless.plugins.PluginsController;
  * Всё зовётся на UI-потоке; при выключенном движке или пустом реестре работа не делается.
  */
 public final class MenuInjector {
+
+    static {
+        OptimizerFactory.setDefaultOptimizer(OptimizerFactory.SAFE_REFLECTIVE);
+    }
 
     /**
      * База id пунктов меню сообщения. Стоковые OPTION_* — 0..152, nkbtn_* — 2008..2101,
