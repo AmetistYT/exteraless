@@ -14856,7 +14856,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         }
         if (groupedPhotosListView != null) {
             groupedPhotosListView.reset();
-            groupedPhotosListView.setAnimateBackground(!ApplicationLoader.isNetworkOnline());
+            groupedPhotosListView.setAnimateBackground(!ApplicationLoader.isNetworkOnlineFast());
         }
 
         if (placeProvider != null && placeProvider.getTotalImageCount() > 0) {
