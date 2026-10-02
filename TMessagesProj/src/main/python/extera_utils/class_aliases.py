@@ -357,6 +357,12 @@ _INSTANCE_SHAPED = {
         "secret": ("getSecret", "setSecret"),
         "link": "getLink",
     },
+    "app.exteraless.plugins.PluginsController": {
+        "pluginsDir": "getPluginsDir",
+        "preferences": "getPreferences",
+        "settings": "getSettings",
+        "engines": "getEngines",
+    },
 }
 
 _WRAP_RESULT = {
@@ -405,6 +411,16 @@ class _FieldShapedObject:
 
     def __repr__(self):
         return repr(object.__getattribute__(self, "_exteraless_java"))
+
+
+def instance_getters():
+    out = {}
+    for name, fields in _INSTANCE_SHAPED.items():
+        out[name] = {
+            field: target[0] if isinstance(target, (tuple, list)) else target
+            for field, target in fields.items()
+        }
+    return out
 
 
 def wrap_instance(obj, java_name):

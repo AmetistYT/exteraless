@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import corpus
+import javaapi
 
 PY_ALIASES = os.path.join(corpus.PYTHON_ROOT, "extera_utils", "class_aliases.py")
 JAVA_ALIASES = os.path.join(corpus.JAVA_ROOT, "app", "exteraless", "plugins", "ClassAliases.java")
@@ -72,3 +73,13 @@ def test_class_resolution_hook_falls_back_to_aliases():
     assert "ClassAliases.resolve" in source, (
         "подмена имён в Class.forName пропала — плагины с зашитым DEX перестанут "
         "находить наши классы по именам exteraGram")
+
+
+def test_instance_getters_exist_in_our_tree(python_aliases):
+    missing = []
+    for fqcn, getters in sorted(python_aliases.instance_getters().items()):
+        for field, getter in sorted(getters.items()):
+            if javaapi.declares(fqcn, getter) is None:
+                missing.append(f"{fqcn}.{getter} ({field})")
+    assert not missing, (
+        "поле-атрибут ведёт в несуществующий геттер: " + ", ".join(missing))

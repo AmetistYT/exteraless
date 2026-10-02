@@ -1426,6 +1426,46 @@ def _install_dual_member_setters() -> None:
                   file=sys.stderr)
 
 
+_instance_getters_installed = False
+
+
+def _install_instance_getters() -> None:
+    global _instance_getters_installed
+    if _instance_getters_installed:
+        return
+    _instance_getters_installed = True
+    from java import jclass
+    from .class_aliases import instance_getters, unwrap
+    for class_name, getters in instance_getters().items():
+        try:
+            cls = unwrap(jclass(class_name))
+            original = getattr(cls, "__getattr__", None)
+        except Exception as e:
+            print(f"[exteraless:plugin_loader] getter scan failed for {class_name}: {e}",
+                  file=sys.stderr)
+            continue
+
+        def __getattr__(self, name, _getters=getters, _original=original):
+            if _original is not None:
+                try:
+                    return _original(self, name)
+                except AttributeError:
+                    pass
+            getter = _getters.get(name)
+            if getter is None:
+                raise AttributeError(name)
+            try:
+                return getattr(self, getter)()
+            except TypeError:
+                return getattr(type(self), getter)()
+
+        try:
+            _set_class_attr(cls, "__getattr__", __getattr__)
+        except Exception as e:
+            print(f"[exteraless:plugin_loader] getters for {class_name} failed: {e}",
+                  file=sys.stderr)
+
+
 def _install_jclass_guard() -> None:
     """Обернуть java.jclass проверкой разрешений. Идемпотентно, не бросает.
 
@@ -1787,6 +1827,7 @@ def _install_sandbox() -> None:
         _install_jclass_guard()
         _install_color_int_shims()
         _install_dual_member_setters()
+        _install_instance_getters()
         _install_log_capture()
         _install_dynamic_proxy_guard()
         _install_interface_call_shim()
