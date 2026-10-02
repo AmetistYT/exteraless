@@ -16923,6 +16923,12 @@ public class MessagesController extends BaseController implements NotificationCe
                     channelsPts.put(channelId, channelPts);
                 }
                 if (channelPts == 0 && (newDialogType == 2 || newDialogType == 3)) {
+                    if (newDialogType == 3) {
+                        final TLRPC.Chat chat = getChat(channelId);
+                        if (ChatObject.isNotInChat(chat) && !ChatObject.isMonoForum(chat)) {
+                            getMessagesStorage().deleteChannelHistoryWithoutPts(channelId);
+                        }
+                    }
                     AndroidUtilities.runOnUIThread(() -> {
                         NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.onReceivedChannelDifference, channelId);
                     });

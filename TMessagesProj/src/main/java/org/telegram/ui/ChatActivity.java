@@ -191,6 +191,7 @@ import org.telegram.messenger.HashtagSearchController;
 import org.telegram.messenger.ImageLoader;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.ImageReceiver;
+import org.telegram.messenger.utils.Choreographer60FpsContent;
 import org.telegram.messenger.LanguageDetector;
 import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.LocaleController;
@@ -2102,11 +2103,7 @@ public class ChatActivity extends BaseFragment implements
                 if (reaction == null && (reactionStringSetting == null || !reactionStringSetting.startsWith("animated_"))) {
                     return false;
                 }
-                boolean available = dialog_id >= 0;
-                if (!available && chatInfo != null) {
-                    available = ChatObject.reactionIsAvailable(chatInfo, reaction == null ? reactionStringSetting : reaction.reaction);
-                }
-                if (!available) {
+                if (!isDoubleTapReactionAvailable(message, reaction == null ? reactionStringSetting : reaction.reaction)) {
                     return false;
                 }
                 return message != null && !message.isDateObject && !message.isSending() && message.canSetReaction() && !message.isEditing() && !actionBar.isActionModeShowed() && !isSecretChat() && !isInScheduleMode() && !message.isSponsored() && !message.isAyuDeleted();
@@ -2207,11 +2204,7 @@ public class ChatActivity extends BaseFragment implements
             }ReactionsEffectOverlay.removeCurrent(false);
                 String reactionString = getMediaDataController().getDoubleTapReaction();
                 if (reactionString.startsWith("animated_")) {
-                    boolean available = dialog_id >= 0;
-                    if (!available && chatInfo != null) {
-                        available = ChatObject.reactionIsAvailable(chatInfo, reactionString);
-                    }
-                    if (!available) {
+                    if (!isDoubleTapReactionAvailable(messageObject, reactionString)) {
                         return;
                     }
                     selectReaction(view, messageObject, null, null, x, y, ReactionsLayoutInBubble.VisibleReaction.fromEmojicon(reactionString), true, false, false, false);
@@ -2220,11 +2213,7 @@ public class ChatActivity extends BaseFragment implements
                     if (reaction == null || messageObject.isSponsored()) {
                         return;
                     }
-                    boolean available = dialog_id >= 0;
-                    if (!available && chatInfo != null) {
-                        available = ChatObject.reactionIsAvailable(chatInfo, reaction.reaction);
-                    }
-                    if (!available) {
+                    if (!isDoubleTapReactionAvailable(messageObject, reaction.reaction)) {
                         return;
                     }
                     selectReaction(view, messageObject, null, null, x, y, ReactionsLayoutInBubble.VisibleReaction.fromEmojicon(reaction), true, false, false, false);
@@ -11639,6 +11628,19 @@ public class ChatActivity extends BaseFragment implements
         dimBehindView(value, false, view != sideControlsButtonsLayout);
     }
 
+    private boolean isDoubleTapReactionAvailable(MessageObject messageObject, String reaction) {
+        if (messageObject != null && messageObject.isForwardedChannelPost()) {
+            final long channelId = -messageObject.getFromChatId();
+            final TLRPC.ChatFull channelInfo = getMessagesController().getChatFull(channelId);
+            if (channelInfo == null) {
+                getMessagesController().loadFullChat(channelId, classGuid, false);
+                return false;
+            }
+            return ChatObject.reactionIsAvailable(channelInfo, reaction);
+        }
+        return dialog_id >= 0 || chatInfo != null && ChatObject.reactionIsAvailable(chatInfo, reaction);
+    }
+
     private void setScrimView(View scrimView) {
         if (this.scrimView == scrimView) {
             return;
@@ -11646,11 +11648,20 @@ public class ChatActivity extends BaseFragment implements
         if (this.scrimView != null) {
             if (this.scrimView instanceof ChatActionCell) {
                 ((ChatActionCell) this.scrimView).setInvalidateWithParent(null);
+            } else if (this.scrimView instanceof ChatMessageCell) {
+                ((ChatMessageCell) this.scrimView).getPhotoImage().setLayerNum(0);
             }
         }
         this.scrimView = scrimView;
         if (this.scrimView instanceof ChatActionCell) {
             ((ChatActionCell) this.scrimView).setInvalidateWithParent(fragmentView);
+        } else if (this.scrimView instanceof ChatMessageCell) {
+            final ImageReceiver photoImage = ((ChatMessageCell) this.scrimView).getPhotoImage();
+            photoImage.setLayerNum(512);
+            final AnimatedFileDrawable animation = photoImage.getAnimation();
+            if (animation != null && !animation.isRunning() && photoImage.getAllowStartAnimation() && NotificationCenter.getGlobalInstance().getCurrentHeavyOperationFlags() != 0) {
+                animation.checkRepeat();
+            }
         }
     }
     public void dimBehindView(boolean enable) {
@@ -19119,7 +19130,7 @@ public class ChatActivity extends BaseFragment implements
                         }
 
                         if (cell != null && cell.getPhotoImage().isAnimationRunning()) {
-                            invalidate();
+                            Choreographer60FpsContent.getInstance().postInvalidateView(this);
                         }
 
                         float viewClipLeft = chatListView.getLeft();
@@ -36959,7 +36970,7 @@ public class ChatActivity extends BaseFragment implements
         } else if (actionBar != null && actionBar.isActionModeShowed()) {
             if (invoked) clearSelectionMode();
             return false;
-        } else if (chatActivityEnterView != null && chatActivityEnterView.isPopupShowing()) {
+        } else if (chatActivityEnterView != null && chatActivityEnterView.isPopupShowing() && !chatActivityEnterView.isPersistentBotKeyboardShowing()) {
             if (invoked) chatActivityEnterView.hidePopup(true);
             return false;
 //        } else if (chatActivityEnterView != null && chatActivityEnterView.hasBotWebView() && chatActivityEnterView.botCommandsMenuIsShowing() && chatActivityEnterView.onBotWebViewBackPressed()) {

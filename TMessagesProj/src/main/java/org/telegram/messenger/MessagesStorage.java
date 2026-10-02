@@ -18254,6 +18254,33 @@ public class MessagesStorage extends BaseController {
         return max[0];
     }
 
+    public void deleteChannelHistoryWithoutPts(long channelId) {
+        storageQueue.postRunnable(() -> {
+            final long did = -channelId;
+            SQLiteCursor cursor = null;
+            try {
+                cursor = database.queryFinalized("SELECT pts FROM dialogs WHERE did = " + did);
+                final boolean hasPts = cursor.next() && cursor.intValue(0) != 0;
+                cursor.dispose();
+                cursor = null;
+                if (hasPts) {
+                    return;
+                }
+                database.executeFast("DELETE FROM messages_v2 WHERE uid = " + did).stepThis().dispose();
+                database.executeFast("DELETE FROM messages_holes WHERE uid = " + did).stepThis().dispose();
+                database.executeFast("DELETE FROM media_v4 WHERE uid = " + did).stepThis().dispose();
+                database.executeFast("DELETE FROM media_holes_v2 WHERE uid = " + did).stepThis().dispose();
+                database.executeFast("UPDATE media_counts_v2 SET old = 1 WHERE uid = " + did).stepThis().dispose();
+            } catch (Exception e) {
+                checkSQLException(e);
+            } finally {
+                if (cursor != null) {
+                    cursor.dispose();
+                }
+            }
+        });
+    }
+
     public int getChannelPtsSync(long channelId) {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         Integer[] pts = new Integer[]{0};

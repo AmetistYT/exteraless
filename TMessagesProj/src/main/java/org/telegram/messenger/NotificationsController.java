@@ -4387,7 +4387,8 @@ public class NotificationsController extends BaseController implements Notificat
         try {
             SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
             boolean isReactionPush = lastMessageObject != null && lastMessageObject.isReactionPush;
-            int notifyOverride = getNotifyOverride(preferences, dialogId, topicId);
+            final long overrideDialogId = lastMessageObject != null && lastMessageObject.messageOwner != null && lastMessageObject.messageOwner.mentioned ? lastMessageObject.getFromChatId() : dialogId;
+            int notifyOverride = getNotifyOverride(preferences, overrideDialogId, topicId);
             boolean value;
             if (notifyOverride == -1) {
                 value = isGlobalNotificationsEnabled(dialogId, isChannel, isReactionPush, isReactionPush);
