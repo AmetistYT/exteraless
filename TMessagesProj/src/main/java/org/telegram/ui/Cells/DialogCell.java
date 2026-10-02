@@ -147,6 +147,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Stack;
+import java.util.TimeZone;
 
 import me.vkryl.android.animator.BoolAnimator;
 
@@ -1185,9 +1186,6 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
     }
 
     public void setPinForced(boolean value) {
-        if (drawPinForced == value) {
-            return;
-        }
         drawPinForced = value;
         if (getMeasuredWidth() > 0 && getMeasuredHeight() > 0) {
             buildLayout();
@@ -1333,7 +1331,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         if (isTransitionSupport) {
             return;
         }
-        if (isDialogCell) {
+        if (isDialogCell || isTopic) {
             boolean needUpdate = updateHelper.update();
             if (!needUpdate && currentDialogFolderId == 0 && currentDialogCommunityId == 0 && encryptedChat == null) {
                 return;
@@ -6404,6 +6402,8 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         public int lastTopicsCount;
         public boolean lastDrawnPinned;
         public boolean lastDrawnHasCall;
+        public long lastDrawnTopicId;
+        public long lastDrawnStateHash;
 
 
         public float typingProgres;
@@ -6414,20 +6414,31 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
 
 
         public boolean update() {
-            TLRPC.Dialog dialog = MessagesController.getInstance(currentAccount).dialogs_dict.get(currentDialogId);
-            if (dialog == null) {
-                if (dialogsType == DialogsActivity.DIALOGS_TYPE_FORWARD && lastDrawnDialogId != currentDialogId) {
-                    lastDrawnDialogId = currentDialogId;
-                    return true;
+            TLRPC.Dialog dialog = null;
+            if (!isTopic) {
+                dialog = MessagesController.getInstance(currentAccount).dialogs_dict.get(currentDialogId);
+                if (dialog == null) {
+                    if (dialogsType == DialogsActivity.DIALOGS_TYPE_FORWARD && lastDrawnDialogId != currentDialogId) {
+                        lastDrawnDialogId = currentDialogId;
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
             }
             int messageHash = message == null ? 0 : message.getId() + message.hashCode();
             Integer printingType = null;
-            long readHash = dialog.read_inbox_max_id + ((long) dialog.read_outbox_max_id << 8) + ((long) (dialog.unread_count + (dialog.unread_mark ? -1 : 0)) << 16) +
-                    (dialog.unread_reactions_count > 0 ? (1 << 18) : 0) +
-                    (dialog.unread_mentions_count > 0 ? (1 << 19) : 0) +
-                    (dialog.unread_poll_votes_count > 0 ? (1 << 21) : 0);
+            long readHash;
+            if (dialog != null) {
+                readHash = dialog.read_inbox_max_id + ((long) dialog.read_outbox_max_id << 8) + ((long) (dialog.unread_count + (dialog.unread_mark ? -1 : 0)) << 16) +
+                        (dialog.unread_reactions_count > 0 ? (1 << 18) : 0) +
+                        (dialog.unread_mentions_count > 0 ? (1 << 19) : 0) +
+                        (dialog.unread_poll_votes_count > 0 ? (1 << 21) : 0);
+            } else {
+                readHash = forumTopic.read_inbox_max_id + ((long) forumTopic.read_outbox_max_id << 8) + ((long) forumTopic.unread_count << 16) +
+                        (forumTopic.unread_reactions_count > 0 ? (1 << 18) : 0) +
+                        (forumTopic.unread_mentions_count > 0 ? (1 << 19) : 0) +
+                        (forumTopic.unread_poll_votes_count > 0 ? (1 << 21) : 0);
+            }
 
             if (isForumCell()) {
                 int[] f = MessagesController.getInstance(currentAccount).getTopicsController().getForumUnreadCount(-currentDialogId);
@@ -6439,7 +6450,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 }
             }
 
-            if (!isForumCell() && (isDialogCell || isTopic)) {
+            if (!isForumCell() && isDialogCell) {
                 if (!TextUtils.isEmpty(MessagesController.getInstance(currentAccount).getPrintingString(currentDialogId, getTopicId(), true))) {
                     printingType = MessagesController.getInstance(currentAccount).getPrintingStringType(currentDialogId, getTopicId());
                 } else {
@@ -6471,22 +6482,27 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             int draftHash = draftMessage == null ? 0 : draftMessage.message.hashCode() + (draftMessage.reply_to != null ? (draftMessage.reply_to.reply_to_msg_id << 16) : 0);
             boolean hasCall = chat != null && chat.call_active && chat.call_not_empty;
             boolean translated = MessagesController.getInstance(currentAccount).getTranslateController().isTranslatingDialog(currentDialogId);
+            boolean isFolder = dialog != null && dialog.isFolder;
+            long topicId = getTopicId();
+            long stateHash = calcStateHash();
             if (lastDrawnSizeHash == sizeHash &&
                     lastDrawnMessageId == messageHash &&
                     lastDrawnTranslated == translated &&
                     lastDrawnDialogId == currentDialogId &&
-                    lastDrawnDialogIsFolder == dialog.isFolder &&
+                    lastDrawnTopicId == topicId &&
+                    lastDrawnDialogIsFolder == isFolder &&
                     lastDrawnReadState == readHash &&
                     Objects.equals(lastDrawnPrintingType, printingType) &&
                     lastTopicsCount == topicCount &&
                     draftHash == lastDrawnDraftHash &&
-                    lastDrawnPinned == drawPin &&
+                    lastDrawnPinned == getIsPinned() &&
                     lastDrawnHasCall == hasCall &&
+                    lastDrawnStateHash == stateHash &&
                     DialogCell.this.draftVoice == draftVoice) {
                 return false;
             }
 
-            if (lastDrawnDialogId != currentDialogId) {
+            if (lastDrawnDialogId != currentDialogId || lastDrawnTopicId != topicId) {
                 typingProgres = printingType == null ? 0f : 1f;
                 waitngNewMessageFroTypingAnimation = false;
             } else {
@@ -6508,18 +6524,39 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 lastKnownTypingType = printingType;
             }
             lastDrawnDialogId = currentDialogId;
+            lastDrawnTopicId = topicId;
             lastDrawnMessageId = messageHash;
-            lastDrawnDialogIsFolder = dialog.isFolder;
+            lastDrawnDialogIsFolder = isFolder;
             lastDrawnReadState = readHash;
             lastDrawnPrintingType = printingType;
             lastDrawnSizeHash = sizeHash;
             lastDrawnDraftHash = draftHash;
             lastTopicsCount = topicCount;
-            lastDrawnPinned = drawPin;
+            lastDrawnPinned = getIsPinned();
             lastDrawnHasCall = hasCall;
             lastDrawnTranslated = translated;
+            lastDrawnStateHash = stateHash;
 
             return true;
+        }
+
+        private long calcStateHash() {
+            long hash = (dialogMuted ? 1 : 0) | (drawUnmute ? 2 : 0) | (twoLinesForName ? 4 : 0) | (showTopicIconInName ? 8 : 0) | (SharedConfig.useThreeLinesLayout ? 16 : 0);
+            hash = MediaDataController.calcHash(hash, customMessage == null ? 0 : customMessage.hashCode());
+            hash = MediaDataController.calcHash(hash, titleOverride == null ? 0 : titleOverride.hashCode());
+            if (message != null) {
+                hash = MediaDataController.calcHash(hash, message.messageOwner.send_state);
+                hash = MediaDataController.calcHash(hash, message.messageOwner.edit_date);
+                hash = MediaDataController.calcHash(hash, message.isUnread() ? 1 : 0);
+            }
+            if (forumTopic != null) {
+                hash = MediaDataController.calcHash(hash, forumTopic.title == null ? 0 : forumTopic.title.hashCode());
+                hash = MediaDataController.calcHash(hash, forumTopic.icon_emoji_id);
+                hash = MediaDataController.calcHash(hash, forumTopic.icon_color);
+                hash = MediaDataController.calcHash(hash, (forumTopic.closed ? 1 : 0) | (forumTopic.hidden ? 2 : 0));
+            }
+            final long now = System.currentTimeMillis();
+            return MediaDataController.calcHash(hash, (now + TimeZone.getDefault().getOffset(now)) / 86400000L);
         }
 
         public void updateAnimationValues() {
