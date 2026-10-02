@@ -570,8 +570,13 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             setInfo();
             scheduleItemsUpdate(true);
         } else if (id == NotificationCenter.updateInterfaces) {
-            setInfo();
-            scheduleItemsUpdate(false);
+            final int mask = (Integer) args[0];
+            if (isPaused()) {
+                scheduleItemsUpdate(false);
+            } else if ((mask & (MessagesController.UPDATE_MASK_NAME | MessagesController.UPDATE_MASK_AVATAR | MessagesController.UPDATE_MASK_PHONE | MessagesController.UPDATE_MASK_USER_PHONE | MessagesController.UPDATE_MASK_EMOJI_STATUS)) != 0) {
+                setInfo();
+                scheduleItemsUpdate(false);
+            }
         } else if (id == NotificationCenter.newSuggestionsAvailable) {
             scheduleItemsUpdate(true);
         }
