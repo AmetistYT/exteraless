@@ -145,7 +145,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
         LinearLayout chips = new LinearLayout(context);
         chips.setOrientation(LinearLayout.HORIZONTAL);
         if (PluginFileViewer.canOpen(file)) {
-            TextView source = createChip(context, R.drawable.msg_view_file, getString(R.string.PluginsViewSource));
+            TextView source = createChip(context, R.drawable.baseline_code_24, getString(R.string.PluginsViewSource));
             source.setOnClickListener(v -> {
                 BaseFragment fragment = LaunchActivity.getLastFragment();
                 if (fragment != null) {
@@ -155,7 +155,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
             chips.addView(source, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 36, 0, 0, 8, 0));
         }
         if (PluginAiReview.canReview(file)) {
-            TextView review = createChip(context, 0, "\u2726  " + getString(R.string.PluginsAiReview));
+            TextView review = createChip(context, R.drawable.input_ai_star, getString(R.string.PluginsAiReview));
             review.setOnClickListener(v -> {
                 if (!AiController.canUseAI() && !PluginAiReview.isCached(file)) {
                     BulletinFactory.of(container, resourcesProvider).createSimpleBulletin(
@@ -272,6 +272,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
         chip.setTextColor(colors.onSecondaryContainer);
         chip.setGravity(Gravity.CENTER_VERTICAL);
         chip.setSingleLine(true);
+        chip.setText(text);
         chip.setPadding(dp(iconRes != 0 ? 12 : 16), 0, dp(16), 0);
         if (iconRes != 0) {
             android.graphics.drawable.Drawable icon = context.getResources().getDrawable(iconRes).mutate();
@@ -412,9 +413,10 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
 
     private android.view.View createEnableAfterInstall(Context context) {
         LinearLayout row = createCard(context);
+        row.setClipToOutline(false);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(20), dp(14), dp(16), dp(14));
+        row.setPadding(dp(20), dp(14), dp(21), dp(14));
 
         TextView text = new TextView(context);
         text.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
