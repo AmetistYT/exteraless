@@ -1321,3 +1321,59 @@ def test_repeated_java_from_import_is_served_from_cache(loader, monkeypatch):
     for _ in range(2):
         loader._sandboxed_import('org.telegram.messenger', fromlist=('SendMessagesHelper',))
     assert calls.count(('org.telegram.messenger', ('SendMessagesHelper',))) == 2
+
+
+def test_new_proxy_class_methods_are_guarded(loader, monkeypatch):
+    class ProxyClass(type):
+        pass
+
+    class _Class:
+        def __init__(self, interface, methods):
+            self._interface = interface
+            self._methods = methods
+
+        def isInterface(self):
+            return self._interface
+
+        def getName(self):
+            return 'java.util.Comparator'
+
+        def getMethods(self):
+            return self._methods
+
+    class _Method:
+        def __init__(self, name, returns):
+            self._name, self._returns = name, returns
+
+        def getName(self):
+            return self._name
+
+        def getReturnType(self):
+            return types.SimpleNamespace(getName=lambda: self._returns)
+
+    comparator_class = _Class(True, [_Method('compare', 'int')])
+
+    class Comparator:
+        _chaquopy_j_klass = object()
+
+        @staticmethod
+        def getClass():
+            return comparator_class
+
+    chaquopy = types.ModuleType('java.chaquopy')
+    chaquopy.ProxyClass = ProxyClass
+    monkeypatch.setitem(sys.modules, 'java.chaquopy', chaquopy)
+    monkeypatch.setattr(loader, '_proxy_class_type', None)
+    monkeypatch.setattr(loader, '_proxy_defaults_cache', {})
+
+    def compare(self, a, b):
+        raise ValueError('plugin bug')
+
+    proxy = ProxyClass('Listener', (Comparator,), {'compare': compare})
+    plain = type('Plain', (Comparator,), {'compare': compare})
+    loader._guard_new_proxy_class(proxy)
+    loader._guard_new_proxy_class(plain)
+
+    assert proxy.compare(proxy, 1, 2) == 0
+    with pytest.raises(ValueError):
+        plain.compare(plain, 1, 2)

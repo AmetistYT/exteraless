@@ -1719,9 +1719,60 @@ def _guard_proxy_subclass(cls, defaults):
         if isinstance(value, (staticmethod, classmethod, type)):
             continue
         try:
-            setattr(cls, name, _guard_proxy_method(value, defaults.get(name), cls.__name__))
+            type.__setattr__(cls, name, _guard_proxy_method(value, defaults.get(name), cls.__name__))
         except Exception:
             continue
+
+
+def _proxy_interfaces(cls):
+    interfaces = []
+    for base in cls.__bases__:
+        try:
+            if "_chaquopy_j_klass" not in vars(base):
+                continue
+            klass = base.getClass()
+            if not klass.isInterface() or str(klass.getName()).startswith("com.chaquo.python."):
+                continue
+        except Exception:
+            continue
+        interfaces.append(base)
+    return interfaces
+
+
+_proxy_class_type = None
+
+
+def _guard_new_proxy_class(cls) -> None:
+    global _proxy_class_type
+    if _proxy_class_type is None:
+        try:
+            from java.chaquopy import ProxyClass
+        except Exception:
+            return
+        _proxy_class_type = ProxyClass
+    if not isinstance(cls, _proxy_class_type):
+        return
+    _guard_proxy_subclass(cls, _proxy_return_defaults(_proxy_interfaces(cls)))
+
+
+def _install_proxy_class_guard() -> None:
+    try:
+        from java import jclass
+        root = jclass("java.lang.Object")
+        if getattr(getattr(vars(root).get("__init_subclass__"), "__func__", None), "_exteraless_guard", False):
+            return
+
+        def __init_subclass__(cls, **kwargs):
+            try:
+                _guard_new_proxy_class(cls)
+            except Exception as e:
+                print(f"[exteraless:plugin_loader] proxy class guard skipped: {e}",
+                      file=sys.stderr)
+
+        __init_subclass__._exteraless_guard = True
+        _set_class_attr(root, "__init_subclass__", classmethod(__init_subclass__))
+    except Exception as e:
+        print(f"[exteraless:plugin_loader] proxy class guard failed: {e}", file=sys.stderr)
 
 
 def _install_dynamic_proxy_guard() -> None:
@@ -1954,6 +2005,7 @@ def _install_sandbox() -> None:
         _install_java_getters()
         _install_log_capture()
         _install_dynamic_proxy_guard()
+        _install_proxy_class_guard()
         _install_interface_call_shim()
         from . import class_aliases
         class_aliases.install_import_hook()
