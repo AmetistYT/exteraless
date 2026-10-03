@@ -74,6 +74,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
     private final com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet.PluginInstallParams params;
     private final Plugin plugin;
     private final PlayerColors colors;
+    private ScrollView scroll;
 
     public PluginInstallBottomSheet(Activity activity, File file,
                                     com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet.PluginInstallParams params,
@@ -219,7 +220,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
         content.addView(createEnableAfterInstall(context),
                 LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 12, 0, 0));
 
-        ScrollView scroll = new ScrollView(context);
+        scroll = new ScrollView(context);
         scroll.setVerticalScrollBarEnabled(false);
         scroll.addView(content);
 
@@ -256,6 +257,11 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
     }
 
     private static final int BAR_HEIGHT = 84;
+
+    @Override
+    protected boolean canDismissWithSwipe() {
+        return scroll == null || !scroll.canScrollVertically(-1);
+    }
 
     private LinearLayout createCard(Context context) {
         LinearLayout card = new LinearLayout(context);
@@ -416,7 +422,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
         row.setClipToOutline(false);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(20), dp(14), dp(21), dp(14));
+        row.setPadding(dp(20), dp(14), 0, dp(14));
 
         TextView text = new TextView(context);
         text.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
@@ -428,7 +434,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
         toggle.setColors(Theme.key_switchTrack, Theme.key_switchTrackChecked,
                 Theme.key_windowBackgroundWhite, Theme.key_windowBackgroundWhite);
         toggle.setChecked(enableAfterInstall, false);
-        row.addView(toggle, LayoutHelper.createLinear(37, 40, Gravity.CENTER_VERTICAL, 12, 0, 0, 0));
+        row.addView(toggle, LayoutHelper.createLinear(37, 40, Gravity.CENTER_VERTICAL, 12, 0, 21, 0));
 
         row.setForeground(Theme.createSelectorDrawable(ColorUtils.setAlphaComponent(colors.onSurface, 0x14), 2));
         row.setOnClickListener(v -> {
