@@ -188,4 +188,8 @@ Source:
     <string name="PluginsUnconsentedTitle">Plugins added without permissions</string>
     <string name="PluginsUnconsentedMore">%1$s and %2$d more</string>
     <string name="PluginsUnconsentedAction">Review</string>
+    <string name="PluginsDexTitle">Embedded Java code (DEX)</string>
+    <string name="PluginsDexLoaded">%1$s. The plugin loads and runs it; what it calls is counted in the permissions below and marked “DEX”.</string>
+    <string name="PluginsDexUnused">%1$s, but nothing in the plugin loads it — this code never runs.</string>
+    <string name="PluginsDexClasses">Classes: %1$s</string>
 </resources>

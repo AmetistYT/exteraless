@@ -183,4 +183,8 @@
     <string name="PluginsUnconsentedTitle">Плагины добавлены без разрешений</string>
     <string name="PluginsUnconsentedMore">%1$s и ещё %2$d</string>
     <string name="PluginsUnconsentedAction">Настроить</string>
+    <string name="PluginsDexTitle">Встроенный Java-код (DEX)</string>
+    <string name="PluginsDexLoaded">%1$s. Плагин загружает и запускает его; что он вызывает, учтено в разрешениях ниже с пометкой «DEX».</string>
+    <string name="PluginsDexUnused">%1$s, но плагин его нигде не загружает — этот код не выполняется.</string>
+    <string name="PluginsDexClasses">Классы: %1$s</string>
 </resources>

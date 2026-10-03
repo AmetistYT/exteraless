@@ -196,6 +196,12 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
                     LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 12, 0, 0));
         }
 
+        PluginCapabilityScan.DexInfo dex = PluginCapabilityScan.dexInfo(capabilities);
+        if (dex != null) {
+            content.addView(createDexCard(context, dex),
+                    LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 12, 0, 0));
+        }
+
         if (!permissions.isEmpty()) {
             LinearLayout group = createCard(context);
             group.setPadding(0, dp(6), 0, dp(6));
@@ -318,6 +324,43 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
             signs.setTextColor(colors.onSurfaceVariant);
             signs.setText(LocaleController.formatString(R.string.PluginsObfuscatedEvidence, TextUtils.join(", ", evidence)));
             box.addView(signs, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 6, 0, 0));
+        }
+        return box;
+    }
+
+    private View createDexCard(Context context, PluginCapabilityScan.DexInfo dex) {
+        final int accent = dex.loaded ? Theme.getColor(Theme.key_text_RedBold) : colors.onSurfaceVariant;
+        LinearLayout box = new LinearLayout(context);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(16), dp(14), dp(16), dp(14));
+        box.setBackground(Theme.createRoundRectDrawable(dp(20), dex.loaded
+                ? ColorUtils.blendARGB(colors.surfaceLow, accent, 0.10f)
+                : colors.surfaceContainer));
+
+        TextView title = new TextView(context);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        title.setTypeface(AndroidUtilities.bold());
+        title.setTextColor(dex.loaded ? accent : colors.onSurface);
+        title.setText(getString(R.string.PluginsDexTitle));
+        box.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        TextView info = new TextView(context);
+        info.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        info.setTextColor(colors.onSurface);
+        info.setText(LocaleController.formatString(dex.loaded ? R.string.PluginsDexLoaded : R.string.PluginsDexUnused,
+                AndroidUtilities.formatFileSize(dex.size)));
+        box.addView(info, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 4, 0, 0));
+
+        if (!dex.classes.isEmpty()) {
+            String names = TextUtils.join(", ", dex.classes);
+            if (dex.moreClasses > 0) {
+                names += " +" + dex.moreClasses;
+            }
+            TextView classes = new TextView(context);
+            classes.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
+            classes.setTextColor(colors.onSurfaceVariant);
+            classes.setText(LocaleController.formatString(R.string.PluginsDexClasses, names));
+            box.addView(classes, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 6, 0, 0));
         }
         return box;
     }
