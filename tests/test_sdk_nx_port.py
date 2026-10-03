@@ -1298,3 +1298,26 @@ def test_getter_fields_survive_absent_markers(loader, monkeypatch):
     assert reflected.count('getText') == 1
     assert reflected.count('getHint') == 1
     assert reflected.count('isHint') == 1
+
+
+def test_repeated_java_from_import_is_served_from_cache(loader, monkeypatch):
+    calls = []
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        calls.append((name, tuple(fromlist or ())))
+        module = types.ModuleType("<java import hook>")
+        for item in fromlist or ():
+            setattr(module, item, f"{name}.{item}")
+        return module
+
+    monkeypatch.setattr(loader, '_original_import', fake_import)
+    monkeypatch.setattr(loader, '_java_from_imports', {})
+    first = loader._sandboxed_import('org.telegram.messenger', fromlist=('AndroidUtilities',))
+    second = loader._sandboxed_import('org.telegram.messenger', fromlist=('AndroidUtilities',))
+    assert second is first
+    assert first.AndroidUtilities == 'org.telegram.messenger.AndroidUtilities'
+    assert calls.count(('org.telegram.messenger', ('AndroidUtilities',))) == 1
+
+    for _ in range(2):
+        loader._sandboxed_import('org.telegram.messenger', fromlist=('SendMessagesHelper',))
+    assert calls.count(('org.telegram.messenger', ('SendMessagesHelper',))) == 2

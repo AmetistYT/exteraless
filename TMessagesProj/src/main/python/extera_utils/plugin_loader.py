@@ -1066,17 +1066,42 @@ def _sandboxed_import(name, globals=None, locals=None, fromlist=(), level=0):
         except Exception as exc:
             _log_neighbour_import_failure(name, exc)
             raise
+    key = (name, tuple(fromlist)) if fromlist and level == 0 else None
+    if key is not None:
+        cached = _java_from_imports.get(key)
+        if cached is not None:
+            return cached
     try:
-        return _original_import(name, globals, locals, fromlist, level)
+        module = _original_import(name, globals, locals, fromlist, level)
     except ModuleNotFoundError as exc:
         # Chaquopy отдаёт «No module named 'org'» — корень пакета, а не то, что
         # действительно не нашлось. Настоящий запрос знает только этот кадр.
         if getattr(exc, "_exteraless_java_import", None) is None:
             exc._exteraless_java_import = (name, tuple(fromlist or ()))
         raise
+    if key is not None and _cacheable_java_import(module, name, key[1]):
+        if len(_java_from_imports) >= _JAVA_FROM_IMPORTS_MAX:
+            _java_from_imports.clear()
+        _java_from_imports[key] = module
+    return module
 
 
 _sandboxed_import._exteraless_sandbox = True
+
+_java_from_imports = {}
+_JAVA_FROM_IMPORTS_MAX = 4096
+
+
+def _cacheable_java_import(module, name, fromlist) -> bool:
+    if getattr(module, "__name__", None) != "<java import hook>":
+        return False
+    for item in fromlist:
+        if not isinstance(item, str) or item == "*":
+            return False
+        full = f"{name}.{item}"
+        if full in _JAVA_CLASS_DENIED or java_class_permission(full) is not None:
+            return False
+    return True
 
 
 # ---- прямой доступ к файлам из кода плагина ----
