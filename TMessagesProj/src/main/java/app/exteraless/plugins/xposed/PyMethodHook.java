@@ -88,6 +88,7 @@ public class PyMethodHook extends XC_MethodHook {
         }
         if (beforeCall != null && HookFilter.evaluateAll(beforeFilters, param, false)) {
             XposedHooks.callPython(pluginId, beforeCall, param, beforeStats);
+            HookNumbers.coerce(param);
         }
     }
 
@@ -96,6 +97,7 @@ public class PyMethodHook extends XC_MethodHook {
         try {
             if (afterCall != null && HookFilter.evaluateAll(afterFilters, param, true)) {
                 XposedHooks.callPython(pluginId, afterCall, param, afterStats);
+                HookNumbers.coerce(param);
             }
         } finally {
             java.util.IdentityHashMap<MethodHookParam, ActionBar.UnreadImageView> draws = badgeDraws.get();
