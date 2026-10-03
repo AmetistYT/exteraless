@@ -122,7 +122,6 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private int iosChatHeaderRow;
     private boolean iosExpanded;
     private int senderMiniAvatarsRow;
-    private int channelSubscribersRow;
     private int titleTextRow;
     private int chatListDividerRow;
 
@@ -180,7 +179,6 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         forceSnowRow = addRow("forceSnow");
         centerTitleRow = addRow("centerTitle");
         senderMiniAvatarsRow = addRow("senderMiniAvatars");
-        channelSubscribersRow = addRow("channelSubscribers");
         titleTextRow = addRow("titleText");
         chatListDividerRow = addRow();
 
@@ -754,8 +752,6 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             rebuild = true;
         } else if (position == senderMiniAvatarsRow) {
             item = AppearanceConfig.senderMiniAvatars;
-        } else if (position == channelSubscribersRow) {
-            item = AppearanceConfig.channelSubscribers;
         }
 
         if (item == null) {
@@ -900,9 +896,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     } else if (position == forceSnowRow) {
                         cell.setTextAndValueAndCheck(getString(R.string.OEAppearanceForceSnow), getString(R.string.OEAppearanceForceSnowInfo), NekoConfig.actionBarDecoration.Int() == 1, true, true);
                     } else if (position == senderMiniAvatarsRow) {
-                        cell.setTextAndCheck(getString(R.string.OEAppearanceSenderMiniAvatars), AppearanceConfig.senderMiniAvatars.Bool(), true);
-                    } else if (position == channelSubscribersRow) {
-                        cell.setTextAndCheck(getString(R.string.OEAppearanceChannelSubscribers), AppearanceConfig.channelSubscribers.Bool(), false);
+                        cell.setTextAndCheck(getString(R.string.OEAppearanceSenderMiniAvatars), AppearanceConfig.senderMiniAvatars.Bool(), false);
                     }
                     break;
                 }

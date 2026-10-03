@@ -65,10 +65,6 @@ object AppearanceConfig {
     val senderMiniAvatars =
         addConfig("OEAppearanceSenderMiniAvatars", ConfigItem.configTypeBool, true)
 
-    @JvmField
-    val channelSubscribers =
-        addConfig("OEAppearanceChannelSubscribers", ConfigItem.configTypeBool, true)
-
     /** Прятать эмодзи-статус рядом с заголовком шапки. Дефолт false, как в exteraGram. */
     @JvmField
     val hideActionBarStatus =
@@ -420,12 +416,6 @@ object AppearanceConfig {
     fun senderMiniAvatars(): Boolean {
         ensureLoaded()
         return senderMiniAvatars.Bool()
-    }
-
-    @JvmStatic
-    fun channelSubscribers(): Boolean {
-        ensureLoaded()
-        return channelSubscribers.Bool()
     }
 
     /** Текст заголовка списка чатов: 0 — имя приложения, 1 — username, 2 — имя, 3 — «Чаты». */

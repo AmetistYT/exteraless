@@ -23,7 +23,6 @@
     <string name="OEAppearanceHideFloatingButton">Hide Floating Button</string>
     <string name="OEAppearanceHideSearchBar">Hide Search Bar</string>
     <string name="OEAppearanceSenderMiniAvatars">Sender Mini Avatars</string>
-    <string name="OEAppearanceChannelSubscribers">Channel subscribers</string>
     <string name="OEAppearanceForceSnowInfo">Falling snowflakes will appear in the action bar, side menu, and chat backgrounds.</string>
     <string name="OEAppearanceTitleText">Title Text</string>
     <string name="OEAppearanceTitleTextApp">@string/AppName</string>

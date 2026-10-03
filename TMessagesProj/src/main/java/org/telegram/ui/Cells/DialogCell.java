@@ -41,9 +41,7 @@ import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.TextUtils;
-import android.text.style.AbsoluteSizeSpan;
 import android.text.style.ClickableSpan;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.ReplacementSpan;
 import android.text.style.StyleSpan;
 import android.view.Gravity;
@@ -328,26 +326,6 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
 
     public void setCurrentDialogId(long dialogId) {
         currentDialogId = dialogId;
-    }
-
-    private CharSequence channelSubscribersSuffix() {
-        if (chat == null || !ChatObject.isChannelAndNotMegaGroup(chat) || chat.monoforum || !app.exteraless.appearance.AppearanceConfig.channelSubscribers()) {
-            return null;
-        }
-        int count = chat.participants_count;
-        if (count <= 0) {
-            TLRPC.ChatFull full = MessagesController.getInstance(currentAccount).getChatFull(chat.id);
-            if (full != null) {
-                count = full.participants_count;
-            }
-        }
-        if (count <= 0) {
-            return null;
-        }
-        SpannableString suffix = new SpannableString("  " + LocaleController.formatShortNumber(count, null));
-        suffix.setSpan(new AbsoluteSizeSpan(12, true), 0, suffix.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        suffix.setSpan(new ForegroundColorSpan(Theme.getColor(Theme.key_chats_date, resourcesProvider)), 0, suffix.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return suffix;
     }
 
     public void setIsTransitionSupport(boolean isTransitionSupport) {
@@ -2493,25 +2471,16 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 nameString = ((String) nameString).replace('\n', ' ');
             }
             CharSequence nameStringFinal = nameString;
-            CharSequence subscribers = twoLinesForName ? null : channelSubscribersSuffix();
-            if (subscribers != null) {
-                int available = Math.max(0, ellipsizeWidth - (int) Math.ceil(Theme.dialogs_timePaint.measureText(subscribers.toString())));
-                nameLayoutFits = true;
-                channelShouldUseLineWidth = false;
-                nameIsEllipsized = Theme.dialogs_namePaint[paintIndex].measureText(nameStringFinal.toString()) > available;
-                nameStringFinal = TextUtils.ellipsize(nameStringFinal, Theme.dialogs_namePaint[paintIndex], available, TextUtils.TruncateAt.END);
-            } else {
-                if (nameLayoutEllipsizeByGradient) {
-                    nameLayoutFits = nameStringFinal.length() == TextUtils.ellipsize(nameStringFinal, Theme.dialogs_namePaint[paintIndex], ellipsizeWidth, TextUtils.TruncateAt.END).length();
-                    ellipsizeWidth += dp(48);
-                    channelShouldUseLineWidth = nameLayoutFits;
-                } else if (isForChannelSubscriberCell) {
-                    channelShouldUseLineWidth = nameStringFinal.length() == TextUtils.ellipsize(nameStringFinal, Theme.dialogs_namePaint[paintIndex], ellipsizeWidth, TextUtils.TruncateAt.END).length();
-                }
-                nameIsEllipsized = Theme.dialogs_namePaint[paintIndex].measureText(nameStringFinal.toString()) > ellipsizeWidth;
-                if (!twoLinesForName) {
-                    nameStringFinal = TextUtils.ellipsize(nameStringFinal, Theme.dialogs_namePaint[paintIndex], ellipsizeWidth, TextUtils.TruncateAt.END);
-                }
+            if (nameLayoutEllipsizeByGradient) {
+                nameLayoutFits = nameStringFinal.length() == TextUtils.ellipsize(nameStringFinal, Theme.dialogs_namePaint[paintIndex], ellipsizeWidth, TextUtils.TruncateAt.END).length();
+                ellipsizeWidth += dp(48);
+                channelShouldUseLineWidth = nameLayoutFits;
+            } else if (isForChannelSubscriberCell) {
+                channelShouldUseLineWidth = nameStringFinal.length() == TextUtils.ellipsize(nameStringFinal, Theme.dialogs_namePaint[paintIndex], ellipsizeWidth, TextUtils.TruncateAt.END).length();
+            }
+            nameIsEllipsized = Theme.dialogs_namePaint[paintIndex].measureText(nameStringFinal.toString()) > ellipsizeWidth;
+            if (!twoLinesForName) {
+                nameStringFinal = TextUtils.ellipsize(nameStringFinal, Theme.dialogs_namePaint[paintIndex], ellipsizeWidth, TextUtils.TruncateAt.END);
             }
             nameStringFinal = Emoji.replaceEmoji(nameStringFinal, Theme.dialogs_namePaint[paintIndex].getFontMetricsInt(), false);
             if (message != null && message.hasHighlightedWords()) {
@@ -2520,15 +2489,12 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                     nameStringFinal = s;
                 }
             }
-            if (subscribers != null) {
-                nameStringFinal = TextUtils.concat(nameStringFinal, subscribers);
-            }
             if (twoLinesForName) {
                 nameLayout = StaticLayoutEx.createStaticLayout(nameStringFinal, Theme.dialogs_namePaint[paintIndex], ellipsizeWidth, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false, TextUtils.TruncateAt.END, ellipsizeWidth, 2);
             } else {
                 nameLayout = new StaticLayout(nameStringFinal, Theme.dialogs_namePaint[paintIndex], Math.max(ellipsizeWidth, nameWidth), Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
             }
-            nameLayoutTranslateX = subscribers == null && nameLayoutEllipsizeByGradient && nameLayout.isRtlCharAt(0) ? -dp(36) : 0;
+            nameLayoutTranslateX = nameLayoutEllipsizeByGradient && nameLayout.isRtlCharAt(0) ? -dp(36) : 0;
             nameLayoutEllipsizeLeft = nameLayout.isRtlCharAt(0);
         } catch (Exception e) {
             FileLog.e(e);

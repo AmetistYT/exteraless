@@ -17,7 +17,6 @@
     <string name="OEAppearanceHideFloatingButton">隐藏悬浮按钮</string>
     <string name="OEAppearanceHideSearchBar">隐藏搜索栏</string>
     <string name="OEAppearanceSenderMiniAvatars">发送者小头像</string>
-    <string name="OEAppearanceChannelSubscribers">频道订阅人数</string>
     <string name="OEAppearanceForceSnowInfo">顶栏、侧边菜单和对话背景中会出现飘落的雪花。</string>
     <string name="OEAppearanceTitleText">标题文字</string>
     <string name="OEAppearanceTitleTextApp">@string/AppName</string>

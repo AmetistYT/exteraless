@@ -17,7 +17,6 @@
     <string name="OEAppearanceHideFloatingButton">Ukryj pływający przycisk</string>
     <string name="OEAppearanceHideSearchBar">Ukryj pasek wyszukiwania</string>
     <string name="OEAppearanceSenderMiniAvatars">Miniaturki awatarów nadawców</string>
-    <string name="OEAppearanceChannelSubscribers">Subskrybenci kanałów</string>
     <string name="OEAppearanceForceSnowInfo">Padające śnieżynki pojawią się na pasku górnym, w menu bocznym i w tłach czatów.</string>
     <string name="OEAppearanceTitleText">Tekst tytułu</string>
     <string name="OEAppearanceTitleTextApp">@string/AppName</string>

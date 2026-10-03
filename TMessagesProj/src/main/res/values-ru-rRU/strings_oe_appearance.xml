@@ -18,7 +18,6 @@
     <string name="OEAppearanceHideFloatingButton">Скрыть плавающую кнопку</string>
     <string name="OEAppearanceHideSearchBar">Скрыть строку поиска</string>
     <string name="OEAppearanceSenderMiniAvatars">Мини-аватарки отправителей</string>
-    <string name="OEAppearanceChannelSubscribers">Подписчики каналов</string>
     <string name="OEAppearanceChatListInfo">Если у папок выбрано «Только иконки», в заголовке будет название папки.</string>
 
     <string name="OEAppearanceFolders">Папки</string>
