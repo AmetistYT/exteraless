@@ -396,11 +396,15 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
         fallback.setImageResource(R.drawable.msg_plugins);
         fallback.setColorFilter(new PorterDuffColorFilter(colors.onPrimaryContainer, PorterDuff.Mode.SRC_IN));
         frame.addView(fallback, LayoutHelper.createFrame(36, 36, Gravity.CENTER));
-        frame.addView(image, LayoutHelper.createFrame(52, 52, Gravity.CENTER));
+        image.setRoundRadius(dp(20));
+        frame.addView(image, LayoutHelper.createFrame(64, 64, Gravity.CENTER));
         image.setVisibility(android.view.View.GONE);
         // Наш значок стоит до тех пор, пока не приедет иконка плагина: она
         // может и не приехать, а пустое место вместо неё — хуже заглушки.
-        PluginIcons.apply(image, plugin, () -> fallback.setVisibility(android.view.View.GONE));
+        PluginIcons.apply(image, plugin, () -> {
+            fallback.setVisibility(android.view.View.GONE);
+            frame.setBackground(null);
+        });
         return frame;
     }
 
