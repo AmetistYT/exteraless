@@ -5,11 +5,14 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.RenderEffect;
 import android.graphics.Shader;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.SystemClock;
 import android.text.Layout;
 import android.text.StaticLayout;
@@ -32,6 +35,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MediaController;
 import org.telegram.messenger.R;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RadialProgressView;
@@ -74,7 +78,17 @@ public class LyricsView extends FrameLayout {
     private long userScrollAt;
     private boolean userDragging;
     private int colorActive;
-    private int colorInactive;
+    private long positionMs;
+    private long positionAt;
+    private final Runnable resumeFollow = () -> {
+        userScrollAt = 0;
+        updateBlur();
+        scrollToActive(true);
+    };
+
+    private static final long FOLLOW_RESUME_MS = 750;
+    private static final int MAX_BLUR_DISTANCE = 4;
+    private static final float BLUR_PER_LINE_DP = 1.25f;
 
     public LyricsView(Context context) {
         super(context);
@@ -100,8 +114,12 @@ public class LyricsView extends FrameLayout {
                 userDragging = newState == RecyclerView.SCROLL_STATE_DRAGGING;
                 if (newState != RecyclerView.SCROLL_STATE_IDLE && userDragging) {
                     userScrollAt = SystemClock.elapsedRealtime();
+                    removeCallbacks(resumeFollow);
+                    updateBlur();
                 } else if (newState == RecyclerView.SCROLL_STATE_IDLE && userScrollAt != 0) {
                     userScrollAt = SystemClock.elapsedRealtime();
+                    removeCallbacks(resumeFollow);
+                    postDelayed(resumeFollow, FOLLOW_RESUME_MS);
                 }
             }
         });
@@ -159,7 +177,6 @@ public class LyricsView extends FrameLayout {
 
     public void setColors(PlayerColors c) {
         colorActive = c.onSurface;
-        colorInactive = c.onSurfaceVariant;
         tileBg.setColor(c.secondaryContainer);
         tileIcon.setColor(c.onSecondaryContainer);
         tile.invalidate();
@@ -235,6 +252,8 @@ public class LyricsView extends FrameLayout {
         list.setVisibility(VISIBLE);
         empty.setVisibility(GONE);
         active = value != null ? value.indexAt(positionMs) : -1;
+        this.positionMs = positionMs;
+        positionAt = SystemClock.elapsedRealtime();
         userScrollAt = 0;
         applyPadding();
         adapter.notifyDataSetChanged();
@@ -245,6 +264,8 @@ public class LyricsView extends FrameLayout {
         if (lyrics == null || !lyrics.synced) {
             return;
         }
+        positionMs = ms;
+        positionAt = SystemClock.elapsedRealtime();
         int index = lyrics.indexAt(ms);
         if (index == active) {
             return;
@@ -258,10 +279,39 @@ public class LyricsView extends FrameLayout {
                 ((LineView) child).setRole(roleFor(pos), true);
             }
         }
-        boolean following = !userDragging && (userScrollAt == 0 || SystemClock.elapsedRealtime() - userScrollAt > 3500);
+        boolean following = !userDragging && (userScrollAt == 0 || SystemClock.elapsedRealtime() - userScrollAt > FOLLOW_RESUME_MS);
         if (following) {
             userScrollAt = 0;
             scrollToActive(old >= 0 && Math.abs(index - old) <= 3);
+        }
+        updateBlur();
+    }
+
+    private long currentMs() {
+        if (MediaController.getInstance().isMessagePaused()) {
+            return positionMs;
+        }
+        return positionMs + Math.min(2000, SystemClock.elapsedRealtime() - positionAt);
+    }
+
+    private boolean isPlaying() {
+        return !MediaController.getInstance().isMessagePaused();
+    }
+
+    private float blurFor(int position) {
+        if (lyrics == null || !lyrics.synced || active < 0 || userDragging || userScrollAt != 0) {
+            return 0f;
+        }
+        int distance = Math.min(Math.abs(position - active), MAX_BLUR_DISTANCE);
+        return dp(BLUR_PER_LINE_DP) * distance;
+    }
+
+    private void updateBlur() {
+        for (int i = 0; i < list.getChildCount(); i++) {
+            View child = list.getChildAt(i);
+            if (child instanceof LineView) {
+                ((LineView) child).setBlur(blurFor(list.getChildAdapterPosition(child)));
+            }
         }
     }
 
@@ -368,8 +418,10 @@ public class LyricsView extends FrameLayout {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             LineView view = (LineView) holder.itemView;
             String text = lyrics.lines.get(position).text;
-            view.setText(TextUtils.isEmpty(text) ? "♪" : text, !lyrics.synced);
+            view.index = position;
+            view.setText(TextUtils.isEmpty(text) ? (lyrics.synced ? "" : "♪") : text, !lyrics.synced);
             view.setRole(roleFor(position), false);
+            view.setBlur(blurFor(position));
         }
 
         @Override
@@ -385,19 +437,28 @@ public class LyricsView extends FrameLayout {
         static final int ROLE_FUTURE = 2;
         static final int ROLE_PLAIN = 3;
 
+        private static final float OPACITY_FUTURE = 0.51f;
+        private static final float OPACITY_PAST = 0.5f;
+        private static final float UNFILLED_ALPHA = 0.45f;
+        private static final float ACTIVE_SCALE = 1.05f;
+
         private final TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        private final Spring activeness = new Spring(0, 260f, 1f, 0.004f);
-        private final Spring opacity = new Spring(0.72f, 260f, 1f, 0.004f);
+        private final Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Matrix fillMatrix = new Matrix();
+        private final Spring opacity = new Spring(OPACITY_FUTURE, 260f, 1f, 0.004f);
+        private final Spring scale = new Spring(1f, 320f, 0.75f, 0.0005f);
+        private int index = -1;
         private String text;
         private boolean plain;
         private StaticLayout layout;
         private int layoutWidth;
         private int role = ROLE_FUTURE;
         private long lastFrame;
+        private float blur = -1f;
 
         LineView(Context context) {
             super(context);
-            paint.setTypeface(AndroidUtilities.bold());
+            paint.setTypeface(tw.nekomimi.nekogram.helpers.TypefaceHelper.lyricsTypeface());
         }
 
         void setText(String value, boolean isPlain) {
@@ -409,19 +470,35 @@ public class LyricsView extends FrameLayout {
             }
         }
 
+        void setBlur(float value) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || value == blur) {
+                return;
+            }
+            blur = value;
+            setRenderEffect(value > 0f ? RenderEffect.createBlurEffect(value, value, Shader.TileMode.DECAL) : null);
+        }
+
         void setRole(int value, boolean animated) {
             role = value;
-            float targetActive = value == ROLE_ACTIVE || value == ROLE_PLAIN ? 1f : 0f;
-            float targetOpacity = value == ROLE_PAST ? 0.4f : value == ROLE_FUTURE ? 0.72f : 1f;
+            float targetOpacity = value == ROLE_PAST ? OPACITY_PAST : value == ROLE_FUTURE ? OPACITY_FUTURE : 1f;
+            float targetScale = value == ROLE_ACTIVE ? ACTIVE_SCALE : 1f;
             if (animated) {
-                activeness.target = targetActive;
                 opacity.target = targetOpacity;
+                scale.target = targetScale;
                 lastFrame = 0;
             } else {
-                activeness.snap(targetActive);
                 opacity.snap(targetOpacity);
+                scale.snap(targetScale);
             }
             invalidate();
+        }
+
+        private boolean isInterlude() {
+            return !plain && TextUtils.isEmpty(text);
+        }
+
+        private float textSize() {
+            return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, plain ? 20 : 28, getResources().getDisplayMetrics());
         }
 
         private void ensureLayout(int width) {
@@ -429,10 +506,11 @@ public class LyricsView extends FrameLayout {
                 return;
             }
             layoutWidth = width;
-            paint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, plain ? 20 : 24, getResources().getDisplayMetrics()));
-            layout = StaticLayout.Builder.obtain(text == null ? "" : text, 0, text == null ? 0 : text.length(), paint, Math.max(1, width))
+            paint.setTextSize(textSize());
+            int textWidth = Math.max(1, (int) (width / ACTIVE_SCALE));
+            layout = StaticLayout.Builder.obtain(text == null ? "" : text, 0, text == null ? 0 : text.length(), paint, textWidth)
                     .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                    .setLineSpacing(0, 1.1f)
+                    .setLineSpacing(0, 1.18f)
                     .setIncludePad(false)
                     .build();
         }
@@ -442,7 +520,30 @@ public class LyricsView extends FrameLayout {
             int width = MeasureSpec.getSize(widthMeasureSpec);
             ensureLayout(width);
             int pad = plain ? dp(6) : dp(10);
-            setMeasuredDimension(width, layout.getHeight() + pad * 2);
+            int content = isInterlude() ? (int) (textSize() * 0.9f) : layout.getHeight();
+            setMeasuredDimension(width, content + pad * 2);
+        }
+
+        private float lineProgress() {
+            if (lyrics == null || index < 0 || index >= lyrics.lines.size()) {
+                return 0f;
+            }
+            long start = lyrics.lines.get(index).time;
+            long end = index + 1 < lyrics.lines.size() ? lyrics.lines.get(index + 1).time : start + 4000;
+            if (end <= start) {
+                return 1f;
+            }
+            return Math.max(0f, Math.min(1f, (currentMs() - start) / (float) (end - start)));
+        }
+
+        private float glow(float t) {
+            if (t < 0.15f) {
+                return t / 0.15f;
+            }
+            if (t < 0.6f) {
+                return 1f;
+            }
+            return Math.max(0f, 1f - (t - 0.6f) / 0.4f);
         }
 
         @Override
@@ -450,20 +551,74 @@ public class LyricsView extends FrameLayout {
             long now = SystemClock.elapsedRealtime();
             float dt = lastFrame == 0 ? 0.016f : (now - lastFrame) / 1000f;
             lastFrame = now;
-            boolean animating = activeness.step(dt);
-            animating |= opacity.step(dt);
+            boolean animating = opacity.step(dt);
+            animating |= scale.step(dt);
             ensureLayout(getWidth());
-            int color = ColorUtils.blendARGB(colorInactive, colorActive, Math.max(0f, Math.min(1f, activeness.value)));
-            paint.setColor(ColorUtils.setAlphaComponent(color, (int) (Math.max(0f, Math.min(1f, opacity.value)) * (color >>> 24))));
+            float alpha = Math.max(0f, Math.min(1f, opacity.value));
+            int baseAlpha = colorActive >>> 24;
+            boolean live = role == ROLE_ACTIVE && !plain;
+            float progress = live ? lineProgress() : 0f;
+            int pad = plain ? dp(6) : dp(10);
             canvas.save();
-            canvas.translate(0, plain ? dp(6) : dp(10));
-            layout.draw(canvas);
+            canvas.translate(0, pad);
+            float pivotY = (getHeight() - pad * 2) / 2f;
+            canvas.scale(scale.value, scale.value, 0, pivotY);
+            if (isInterlude()) {
+                drawInterlude(canvas, live, progress, alpha, now);
+            } else if (live) {
+                int filled = ColorUtils.setAlphaComponent(colorActive, (int) (alpha * baseAlpha));
+                int unfilled = ColorUtils.setAlphaComponent(colorActive, (int) (alpha * baseAlpha * UNFILLED_ALPHA));
+                float height = layout.getHeight();
+                LinearGradient fill = new LinearGradient(0, 0, 0, 1, filled, unfilled, Shader.TileMode.CLAMP);
+                fillMatrix.setScale(1f, Math.max(1f, height * 0.2f));
+                fillMatrix.postTranslate(0, (progress * 1.2f - 0.2f) * height);
+                fill.setLocalMatrix(fillMatrix);
+                paint.setShader(fill);
+                paint.setColor(0xffffffff);
+                float g = glow(progress);
+                if (g > 0.01f) {
+                    paint.setShadowLayer(dp(4 + 2 * g), 0, 0, ColorUtils.setAlphaComponent(colorActive, (int) (g * 0.35f * baseAlpha)));
+                } else {
+                    paint.clearShadowLayer();
+                }
+                layout.draw(canvas);
+                paint.setShader(null);
+                paint.clearShadowLayer();
+            } else {
+                paint.setShader(null);
+                paint.clearShadowLayer();
+                paint.setColor(ColorUtils.setAlphaComponent(colorActive, (int) (alpha * baseAlpha)));
+                layout.draw(canvas);
+            }
             canvas.restore();
-            if (animating) {
+            if (animating || (live && isPlaying())) {
                 postInvalidateOnAnimation();
             } else {
                 lastFrame = 0;
             }
+        }
+
+        private void drawInterlude(Canvas canvas, boolean live, float progress, float alpha, long now) {
+            float size = textSize() * 0.32f;
+            float gap = size * 0.55f;
+            float cy = textSize() * 0.45f;
+            float breathe = live ? 1f + 0.06f * (float) Math.sin(now / 1600.0 * Math.PI * 2) : 1f;
+            canvas.save();
+            canvas.scale(breathe, breathe, size * 1.5f + gap, cy);
+            int baseAlpha = colorActive >>> 24;
+            for (int i = 0; i < 3; i++) {
+                float lit = live ? Math.max(0f, Math.min(1f, progress * 3f - i)) : 0f;
+                float dotAlpha = alpha * (0.35f + 0.65f * lit);
+                dotPaint.setColor(ColorUtils.setAlphaComponent(colorActive, (int) (dotAlpha * baseAlpha)));
+                if (lit > 0f) {
+                    dotPaint.setShadowLayer(dp(4 + 2 * lit), 0, 0, ColorUtils.setAlphaComponent(colorActive, (int) (lit * 0.35f * baseAlpha)));
+                } else {
+                    dotPaint.clearShadowLayer();
+                }
+                float cx = size / 2f + i * (size + gap);
+                canvas.drawCircle(cx, cy, size / 2f * (0.9f + 0.1f * lit), dotPaint);
+            }
+            canvas.restore();
         }
     }
 }
