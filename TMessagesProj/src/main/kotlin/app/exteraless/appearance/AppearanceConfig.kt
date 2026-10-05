@@ -383,6 +383,95 @@ object AppearanceConfig {
         }
     }
 
+    // ---- Expressive-чат ----
+
+    /** Экран чата в стиле Material 3 Expressive. Общий выключатель, зоны ниже включаются отдельно. */
+    @JvmField
+    val expressiveChat = addConfig("OEAppearanceExpressiveChat", ConfigItem.configTypeBool, false)
+
+    @JvmField
+    val expressiveChatHeader = addConfig("OEAppearanceExpressiveChatHeader", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val expressiveChatPanels = addConfig("OEAppearanceExpressiveChatPanels", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val expressiveChatBubbles = addConfig("OEAppearanceExpressiveChatBubbles", ConfigItem.configTypeBool, true)
+
+    /** Внешнее скругление пузыря, dp. */
+    @JvmField
+    val expressiveChatBubbleRadius = addConfig("OEAppearanceExpressiveChatBubbleRadius", ConfigItem.configTypeInt, 20)
+
+    /** Скругление на стыке сообщений одной группы, dp. */
+    @JvmField
+    val expressiveChatBubbleNearRadius = addConfig("OEAppearanceExpressiveChatBubbleNearRadius", ConfigItem.configTypeInt, 6)
+
+    @JvmField
+    val expressiveChatServicePills = addConfig("OEAppearanceExpressiveChatServicePills", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val expressiveChatReplies = addConfig("OEAppearanceExpressiveChatReplies", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val expressiveChatVoice = addConfig("OEAppearanceExpressiveChatVoice", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val expressiveChatReactions = addConfig("OEAppearanceExpressiveChatReactions", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val expressiveChatButtons = addConfig("OEAppearanceExpressiveChatButtons", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val expressiveChatInput = addConfig("OEAppearanceExpressiveChatInput", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val expressiveChatEmojiPanel = addConfig("OEAppearanceExpressiveChatEmojiPanel", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val expressiveChatMenu = addConfig("OEAppearanceExpressiveChatMenu", ConfigItem.configTypeBool, true)
+
+    /** Скругление контекстного меню сообщения, dp. */
+    @JvmField
+    val expressiveChatMenuRadius = addConfig("OEAppearanceExpressiveChatMenuRadius", ConfigItem.configTypeInt, 24)
+
+    @JvmField
+    val expressiveChatSelection = addConfig("OEAppearanceExpressiveChatSelection", ConfigItem.configTypeBool, true)
+
+    @JvmStatic
+    fun expressiveChat(): Boolean {
+        ensureLoaded()
+        return expressiveChat.Bool()
+    }
+
+    /** Все параметры Expressive-чата, кроме общего выключателя, — для кнопки сброса. */
+    @JvmStatic
+    fun expressiveChatItems(): List<ConfigItem> = listOf(
+        expressiveChatHeader, expressiveChatPanels, expressiveChatBubbles,
+        expressiveChatBubbleRadius, expressiveChatBubbleNearRadius, expressiveChatServicePills,
+        expressiveChatReplies, expressiveChatVoice, expressiveChatReactions, expressiveChatButtons,
+        expressiveChatInput, expressiveChatEmojiPanel, expressiveChatMenu, expressiveChatMenuRadius,
+        expressiveChatSelection,
+    )
+
+    @JvmStatic
+    fun isExpressiveChatDefault(): Boolean {
+        ensureLoaded()
+        return expressiveChatItems().all { it.value == it.defaultValue }
+    }
+
+    @JvmStatic
+    fun resetExpressiveChat() {
+        ensureLoaded()
+        synchronized(sync) {
+            val editor = getPreferences().edit()
+            for (item in expressiveChatItems()) {
+                editor.remove(item.key)
+                item.value = item.defaultValue
+            }
+            editor.apply()
+        }
+    }
+
     @JvmField
     val profileMusicCard =
         addConfig("OEAppearanceProfileMusicCard", ConfigItem.configTypeBool, true)

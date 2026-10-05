@@ -153,6 +153,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private int iconPacksRow;
     private int emojiSetsRow;
     private int pillStackRow;
+    private int expressiveChatRow;
     private int linksDividerRow;
 
     private AvatarCornersPreviewCell avatarCornersPreviewCell;
@@ -218,6 +219,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         iconPacksRow = addRow("iconPacks");
         emojiSetsRow = addRow("emojiSets", "EmojiSets");
         pillStackRow = addRow("pillStack");
+        expressiveChatRow = addRow("expressiveChat");
         linksDividerRow = addRow();
 
         appearanceHeaderRow = addRow("appearanceHeader");
@@ -569,6 +571,9 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             return;
         } else if (position == pillStackRow) {
             presentFragment(new PillStackSettingsActivity());
+            return;
+        } else if (position == expressiveChatRow) {
+            presentFragment(new ExpressiveChatSettingsActivity());
             return;
         } else if (position == appNavigationRow) {
             presentFragment(new OpenExteraAppNavigationActivity());
@@ -1113,7 +1118,9 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     } else if (position == emojiSetsRow) {
                         cell.setTextAndValueAndIcon(getString(R.string.EmojiSets), getString(R.string.OEAppearanceEmojiSetsInfo), R.drawable.msg_emoji_smiles, true);
                     } else if (position == pillStackRow) {
-                        cell.setTextAndValueAndIcon(getString(R.string.OEAppearancePillStack), getString(R.string.OEAppearancePillStackInfo), R.drawable.outline_header_search, false);
+                        cell.setTextAndValueAndIcon(getString(R.string.OEAppearancePillStack), getString(R.string.OEAppearancePillStackInfo), R.drawable.outline_header_search, true);
+                    } else if (position == expressiveChatRow) {
+                        cell.setTextAndValueAndIcon(getString(R.string.OEExpressiveChat), getString(R.string.OEExpressiveChatInfo), R.drawable.msg_customize, false);
                     }
                     break;
                 }
@@ -1182,7 +1189,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             } else if (position == fabShapeRow) {
                 return TYPE_FAB_SHAPE;
             } else if (position == appNavigationRow || position == iconPacksRow
-                    || position == emojiSetsRow || position == pillStackRow) {
+                    || position == emojiSetsRow || position == pillStackRow || position == expressiveChatRow) {
                 return TYPE_DETAIL_SETTINGS;
             } else if (position == md3GroupRow || position == hideAiGroupRow
                     || position == iosGroupRow || position == hideSettingsGroupRow) {

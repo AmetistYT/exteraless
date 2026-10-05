@@ -16849,7 +16849,9 @@ public class ChatActivityEnterView extends FrameLayout implements
             updateColors();
             checkBackgroundRect();
             if (isNewDesignSendButton) {
-                canvas.drawRoundRect(backgroundRect, dp(RADIUS), dp(RADIUS), backgroundPaint);
+                final float newDesignRadius = app.exteraless.appearance.ExpressiveChat.input()
+                        ? app.exteraless.appearance.ExpressiveChat.buttonRadius(backgroundRect.height()) : dp(RADIUS);
+                canvas.drawRoundRect(backgroundRect, newDesignRadius, newDesignRadius, backgroundPaint);
             }
 
             final boolean inactive = isInactive();
@@ -16915,7 +16917,12 @@ public class ChatActivityEnterView extends FrameLayout implements
             if (openProgress > 0) {
                 canvas.save();
                 path.rewind();
-                final float r = Math.min(w, h) / 2.0f;
+                float r = Math.min(w, h) / 2.0f;
+                if (app.exteraless.appearance.ExpressiveChat.input()) {
+                    // Expressive: кнопка выезжает кругом (как микрофон) и пружиной
+                    // превращается в скруглённый квадрат «Отправить»
+                    r = lerp(r, app.exteraless.appearance.ExpressiveChat.buttonRadius(Math.min(w, h)), openProgress);
+                }
                 AndroidUtilities.rectTmp.set(right - w, cy - h / 2.0f, right, cy + h / 2.0f);
                 path.addRoundRect(AndroidUtilities.rectTmp, r, r, Path.Direction.CW);
 
@@ -16934,6 +16941,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                 canvas.scale(eS, eS, bCX, bCY);
 
                 if (blurredBackgroundDrawable != null) {
+                    if (app.exteraless.appearance.ExpressiveChat.input()) {
+                        blurredBackgroundDrawable.setRadius(r + dp(3));
+                    }
                     AndroidUtilities.rectTmp.round(AndroidUtilities.rectTmp2);
                     AndroidUtilities.rectTmp2.inset(-dp(7), -dp(7));
                     blurredBackgroundDrawable.setBounds(AndroidUtilities.rectTmp2);

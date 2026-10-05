@@ -1457,6 +1457,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
      * Здесь только зависимые от хвостика геометрии в ячейке.
      */
     private static boolean oeRemoveMessageTail() {
+        if (app.exteraless.appearance.ExpressiveChat.bubbles()) {
+            return true;
+        }
         app.exteraless.chats.ChatsConfig.ensureLoaded();
         return app.exteraless.chats.ChatsConfig.removeMessageTail.Bool();
     }
@@ -11259,10 +11262,13 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 int tl, tr, bl, br;
                 int minRad = dp(4);
                 int rad;
-                if (SharedConfig.bubbleRadius > 2) {
-                    rad = dp(SharedConfig.bubbleRadius - 2);
+                // Expressive-чат: фото повторяет скругление пузыря из своих настроек
+                final int bubbleRadius = app.exteraless.appearance.ExpressiveChat.bubbles()
+                        ? app.exteraless.appearance.ExpressiveChat.bubbleRadiusDp() : SharedConfig.bubbleRadius;
+                if (bubbleRadius > 2) {
+                    rad = dp(bubbleRadius - 2);
                 } else {
-                    rad = dp(SharedConfig.bubbleRadius);
+                    rad = dp(bubbleRadius);
                 }
                 int nearRad = Math.min(dp(3), rad);
                 tl = tr = bl = br = rad;

@@ -2757,7 +2757,10 @@ public class EmojiView extends FrameLayout implements
             typeTabs.setViewPager(pager);
             typeTabs.setShouldExpand(false);
             typeTabs.setIndicatorHeight(AndroidUtilities.dp(3));
-            typeTabs.setIndicatorColor(ColorUtils.setAlphaComponent(getThemedColor(Theme.key_chat_emojiPanelIconSelected), 20));
+            // Expressive-чат: выбранная вкладка «Эмодзи / GIF / Стикеры» — тональная пилюля
+            typeTabs.setIndicatorColor(app.exteraless.appearance.ExpressiveChat.emojiPanel()
+                    ? app.exteraless.appearance.ExpressiveChat.tonalSelectorColor(resourcesProvider)
+                    : ColorUtils.setAlphaComponent(getThemedColor(Theme.key_chat_emojiPanelIconSelected), 20));
             typeTabs.setUnderlineHeight(0);
             typeTabs.setTabPaddingLeftRight(AndroidUtilities.dp(11));
             typeTabs.setPadding(dp(4), dp(11), dp(4), dp(11));

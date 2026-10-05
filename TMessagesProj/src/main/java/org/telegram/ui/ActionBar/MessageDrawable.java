@@ -324,7 +324,7 @@ public class MessageDrawable extends Drawable {
         } else if (overrideRounding > 0) {
             newRad = 0;
         } else {
-            newRad = dp(SharedConfig.bubbleRadius);
+            newRad = dp(oeBubbleRadius());
         }
         int idx;
         if (isTopNear && isBottomNear) {
@@ -443,7 +443,7 @@ public class MessageDrawable extends Drawable {
         if (gradientShader == null && !isSelected && crossfadeFromDrawable == null) {
             return null;
         }
-        int newRad = dp(SharedConfig.bubbleRadius);
+        int newRad = dp(oeBubbleRadius());
         int idx;
         if (isTopNear && isBottomNear) {
             idx = 3;
@@ -567,14 +567,14 @@ public class MessageDrawable extends Drawable {
             rad = overrideRoundRadius;
             nearRad = overrideRoundRadius;
         } else if (overrideRounding > 0) {
-            rad = AndroidUtilities.lerp(dp(SharedConfig.bubbleRadius), Math.min(bounds.width(), bounds.height()) / 2, overrideRounding);
-            nearRad = AndroidUtilities.lerp(dp(Math.min(6, SharedConfig.bubbleRadius)), Math.min(bounds.width(), bounds.height()) / 2, overrideRounding);
+            rad = AndroidUtilities.lerp(dp(oeBubbleRadius()), Math.min(bounds.width(), bounds.height()) / 2, overrideRounding);
+            nearRad = AndroidUtilities.lerp(dp(oeNearRadius()), Math.min(bounds.width(), bounds.height()) / 2, overrideRounding);
         } else if (currentType == TYPE_PREVIEW) {
             rad = dp(6);
             nearRad = dp(6);
         } else {
-            rad = dp(SharedConfig.bubbleRadius);
-            nearRad = dp(Math.min(6, SharedConfig.bubbleRadius));
+            rad = dp(oeBubbleRadius());
+            nearRad = dp(oeNearRadius());
         }
         int smallRad = dp(6);
 
@@ -630,14 +630,14 @@ public class MessageDrawable extends Drawable {
             rad = overrideRoundRadius;
             nearRad = overrideRoundRadius;
         } else if (overrideRounding > 0) {
-            rad = AndroidUtilities.lerp(dp(SharedConfig.bubbleRadius), Math.min(bounds.width(), bounds.height()) / 2, overrideRounding);
-            nearRad = AndroidUtilities.lerp(dp(Math.min(6, SharedConfig.bubbleRadius)), Math.min(bounds.width(), bounds.height()) / 2, overrideRounding);
+            rad = AndroidUtilities.lerp(dp(oeBubbleRadius()), Math.min(bounds.width(), bounds.height()) / 2, overrideRounding);
+            nearRad = AndroidUtilities.lerp(dp(oeNearRadius()), Math.min(bounds.width(), bounds.height()) / 2, overrideRounding);
         } else if (currentType == TYPE_PREVIEW) {
             rad = dp(6);
             nearRad = dp(6);
         } else {
-            rad = dp(SharedConfig.bubbleRadius);
-            nearRad = dp(Math.min(6, SharedConfig.bubbleRadius));
+            rad = dp(oeBubbleRadius());
+            nearRad = dp(oeNearRadius());
         }
         int smallRad = dp(6);
         int top = Math.max(bounds.top, 0);
@@ -865,8 +865,25 @@ public class MessageDrawable extends Drawable {
         this.resourcesProvider = resourcesProvider;
     }
 
-    /** openExtera: убрать «хвостик» пузыря сообщения (ChatsConfig.removeMessageTail). */
+    /** Внешнее скругление пузыря: в Expressive-чате своё, иначе штатное. */
+    private static int oeBubbleRadius() {
+        return app.exteraless.appearance.ExpressiveChat.bubbles()
+                ? app.exteraless.appearance.ExpressiveChat.bubbleRadiusDp()
+                : SharedConfig.bubbleRadius;
+    }
+
+    /** Скругление на стыке сообщений одной группы. */
+    private static int oeNearRadius() {
+        return app.exteraless.appearance.ExpressiveChat.bubbles()
+                ? app.exteraless.appearance.ExpressiveChat.bubbleNearRadiusDp()
+                : Math.min(6, SharedConfig.bubbleRadius);
+    }
+
+    /** openExtera: убрать «хвостик» пузыря сообщения (ChatsConfig.removeMessageTail). В Expressive-чате хвостиков нет. */
     private static boolean oeRemoveMessageTail() {
+        if (app.exteraless.appearance.ExpressiveChat.bubbles()) {
+            return true;
+        }
         try {
             app.exteraless.chats.ChatsConfig.ensureLoaded();
             return app.exteraless.chats.ChatsConfig.removeMessageTail.Bool();
@@ -882,11 +899,15 @@ public class MessageDrawable extends Drawable {
         boolean lastDrawFullBottom;
         /** openExtera: чтобы кэш пути сбрасывался при переключении «убрать хвостик». */
         boolean lastNoTail = oeRemoveMessageTail();
+        /** Expressive-чат: версия формы пузырей, чтобы новые радиусы применялись сразу. */
+        int lastShapeVersion = app.exteraless.appearance.ExpressiveChat.shapeVersion();
 
         public boolean invalidatePath(Rect bounds, boolean drawFullBottom, boolean drawFullTop) {
             boolean oeNoTail = oeRemoveMessageTail();
-            boolean invalidate = lastNoTail != oeNoTail || lastRect.isEmpty() || lastRect.top != bounds.top || lastRect.bottom != bounds.bottom || lastRect.right != bounds.right || lastRect.left != bounds.left || lastDrawFullTop != drawFullTop || lastDrawFullBottom != drawFullBottom || !drawFullTop || !drawFullBottom;
+            final int shapeVersion = app.exteraless.appearance.ExpressiveChat.shapeVersion();
+            boolean invalidate = lastNoTail != oeNoTail || lastShapeVersion != shapeVersion || lastRect.isEmpty() || lastRect.top != bounds.top || lastRect.bottom != bounds.bottom || lastRect.right != bounds.right || lastRect.left != bounds.left || lastDrawFullTop != drawFullTop || lastDrawFullBottom != drawFullBottom || !drawFullTop || !drawFullBottom;
             lastNoTail = oeNoTail;
+            lastShapeVersion = shapeVersion;
             lastDrawFullTop = drawFullTop;
             lastDrawFullBottom = drawFullBottom;
             lastRect.set(bounds);

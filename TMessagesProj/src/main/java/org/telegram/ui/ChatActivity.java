@@ -6393,7 +6393,12 @@ public class ChatActivity extends BaseFragment implements
                                         canvas.translate(0, cell.getTranslationY());
                                         int wasAlpha = backgroundPaint.getAlpha();
                                         backgroundPaint.setAlpha((int) (wasAlpha * cell.getHighlightAlpha() * cell.getAlpha()));
-                                        canvas.drawRect(0, cell.getTop(), getMeasuredWidth(), cell.getBottom(), backgroundPaint);
+                                        if (app.exteraless.appearance.ExpressiveChat.selection()) {
+                                            // Expressive-чат: подсветка — скруглённая карточка с отступами
+                                            app.exteraless.appearance.ExpressiveChat.drawSelectionCard(canvas, 0, cell.getTop(), getMeasuredWidth(), cell.getBottom(), backgroundPaint);
+                                        } else {
+                                            canvas.drawRect(0, cell.getTop(), getMeasuredWidth(), cell.getBottom(), backgroundPaint);
+                                        }
                                         backgroundPaint.setAlpha(wasAlpha);
                                         canvas.restore();
                                     }
@@ -6429,7 +6434,12 @@ public class ChatActivity extends BaseFragment implements
                                         backgroundDrawable.setTouchCoordsOverride(touchX, touchY - y);
                                         height -= y;
                                     }
-                                    canvas.clipRect(0, y, getMeasuredWidth(), y + height);
+                                    if (app.exteraless.appearance.ExpressiveChat.selection()) {
+                                        // Expressive-чат: выделенное сообщение — скруглённая карточка с отступами
+                                        app.exteraless.appearance.ExpressiveChat.clipSelectionCard(canvas, 0, y, getMeasuredWidth(), y + height);
+                                    } else {
+                                        canvas.clipRect(0, y, getMeasuredWidth(), y + height);
+                                    }
                                     Paint selectedBackgroundPaint = getThemedPaint(Theme.key_paint_chatMessageBackgroundSelected);
                                     if (themeDelegate != null && !themeDelegate.isDark && selectedBackgroundPaint != null) {
                                         backgroundDrawable.setCustomPaint(selectedBackgroundPaint);
@@ -32946,7 +32956,8 @@ public class ChatActivity extends BaseFragment implements
 
             popupLayout.setBackground(scrimBlur3Factory.create(popupLayout, true)
                 .setColorProvider(BlurredBackgroundProviderImpl.messageMenuBackground(resourceProvider))
-                .setRadius(dp(12))
+                // Expressive-чат: меню сообщения заметно круглее
+                .setRadius(dp(app.exteraless.appearance.ExpressiveChat.menu() ? app.exteraless.appearance.ExpressiveChat.menuRadiusDp() : 12))
                 .setPadding(dp(8)));
 
             boolean addGap = false;
@@ -34305,6 +34316,9 @@ public class ChatActivity extends BaseFragment implements
             // еле заметной подложкой
             if (glassMenu) {
                 GlassMenuHelper.applyToGaps(popupLayout, GlassMenuHelper.separatorColor(true, themeDelegate));
+            }
+            if (app.exteraless.appearance.ExpressiveChat.menu()) {
+                app.exteraless.appearance.ExpressiveChat.styleMenuItems(popupLayout, themeDelegate);
             }
             scrimPopupWindow = new ActionBarPopupWindow(scrimPopupContainerLayout, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT) {
                 @Override
@@ -49192,11 +49206,12 @@ public class ChatActivity extends BaseFragment implements
                 return;
             }
 
+            final int reactionMenuRadius = dp(app.exteraless.appearance.ExpressiveChat.menu() ? app.exteraless.appearance.ExpressiveChat.menuRadiusDp() : 12);
             scrimPopupContainerLayout.setClipToOutline(true);
-            scrimPopupContainerLayout.setOutlineProvider(ViewOutlineProviderImpl.boundsWithPaddingRoundRect(dp(8), dp(12)));
+            scrimPopupContainerLayout.setOutlineProvider(ViewOutlineProviderImpl.boundsWithPaddingRoundRect(dp(8), reactionMenuRadius));
             scrimPopupContainerLayout.setBackground(scrimBlur3Factory.create(scrimPopupContainerLayout, true)
                 .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourceProvider))
-                .setRadius(dp(12))
+                .setRadius(reactionMenuRadius)
                 .setPadding(dp(8))
                 .setHasPadding(true));
 
