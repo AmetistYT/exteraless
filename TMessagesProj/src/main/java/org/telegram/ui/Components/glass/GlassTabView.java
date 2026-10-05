@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
@@ -48,6 +49,7 @@ import org.telegram.ui.Components.RLottieImageView;
 import org.telegram.ui.Components.ScaleStateListAnimator;
 import org.telegram.ui.MainTabsLayout;
 
+import app.exteraless.appearance.ExpressiveDock;
 import app.exteraless.appearance.MainTabsUiHelper;
 import app.exteraless.components.ChatActivityEnterViewStaticIconView;
 
@@ -126,6 +128,10 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     }
 
     private void checkVisualWidth() {
+        if (mainTabExpressive) {
+            layoutExpressive();
+            return;
+        }
         if (hasVisualWidth) {
             final float offset = (visualWidth - getMeasuredWidth()) / 2f;
             imageView.setTranslationX(offset);
@@ -152,9 +158,120 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         }
     }
 
+    // ---- Expressive-док ----
+
+    private boolean mainTabExpressive;
+    private final Rect expressiveTextClip = new Rect();
+
+    private void applyMainTabsExpressive() {
+        mainTabExpressive = true;
+        isSelectedAnimator.setDuration(ExpressiveDock.animationDuration());
+        isSelectedAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, ExpressiveDock.LABEL_TEXT_SIZE_DP);
+        defaultTextPaint.setTextSize(dp(ExpressiveDock.LABEL_TEXT_SIZE_DP));
+        textView.setTypeface(AndroidUtilities.bold());
+        textView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+        textView.setMaxWidth(dp(ExpressiveDock.LABEL_MAX_WIDTH_DP));
+        textView.setVisibility(VISIBLE);
+        textView.setLayoutParams(LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT,
+                Gravity.LEFT | Gravity.CENTER_VERTICAL));
+        final int icon = ExpressiveDock.iconSize();
+        if (backupImageView != null) {
+            backupImageView.setLayoutParams(LayoutHelper.createFrame(icon - 2, icon - 2, Gravity.LEFT | Gravity.CENTER_VERTICAL, 1, 0, 0, 0));
+            backupImageView.setRoundRadius(dp(icon - 2) / 2);
+        } else {
+            imageView.setLayoutParams(LayoutHelper.createFrame(icon, icon, Gravity.LEFT | Gravity.CENTER_VERTICAL));
+        }
+        applyExpressiveColors();
+    }
+
+    private void applyExpressiveColors() {
+        colorDefault = ExpressiveDock.unselectedContentColor(resourcesProvider);
+        colorSelected = ExpressiveDock.selectedContentColor(resourcesProvider);
+        colorSelectedText = colorSelected;
+    }
+
+    /** Текущая ширина вкладки с учётом анимации перестройки. */
+    public float getVisualWidth() {
+        return hasVisualWidth ? visualWidth : getMeasuredWidth();
+    }
+
+    public boolean isMainTabExpressive() {
+        return mainTabExpressive;
+    }
+
+    /** Насколько видна подпись: у активной вкладки растёт вместе с выбором. */
+    private float getExpressiveLabelFactor() {
+        switch (ExpressiveDock.labels()) {
+            case ExpressiveDock.LABELS_ALL:
+                return 1f;
+            case ExpressiveDock.LABELS_NONE:
+                return 0f;
+            default:
+                return isSelectedAnimator.getFloatValue();
+        }
+    }
+
+    private float getExpressiveLabelWidth() {
+        if (textView.getText() == null) {
+            return 0;
+        }
+        return Math.min(dp(ExpressiveDock.LABEL_MAX_WIDTH_DP), defaultTextPaint.measureText(textView.getText().toString()));
+    }
+
+    /** Ширина вкладки без подписи, вместе с половинками промежутка по краям. */
+    private float getExpressiveBaseWidth() {
+        return dp(ExpressiveDock.iconSize()) + dpf2(ExpressiveDock.tabPadding()) * 2 + dp(ExpressiveDock.spacing());
+    }
+
+    private float getExpressiveLabelExtra() {
+        return dpf2(ExpressiveDock.LABEL_GAP_DP) + getExpressiveLabelWidth();
+    }
+
+    /** Ширина невыбранной вкладки по содержимому. */
+    public int getExpressiveCollapsedWidth() {
+        final float base = getExpressiveBaseWidth();
+        return (int) Math.ceil(ExpressiveDock.labels() == ExpressiveDock.LABELS_ALL ? base + getExpressiveLabelExtra() : base);
+    }
+
+    /** Ширина выбранной вкладки по содержимому. */
+    public int getExpressiveExpandedWidth() {
+        final float base = getExpressiveBaseWidth();
+        return (int) Math.ceil(ExpressiveDock.labels() == ExpressiveDock.LABELS_NONE ? base : base + getExpressiveLabelExtra());
+    }
+
+    /**
+     * Иконка и подпись стоят слева направо и вместе центрируются в текущей (анимируемой)
+     * ширине вкладки. Подпись выезжает справа от иконки: растёт обрезка и прозрачность,
+     * как expandHorizontally + fadeIn в Mesh.
+     */
+    private void layoutExpressive() {
+        final float width = hasVisualWidth ? visualWidth : getMeasuredWidth();
+        final float factor = getExpressiveLabelFactor();
+        final float iconWidth = dp(ExpressiveDock.iconSize());
+        final float gap = dpf2(ExpressiveDock.LABEL_GAP_DP) * factor;
+        final float room = width - dp(ExpressiveDock.spacing()) - dpf2(ExpressiveDock.tabPadding()) * 2 - iconWidth - gap;
+        final float labelWidth = Math.max(0, Math.min(getExpressiveLabelWidth() * factor, room));
+        final float left = (width - (iconWidth + gap + labelWidth)) / 2f;
+
+        imageView.setTranslationX(left);
+        if (backupImageView != null) {
+            backupImageView.setTranslationX(left);
+        }
+        textView.setTranslationX(left + iconWidth + gap);
+        textView.setAlpha(factor);
+        // Высоты подписи до первой раскладки ещё нет, поэтому снизу берём с запасом.
+        expressiveTextClip.set(0, 0, (int) Math.ceil(labelWidth), Math.max(textView.getHeight(), dp(48)));
+        textView.setClipBounds(expressiveTextClip);
+    }
+
+    private float getExpressiveIconCenterX() {
+        return imageView.getTranslationX() + dp(ExpressiveDock.iconSize()) / 2f;
+    }
+
     public void setGestureSelectedOverride(float gestureSelectedOverride, boolean allow) {
         this.gestureSelectedOverride = gestureSelectedOverride;
-        this.hasGestureSelectedOverride = allow && !mainTabMaterial3;
+        this.hasGestureSelectedOverride = allow && !mainTabMaterial3 && !mainTabExpressive;
         invalidate();
     }
 
@@ -169,7 +286,20 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     protected void dispatchDraw(@NonNull Canvas canvas) {
         final float viewWidth = hasVisualWidth ? visualWidth : getWidth();
         final float selectedFactor = hasGestureSelectedOverride ? gestureSelectedOverride : isSelectedAnimator.getFloatValue();
-        if (selectedFactor > 0 && !skipDrawSelector) {
+        if (mainTabExpressive) {
+            if (selectedFactor > 0 && !skipDrawSelector) {
+                final float inset = dp(ExpressiveDock.spacing()) / 2f;
+                tmpRectF.set(inset, 0, viewWidth - inset, getHeight());
+                final int color = ExpressiveDock.indicatorColor(resourcesProvider);
+                paintCounterBackground.setColor(Theme.multAlpha(color, selectedFactor));
+                final float r = ExpressiveDock.pillRadius(tmpRectF.height());
+                final float scale = MathUtils.clamp(attachScale, 0, 1);
+                canvas.save();
+                canvas.scale(lerp(0.7f, 1f, selectedFactor) * scale, scale, tmpRectF.centerX(), tmpRectF.centerY());
+                canvas.drawRoundRect(tmpRectF, r, r, paintCounterBackground);
+                canvas.restore();
+            }
+        } else if (selectedFactor > 0 && !skipDrawSelector) {
             final float alpha = mainTabMaterial3
                     ? selectedIndicatorAlphaAnimator.getFloatValue()
                     : AnimatorUtils.DECELERATE_INTERPOLATOR.getInterpolation(selectedFactor);
@@ -206,8 +336,16 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
             canvas.save();
 
             final float gap = dpf2(1.33f);
-            final float cx = viewWidth / 2f + dpf2(11);
-            final float cy = MainTabsUiHelper.getMainTabCounterCenterY(mainTabMaterial3, getHeight());
+            final float cx;
+            final float cy;
+            if (mainTabExpressive) {
+                // Бейдж — на правом верхнем углу иконки, где бы она ни стояла.
+                cx = getExpressiveIconCenterX() + dp(ExpressiveDock.iconSize()) / 2f - dpf2(1);
+                cy = (getHeight() - dp(ExpressiveDock.iconSize())) / 2f + dpf2(2);
+            } else {
+                cx = viewWidth / 2f + dpf2(11);
+                cy = MainTabsUiHelper.getMainTabCounterCenterY(mainTabMaterial3, getHeight());
+            }
             final float height = dpf2(16);
             final float width = Math.max(height, counter.getCurrentWidth() + dp(8));
             final float rOuter = dpf2(9.333f);
@@ -261,6 +399,17 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     }
 
     public void setSelected(boolean selected, boolean animated) {
+        if (mainTabExpressive) {
+            final boolean changed = isSelectedAnimator.getValue() != selected;
+            isSelectedAnimator.setValue(selected, animated);
+            checkPlayAnimation(animated);
+            if (changed) {
+                // Ширины вкладок в доке зависят от выбора — MainTabsLayout их пересчитает
+                // и сам анимирует переезд.
+                requestLayout();
+            }
+            return;
+        }
         if (mainTabMaterial3) {
             MainTabsUiHelper.setMaterial3MainTabSelected(isSelectedAnimator, selectedIndicatorAlphaAnimator, selected, animated);
         } else {
@@ -281,6 +430,9 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     public void onFactorChanged(int id, float factor, float fraction, FactorAnimator callee) {
         if (id == ANIMATOR_ID_IS_SELECTED) {
             updateColors();
+            if (mainTabExpressive) {
+                layoutExpressive();
+            }
         }
         invalidate();
     }
@@ -304,6 +456,9 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
         colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
         colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
+        if (mainTabExpressive) {
+            applyExpressiveColors();
+        }
         updateColors();
         invalidate();
     }
@@ -452,18 +607,21 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         tab.textView.setText(LocaleController.getString(stringRes));
         tab.checkPlayAnimation(false);
         tab.imageView.setLayoutParams(LayoutHelper.createFrame(24, 24, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 4, 0, 0));
-        if (MainTabsUiHelper.isMaterial3NavigationBar()) {
-            tab.applyMainTabsMaterial3();
-        }
         tab.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
         tab.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
         tab.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
+        if (MainTabsUiHelper.isMaterial3NavigationBar()) {
+            tab.applyMainTabsMaterial3();
+        } else if (MainTabsUiHelper.isExpressiveNavigationBar()) {
+            tab.applyMainTabsExpressive();
+        }
         tab.updateColors();
         return tab;
     }
 
     public static GlassTabView createAvatar(Context context, Theme.ResourcesProvider resourcesProvider, int currentAccount, @StringRes int stringRes) {
         GlassTabView tab = new GlassTabView(context);
+        tab.resourcesProvider = resourcesProvider;
         tab.textView.setText(LocaleController.getString(stringRes));
         tab.imageView.setVisibility(GONE);
 
@@ -476,12 +634,14 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         tab.backupImageView = backupImageView;
 
         tab.addView(backupImageView, LayoutHelper.createFrame(22, 22, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 5, 0, 0));
-        if (MainTabsUiHelper.isMaterial3NavigationBar()) {
-            tab.applyMainTabsMaterial3();
-        }
         tab.colorDefault = Theme.getColor(Theme.key_glass_tabUnselected, resourcesProvider);
         tab.colorSelected = Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider);
         tab.colorSelectedText = Theme.getColor(Theme.key_glass_tabSelectedText, resourcesProvider);
+        if (MainTabsUiHelper.isMaterial3NavigationBar()) {
+            tab.applyMainTabsMaterial3();
+        } else if (MainTabsUiHelper.isExpressiveNavigationBar()) {
+            tab.applyMainTabsExpressive();
+        }
         tab.updateColors();
         return tab;
     }
@@ -753,6 +913,12 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     }
 
     public void setMainTabsCompact(boolean compact) {
+        if (mainTabExpressive) {
+            // В доке подписями управляет ExpressiveDock.labels(), он же учитывает этот флаг.
+            setContentDescription(compact || ExpressiveDock.labels() == ExpressiveDock.LABELS_NONE ? textView.getText() : null);
+            requestLayout();
+            return;
+        }
         if (textView.getVisibility() == (compact ? GONE : VISIBLE)) {
             return;
         }

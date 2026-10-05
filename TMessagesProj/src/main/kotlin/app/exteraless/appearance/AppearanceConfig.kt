@@ -264,6 +264,125 @@ object AppearanceConfig {
         return iosNavigationBarStyle.Bool()
     }
 
+    // ---- Expressive-док (из Mesh Expressive) ----
+
+    /**
+     * Плавающий док как в Mesh Expressive: капсула по центру, у неактивных вкладок только
+     * иконка, активная раскрывается в пилюлю «иконка + подпись». По активной вкладке
+     * можно вести пальцем — за ним тянется «капля». Взаимоисключается с M3 и iOS-панелью.
+     */
+    @JvmField
+    val expressiveNavigationBarStyle =
+        addConfig("OEAppearanceExpressiveNavigationBarStyle", ConfigItem.configTypeBool, false)
+
+    /** Высота капсулы, dp. */
+    @JvmField
+    val expressiveDockHeight = addConfig("OEAppearanceExpressiveDockHeight", ConfigItem.configTypeInt, 56)
+
+    /** Скругление капсулы и пилюль, % от половины высоты: 100 — полная капсула. */
+    @JvmField
+    val expressiveDockRoundness = addConfig("OEAppearanceExpressiveDockRoundness", ConfigItem.configTypeInt, 100)
+
+    /** Отступ капсулы от краёв экрана, dp. */
+    @JvmField
+    val expressiveDockSideMargin = addConfig("OEAppearanceExpressiveDockSideMargin", ConfigItem.configTypeInt, 16)
+
+    /** Отступ капсулы снизу (и сверху), dp. */
+    @JvmField
+    val expressiveDockBottomMargin = addConfig("OEAppearanceExpressiveDockBottomMargin", ConfigItem.configTypeInt, 8)
+
+    /** Внутренний отступ между краем капсулы и пилюлями, dp. */
+    @JvmField
+    val expressiveDockInnerPadding = addConfig("OEAppearanceExpressiveDockInnerPadding", ConfigItem.configTypeInt, 6)
+
+    /** Расстояние между вкладками, dp. */
+    @JvmField
+    val expressiveDockSpacing = addConfig("OEAppearanceExpressiveDockSpacing", ConfigItem.configTypeInt, 4)
+
+    /** Размер иконок, dp. */
+    @JvmField
+    val expressiveDockIconSize = addConfig("OEAppearanceExpressiveDockIconSize", ConfigItem.configTypeInt, 24)
+
+    /** Непрозрачность фона капсулы, %. */
+    @JvmField
+    val expressiveDockOpacity = addConfig("OEAppearanceExpressiveDockOpacity", ConfigItem.configTypeInt, 95)
+
+    /** Капсула во всю ширину вместо «по содержимому». */
+    @JvmField
+    val expressiveDockFullWidth = addConfig("OEAppearanceExpressiveDockFullWidth", ConfigItem.configTypeBool, false)
+
+    /** Подписи: 0 — у активной вкладки, 1 — у всех, 2 — нет. */
+    @JvmField
+    val expressiveDockLabels = addConfig("OEAppearanceExpressiveDockLabels", ConfigItem.configTypeInt, 0)
+
+    /** Цвет пилюли: 0 — тональный, 1 — акцентный, 2 — прозрачный. */
+    @JvmField
+    val expressiveDockIndicator = addConfig("OEAppearanceExpressiveDockIndicator", ConfigItem.configTypeInt, 0)
+
+    /** Обводка капсулы. */
+    @JvmField
+    val expressiveDockOutline = addConfig("OEAppearanceExpressiveDockOutline", ConfigItem.configTypeBool, true)
+
+    /** Тень под капсулой. */
+    @JvmField
+    val expressiveDockShadow = addConfig("OEAppearanceExpressiveDockShadow", ConfigItem.configTypeBool, true)
+
+    /** Свайп по доку: 0 — выключен, 1 — от активной вкладки, 2 — откуда угодно. */
+    @JvmField
+    val expressiveDockSwipe = addConfig("OEAppearanceExpressiveDockSwipe", ConfigItem.configTypeInt, 1)
+
+    /** Переключать вкладку прямо во время свайпа, а не по отпусканию. */
+    @JvmField
+    val expressiveDockLiveSwitch = addConfig("OEAppearanceExpressiveDockLiveSwitch", ConfigItem.configTypeBool, false)
+
+    /** «Жидкая» капля: растягивается по скорости пальца. */
+    @JvmField
+    val expressiveDockLiquid = addConfig("OEAppearanceExpressiveDockLiquid", ConfigItem.configTypeBool, true)
+
+    /** Вибрация при смене вкладки свайпом. */
+    @JvmField
+    val expressiveDockHaptics = addConfig("OEAppearanceExpressiveDockHaptics", ConfigItem.configTypeBool, true)
+
+    /** Скорость анимаций: 0 — медленно, 1 — обычно, 2 — быстро. */
+    @JvmField
+    val expressiveDockAnimationSpeed = addConfig("OEAppearanceExpressiveDockAnimationSpeed", ConfigItem.configTypeInt, 1)
+
+    @JvmStatic
+    fun expressiveNavigationBarStyle(): Boolean {
+        ensureLoaded()
+        return expressiveNavigationBarStyle.Bool()
+    }
+
+    /** Все параметры дока, кроме самого переключателя, — для кнопки сброса. */
+    @JvmStatic
+    fun expressiveDockItems(): List<ConfigItem> = listOf(
+        expressiveDockHeight, expressiveDockRoundness, expressiveDockSideMargin,
+        expressiveDockBottomMargin, expressiveDockInnerPadding, expressiveDockSpacing,
+        expressiveDockIconSize, expressiveDockOpacity, expressiveDockFullWidth,
+        expressiveDockLabels, expressiveDockIndicator, expressiveDockOutline,
+        expressiveDockShadow, expressiveDockSwipe, expressiveDockLiveSwitch,
+        expressiveDockLiquid, expressiveDockHaptics, expressiveDockAnimationSpeed,
+    )
+
+    @JvmStatic
+    fun isExpressiveDockDefault(): Boolean {
+        ensureLoaded()
+        return expressiveDockItems().all { it.value == it.defaultValue }
+    }
+
+    @JvmStatic
+    fun resetExpressiveDock() {
+        ensureLoaded()
+        synchronized(sync) {
+            val editor = getPreferences().edit()
+            for (item in expressiveDockItems()) {
+                editor.remove(item.key)
+                item.value = item.defaultValue
+            }
+            editor.apply()
+        }
+    }
+
     @JvmField
     val profileMusicCard =
         addConfig("OEAppearanceProfileMusicCard", ConfigItem.configTypeBool, true)

@@ -8,7 +8,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -28,8 +30,10 @@ import org.telegram.ui.Components.AnimatedLinearLayout;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.glass.GlassTabView;
 
+import app.exteraless.appearance.ExpressiveDock;
 import app.exteraless.appearance.MainTabsUiHelper;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -115,6 +119,10 @@ public class MainTabsLayout extends AnimatedLinearLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (isExpressive()) {
+            measureExpressive(widthMeasureSpec, heightMeasureSpec);
+            return;
+        }
         int width = MeasureSpec.getSize(widthMeasureSpec);
         final int height = MeasureSpec.getSize(heightMeasureSpec);
         final int tabHeight = height - getPaddingTop() - getPaddingBottom();
@@ -211,6 +219,127 @@ public class MainTabsLayout extends AnimatedLinearLayout {
                 MeasureSpec.makeMeasureSpec(tabHeight, MeasureSpec.EXACTLY));
         }
 
+        calculateTotalSizesAfterMeasure();
+    }
+
+    // ---- Expressive-док: раскладка ----
+
+    private int[] expressiveCollapsed;
+    private int[] expressiveExpanded;
+
+    /** Док включён и вкладки собраны под него (после переключения стиля вьюхи пересобираются). */
+    private boolean isExpressive() {
+        if (!MainTabsUiHelper.isExpressiveNavigationBar()) {
+            return false;
+        }
+        for (int a = 0, N = getChildCount(); a < N; a++) {
+            final View child = getChildAt(a);
+            if (child instanceof GlassTabView) {
+                return ((GlassTabView) child).isMainTabExpressive();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Ширины вкладок дока. У выбранной — по содержимому (иконка + подпись), остаток делят
+     * остальные. Во всю ширину остаток — это свободное место, «по содержимому» — запас под
+     * самую длинную подпись, поэтому капсула не прыгает при смене вкладки: перестраиваются
+     * только вкладки внутри, и AnimatedLinearLayout анимирует их переезд.
+     */
+    private void measureExpressive(int widthMeasureSpec, int heightMeasureSpec) {
+        int width = MeasureSpec.getSize(widthMeasureSpec);
+        final int height = MeasureSpec.getSize(heightMeasureSpec);
+        final int tabHeight = Math.max(0, height - getPaddingTop() - getPaddingBottom());
+        if (maxWidthPx > 0 && width > maxWidthPx) {
+            width = maxWidthPx;
+        }
+        final int available = Math.max(0, width - getPaddingLeft() - getPaddingRight());
+        setAnimationDuration(ExpressiveDock.animationDuration());
+
+        final int childCount = getChildCount();
+        if (tabsWidth == null || tabsWidth.length < childCount) {
+            tabsTextWidth = new float[childCount];
+            tabsTextWidthWithMargin = new float[childCount];
+            tabsWeight = new int[childCount];
+            tabsLeftPos = new int[childCount];
+            tabsWidth = new int[childCount];
+        }
+        if (expressiveCollapsed == null || expressiveCollapsed.length < childCount) {
+            expressiveCollapsed = new int[childCount];
+            expressiveExpanded = new int[childCount];
+        }
+
+        int count = 0;
+        int selected = -1;
+        int sumCollapsed = 0;
+        int maxExtra = 0;
+        for (int a = 0; a < childCount; a++) {
+            final View child = getChildAt(a);
+            if (!isViewVisible(child)) {
+                expressiveCollapsed[a] = expressiveExpanded[a] = 0;
+                continue;
+            }
+            if (child instanceof GlassTabView) {
+                final GlassTabView tab = (GlassTabView) child;
+                expressiveCollapsed[a] = tab.getExpressiveCollapsedWidth();
+                expressiveExpanded[a] = tab.getExpressiveExpandedWidth();
+                if (selected < 0 && tab.isTabSelected()) {
+                    selected = a;
+                }
+            } else {
+                expressiveCollapsed[a] = expressiveExpanded[a] = dp(56);
+            }
+            sumCollapsed += expressiveCollapsed[a];
+            maxExtra = Math.max(maxExtra, expressiveExpanded[a] - expressiveCollapsed[a]);
+            count++;
+        }
+        visibleChildCount = count;
+
+        final int total = ExpressiveDock.fullWidth() ? available : Math.min(available, sumCollapsed + maxExtra);
+        final int selectedExtra = selected >= 0 ? expressiveExpanded[selected] - expressiveCollapsed[selected] : 0;
+        final int natural = sumCollapsed + selectedExtra;
+        final int others = count - (selected >= 0 ? 1 : 0);
+        final float free = total - natural;
+
+        float acc = 0;
+        int l = 0;
+        int lastVisible = -1;
+        for (int a = 0; a < childCount; a++) {
+            if (!isViewVisible(getChildAt(a))) {
+                tabsWidth[a] = 0;
+                continue;
+            }
+            float w = expressiveCollapsed[a] + (a == selected ? selectedExtra : 0);
+            if (free < 0) {
+                // Не влезает — ужимаем всё пропорционально, подписи обрежутся сами.
+                w *= natural > 0 ? total / (float) natural : 0;
+            } else if (others > 0) {
+                if (a != selected) {
+                    w += free / others;
+                }
+            } else {
+                w += free;
+            }
+            acc += w;
+            final int rounded = Math.round(acc) - l;
+            tabsWidth[a] = rounded;
+            tabsLeftPos[a] = l;
+            l += rounded;
+            lastVisible = a;
+        }
+        if (lastVisible >= 0 && l != total && free >= 0) {
+            tabsWidth[lastVisible] += total - l;
+            l = total;
+        }
+
+        setMeasuredDimension(l + getPaddingLeft() + getPaddingRight(), height);
+        for (int a = 0; a < childCount; a++) {
+            final View child = getChildAt(a);
+            child.measure(
+                MeasureSpec.makeMeasureSpec(tabsWidth[a], MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(tabHeight, MeasureSpec.EXACTLY));
+        }
         calculateTotalSizesAfterMeasure();
     }
 
@@ -370,6 +499,9 @@ public class MainTabsLayout extends AnimatedLinearLayout {
 
     @Override
     protected void dispatchDraw(@NonNull Canvas canvas) {
+        if (expressiveDragging || expressiveSettling) {
+            drawExpressiveDroplet(canvas);
+        }
         if (drawCustomSelector) {
             final float x = animatedLongSelectedViewCenterX + animatedLongSelectedViewOffsetX;
             final float sWidth = getInterpolatedWidthByX(x, this);
@@ -688,8 +820,322 @@ public class MainTabsLayout extends AnimatedLinearLayout {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (isExpressive()) {
+            // Старая стеклянная капля по долгому нажатию доку не нужна — у него своя.
+            if (handleExpressiveTouch(ev)) {
+                return true;
+            }
+            final boolean handled = super.dispatchTouchEvent(ev);
+            // «Откуда угодно» — жест может начаться и мимо вкладок, на подложке.
+            return handled || ev.getActionMasked() == MotionEvent.ACTION_DOWN && expressiveCandidate;
+        }
         clickHelper.onTouchEvent(this, ev);
         return super.dispatchTouchEvent(ev);
+    }
+
+    // ---- Expressive-док: капля ----
+
+    private boolean expressiveCandidate;
+    private boolean expressiveDragging;
+    private boolean expressiveSettling;
+    private float expressiveDownX, expressiveDownY;
+    private long expressiveDownTime;
+    private float expressiveFingerX;
+    private float expressiveVelocity;
+    private View expressiveStartTab;
+    private View expressiveHoverTab;
+
+    private float expressiveReleaseCenterX, expressiveReleaseWidth, expressiveReleaseStretch;
+    private float expressiveSettleProgress;
+    private final android.graphics.RectF expressiveDropletRect = new android.graphics.RectF();
+    private final Paint expressivePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    /** Подъём капли: пока палец на доке, капля чуть больше и с тенью. */
+    private final BoolAnimator expressiveLift = new BoolAnimator(0, (id, factor, fraction, callee) -> invalidate(),
+            CubicBezierInterpolator.EASE_OUT_QUINT, 220L);
+
+    private final SpringAnimation expressiveSettle = new SpringAnimation(this, new FloatPropertyCompat<MainTabsLayout>("expressiveSettle") {
+        @Override
+        public float getValue(MainTabsLayout object) {
+            return object.expressiveSettleProgress * 1000f;
+        }
+
+        @Override
+        public void setValue(MainTabsLayout object, float value) {
+            object.expressiveSettleProgress = value / 1000f;
+            object.invalidate();
+        }
+    });
+
+    {
+        expressiveSettle.setSpring(new SpringForce(1000f).setDampingRatio(0.76f).setStiffness(380f));
+        expressiveSettle.addEndListener((animation, canceled, value, velocity) -> {
+            if (!canceled) {
+                expressiveSettling = false;
+                setChildrenSkipDrawSelector(false);
+                invalidate();
+            }
+        });
+    }
+
+    private void setChildrenSkipDrawSelector(boolean skip) {
+        for (int a = 0, N = getChildCount(); a < N; a++) {
+            final View child = getChildAt(a);
+            if (child instanceof GlassTabView) {
+                ((GlassTabView) child).setSkipDrawSelector(skip);
+            }
+        }
+    }
+
+    private float getExpressiveTabHeight() {
+        return getHeight() - getPaddingTop() - getPaddingBottom();
+    }
+
+    /** Ширина капли во время перетаскивания — чуть шире вкладки без подписи, как 68dp в Mesh. */
+    private float getExpressiveDropletWidth() {
+        return (dp(ExpressiveDock.iconSize()) + AndroidUtilities.dpf2(ExpressiveDock.tabPadding()) * 2) * 1.45f;
+    }
+
+    /** Видимые вкладки в порядке слева направо. */
+    private ArrayList<View> getExpressiveVisibleTabs() {
+        final ArrayList<View> list = new ArrayList<>();
+        for (int a = 0, N = getChildCount(); a < N; a++) {
+            final View child = getChildAt(a);
+            if (child.getVisibility() == VISIBLE && isViewVisible(child)) {
+                list.add(child);
+            }
+        }
+        java.util.Collections.sort(list, (x, y) -> Integer.compare(x.getLeft(), y.getLeft()));
+        return list;
+    }
+
+    /**
+     * Вкладка под пальцем по равным «слотам», как в Mesh: ширины вкладок меняются прямо во
+     * время жеста, и выбор по их центрам дрожал бы на границе.
+     */
+    private View findExpressiveSlot(float x) {
+        final ArrayList<View> tabs = getExpressiveVisibleTabs();
+        if (tabs.isEmpty()) {
+            return null;
+        }
+        final float content = getWidth() - getPaddingLeft() - getPaddingRight();
+        if (content <= 0) {
+            return tabs.get(0);
+        }
+        final int index = (int) ((x - getPaddingLeft()) / (content / tabs.size()));
+        return tabs.get(Math.max(0, Math.min(tabs.size() - 1, index)));
+    }
+
+    private View findSelectedVisibleTab() {
+        for (View tab : getExpressiveVisibleTabs()) {
+            if (tab instanceof GlassTabView && ((GlassTabView) tab).isTabSelected()) {
+                return tab;
+            }
+        }
+        return null;
+    }
+
+    private boolean handleExpressiveTouch(MotionEvent ev) {
+        final int swipe = ExpressiveDock.swipe();
+        if (swipe == ExpressiveDock.SWIPE_OFF && !expressiveDragging) {
+            expressiveCandidate = false;
+            return false;
+        }
+        final float x = ev.getX();
+        final float y = ev.getY();
+        switch (ev.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN: {
+                expressiveDragging = false;
+                expressiveDownX = x;
+                expressiveDownY = y;
+                expressiveDownTime = ev.getEventTime();
+                if (swipe == ExpressiveDock.SWIPE_ANYWHERE) {
+                    expressiveCandidate = true;
+                } else {
+                    final View selected = findSelectedVisibleTab();
+                    final float slack = dp(12);
+                    expressiveCandidate = selected != null
+                            && x >= selected.getX() - slack
+                            && x <= selected.getX() + getTabVisualWidth(selected) + slack;
+                }
+                return false;
+            }
+            case MotionEvent.ACTION_MOVE: {
+                if (expressiveDragging) {
+                    moveExpressiveDrag(x);
+                    return true;
+                }
+                if (!expressiveCandidate) {
+                    return false;
+                }
+                // Долгое нажатие уже ушло вкладке (меню папок, аккаунтов) — не перехватываем.
+                if (ev.getEventTime() - expressiveDownTime > ViewConfiguration.getLongPressTimeout()) {
+                    expressiveCandidate = false;
+                    return false;
+                }
+                final float dx = x - expressiveDownX;
+                final float dy = y - expressiveDownY;
+                final int slop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
+                if (Math.abs(dy) > slop && Math.abs(dy) > Math.abs(dx)) {
+                    expressiveCandidate = false;
+                    return false;
+                }
+                if (Math.abs(dx) > slop) {
+                    final MotionEvent cancel = MotionEvent.obtain(ev);
+                    cancel.setAction(MotionEvent.ACTION_CANCEL);
+                    super.dispatchTouchEvent(cancel);
+                    cancel.recycle();
+                    if (getParent() != null) {
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                    }
+                    startExpressiveDrag(x);
+                    return true;
+                }
+                return false;
+            }
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL: {
+                expressiveCandidate = false;
+                if (expressiveDragging) {
+                    finishExpressiveDrag(ev.getActionMasked() == MotionEvent.ACTION_UP);
+                    return true;
+                }
+                return false;
+            }
+        }
+        return expressiveDragging;
+    }
+
+    private static float getTabVisualWidth(View view) {
+        return view instanceof GlassTabView ? ((GlassTabView) view).getVisualWidth() : view.getWidth();
+    }
+
+    private void startExpressiveDrag(float x) {
+        expressiveSettle.cancel();
+        expressiveSettling = false;
+        expressiveDragging = true;
+        expressiveFingerX = x;
+        expressiveVelocity = 0;
+        expressiveStartTab = findSelectedVisibleTab();
+        expressiveHoverTab = expressiveStartTab;
+        setChildrenSkipDrawSelector(true);
+        expressiveLift.setValue(true, true);
+        performExpressiveHaptic(HapticFeedbackConstants.LONG_PRESS);
+        moveExpressiveDrag(x);
+    }
+
+    private void moveExpressiveDrag(float x) {
+        final float delta = x - expressiveFingerX;
+        expressiveFingerX = x;
+        // Сглаженная скорость — по ней капля растягивается.
+        expressiveVelocity = expressiveVelocity * 0.6f + delta * 0.4f;
+
+        final View found = findExpressiveSlot(x);
+        if (found != null && found != expressiveHoverTab) {
+            expressiveHoverTab = found;
+            performExpressiveHaptic(HapticFeedbackConstants.CLOCK_TICK);
+            if (ExpressiveDock.liveSwitch()) {
+                found.performClick();
+            }
+            setTabSelected(found, true);
+        }
+        invalidate();
+    }
+
+    private void finishExpressiveDrag(boolean commit) {
+        expressiveDragging = false;
+        // С переключением на лету страница уже там, где палец, — откатывать нечего.
+        final View target = commit || ExpressiveDock.liveSwitch() ? expressiveHoverTab : expressiveStartTab;
+        if (target != null) {
+            setTabSelected(target, true);
+            if (commit && target != expressiveStartTab && !ExpressiveDock.liveSwitch()) {
+                target.performClick();
+            }
+        }
+        expressiveStartTab = null;
+        expressiveHoverTab = null;
+
+        expressiveReleaseCenterX = getExpressiveDropletCenterX();
+        expressiveReleaseWidth = getExpressiveDropletWidth();
+        expressiveReleaseStretch = getExpressiveStretch();
+        expressiveVelocity = 0;
+        expressiveLift.setValue(false, true);
+
+        expressiveSettling = true;
+        expressiveSettleProgress = 0;
+        expressiveSettle.getSpring().setStiffness(ExpressiveDock.dropletStiffness());
+        expressiveSettle.setStartValue(0);
+        expressiveSettle.animateToFinalPosition(1000f);
+        invalidate();
+    }
+
+    private float getExpressiveDropletCenterX() {
+        final float half = getExpressiveDropletWidth() / 2f;
+        final float min = getPaddingLeft() + half;
+        final float max = getWidth() - getPaddingRight() - half;
+        return max < min ? getWidth() / 2f : Math.max(min, Math.min(max, expressiveFingerX));
+    }
+
+    private float getExpressiveStretch() {
+        if (!ExpressiveDock.liquid()) {
+            return 1f;
+        }
+        return 1f + Math.abs(Math.max(-20f, Math.min(20f, expressiveVelocity))) / 90f;
+    }
+
+    private void performExpressiveHaptic(int constant) {
+        if (ExpressiveDock.haptics() && !NekoConfig.disableVibration.Bool()) {
+            try {
+                performHapticFeedback(constant, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            } catch (Exception ignore) {
+            }
+        }
+    }
+
+    /**
+     * Капля: пока палец на доке — фиксированной ширины у пальца, приподнята (×1.12) и
+     * растянута по скорости; после отпускания пружиной перетекает в пилюлю выбранной вкладки.
+     */
+    private void drawExpressiveDroplet(Canvas canvas) {
+        final float tabHeight = getExpressiveTabHeight();
+        if (tabHeight <= 0) {
+            return;
+        }
+        float cx;
+        float width;
+        float stretch;
+        if (expressiveDragging) {
+            cx = getExpressiveDropletCenterX();
+            width = getExpressiveDropletWidth();
+            stretch = getExpressiveStretch();
+        } else {
+            final View target = findSelectedVisibleTab();
+            final float inset = dp(ExpressiveDock.spacing()) / 2f;
+            final float targetWidth = target != null ? getTabVisualWidth(target) - inset * 2 : expressiveReleaseWidth;
+            final float targetCx = target != null ? target.getX() + getTabVisualWidth(target) / 2f : expressiveReleaseCenterX;
+            final float p = expressiveSettleProgress;
+            cx = lerp(expressiveReleaseCenterX, targetCx, p);
+            width = Math.max(0, lerp(expressiveReleaseWidth, targetWidth, p));
+            stretch = lerp(expressiveReleaseStretch, 1f, Math.min(1f, p));
+        }
+        final float lift = expressiveLift.getFloatValue();
+        final float scale = lerp(1f, 1.12f, lift);
+        final float sx = scale * stretch;
+        final float sy = scale / (float) Math.sqrt(stretch);
+        final float top = getPaddingTop();
+        expressiveDropletRect.set(cx - width / 2f, top, cx + width / 2f, top + tabHeight);
+
+        canvas.save();
+        canvas.scale(sx, sy, expressiveDropletRect.centerX(), expressiveDropletRect.centerY());
+        final float r = ExpressiveDock.pillRadius(expressiveDropletRect.height());
+        expressivePaint.setColor(ExpressiveDock.indicatorColor(resourcesProvider));
+        if (lift > 0) {
+            expressivePaint.setShadowLayer(dp(8) * lift, 0, dp(2) * lift, Theme.multAlpha(0xFF000000, 0.18f * lift));
+        } else {
+            expressivePaint.clearShadowLayer();
+        }
+        canvas.drawRoundRect(expressiveDropletRect, r, r, expressivePaint);
+        canvas.restore();
     }
 
 

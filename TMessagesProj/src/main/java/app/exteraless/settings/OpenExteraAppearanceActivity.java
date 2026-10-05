@@ -609,6 +609,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             AppearanceConfig.newNavigationBarStyle.setConfigBool(enable);
             if (enable) {
                 AppearanceConfig.iosNavigationBarStyle.setConfigBool(false);
+                AppearanceConfig.expressiveNavigationBarStyle.setConfigBool(false);
                 notifyRow(iosNavBarRow);
                 leaveFloatingBottomNavigation();
             }
@@ -628,6 +629,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             AppearanceConfig.iosNavigationBarStyle.setConfigBool(enable);
             if (enable) {
                 AppearanceConfig.newNavigationBarStyle.setConfigBool(false);
+                AppearanceConfig.expressiveNavigationBarStyle.setConfigBool(false);
                 notifyRow(md3NavBarRow);
             }
             rebuildAllAndSelf(view, enable);
@@ -1357,6 +1359,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         AppearanceConfig.iosChatHeader.setConfigBool(enable);
         if (enable) {
             AppearanceConfig.newNavigationBarStyle.setConfigBool(false);
+            AppearanceConfig.expressiveNavigationBarStyle.setConfigBool(false);
         }
         rebuildAll();
         rebuildRowsAndNotify();
@@ -1371,6 +1374,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         onM3ListItemsChanged();
         if (enable) {
             AppearanceConfig.iosNavigationBarStyle.setConfigBool(false);
+            AppearanceConfig.expressiveNavigationBarStyle.setConfigBool(false);
             leaveFloatingBottomNavigation();
         }
         NaConfig.INSTANCE.getSliderStyle().setConfigInt(enable ? STYLE_MD3 : 0);
