@@ -56,6 +56,8 @@ import org.telegram.ui.Components.chat.ViewPositionWatcher;
 import org.telegram.ui.Components.spoilers.SpoilerEffect;
 
 public class TextMessageEnterTransition implements MessageEnterTransitionContainer.Transition {
+
+    private static final CubicBezierInterpolator EXPRESSIVE_SEND_INTERPOLATOR = new CubicBezierInterpolator(0.34, 1.28, 0.64, 1);
     float fromRadius;
     float progress;
 
@@ -469,6 +471,10 @@ public class TextMessageEnterTransition implements MessageEnterTransitionContain
         }
 
         float progress = ChatListItemAnimator.DEFAULT_INTERPOLATOR.getInterpolation(this.progress);
+        // Expressive-чат: пузырь доезжает до места с лёгким перелётом, как пружина.
+        // Перелёт только у координат: цвета и прозрачность берут обычный progress.
+        float yProgress = app.exteraless.appearance.ExpressiveChat.input()
+                ? EXPRESSIVE_SEND_INTERPOLATOR.getInterpolation(this.progress) : progress;
         float alphaProgress = this.progress > 0.4f ? 1f : this.progress / 0.4f;
 
         float p2 = CubicBezierInterpolator.EASE_OUT_QUINT.getInterpolation(this.progress);
@@ -489,9 +495,9 @@ public class TextMessageEnterTransition implements MessageEnterTransitionContain
         canvas.save();
         float drawableX = messageViewX + messageView.getBackgroundDrawableLeft() + (fromX - (toX - toXOffset)) * (1f - progressX);
         float drawableToTop = messageViewY + messageView.getBackgroundDrawableTop();
-        float drawableTop = (drawableFromTop - container.getY()) * (1f - progress) + (drawableToTop) * progress;
+        float drawableTop = (drawableFromTop - container.getY()) * (1f - yProgress) + (drawableToTop) * yProgress;
         float drawableH = messageView.getBackgroundDrawableBottom() - messageView.getBackgroundDrawableTop();
-        float drawableBottom = (drawableFromBottom - container.getY()) * (1f - progress) + (drawableToTop + drawableH) * progress;
+        float drawableBottom = (drawableFromBottom - container.getY()) * (1f - yProgress) + (drawableToTop + drawableH) * yProgress;
         int drawableRight = (int) (messageViewX + messageView.getBackgroundDrawableRight() + dp(4) * (1f - progressX));
         MessageDrawable drawable = null;
         if (!currentMessageObject.isAnimatedEmojiStickers()) {
@@ -538,7 +544,7 @@ public class TextMessageEnterTransition implements MessageEnterTransitionContain
                 );
             }
         }
-        canvas.translate(messageView.getLeft() + listView.getX() - container.getX(), messageViewY + (fromY - toY) * (1f - progress));
+        canvas.translate(messageView.getLeft() + listView.getX() - container.getX(), messageViewY + (fromY - toY) * (1f - yProgress));
         messageView.drawTime(canvas, alphaProgress, false);
         messageView.drawNamesLayout(canvas, alphaProgress);
         messageView.drawCommentButton(canvas, alphaProgress);
@@ -625,7 +631,7 @@ public class TextMessageEnterTransition implements MessageEnterTransitionContain
                 fromReplayX -= dp(44);
             }
             float replyX = lerp(fromReplayX, toReplayX, progressX);
-            float replyY = lerp(fromReplayY + dp(12) * progress, toReplayY, progress);
+            float replyY = lerp(fromReplayY + dp(12) * yProgress, toReplayY, yProgress);
 
             if (roundRectRadii == null) {
                 roundRectRadii = new float[8];
@@ -638,9 +644,9 @@ public class TextMessageEnterTransition implements MessageEnterTransitionContain
                 fromReplayX + replyFromStartWidth,
                 fromReplayY + dp(35)
             );
-            AndroidUtilities.rectTmp.offset(0,  + dp(12) * progress);
+            AndroidUtilities.rectTmp.offset(0,  + dp(12) * yProgress);
             messageReplySelectorRect.set(messageView.replySelectorRect);
-            messageReplySelectorRect.offset(messageViewX, messageViewY + (fromY - toY) * (1f - progress));
+            messageReplySelectorRect.offset(messageViewX, messageViewY + (fromY - toY) * (1f - yProgress));
             lerp(
                 AndroidUtilities.rectTmp,
                 messageReplySelectorRect,
@@ -770,7 +776,7 @@ public class TextMessageEnterTransition implements MessageEnterTransitionContain
         }
 
         canvas.save();
-        canvas.translate(fromX * (1f - progressX) + (toX - toXOffset) * progressX, fromY * (1f - progress) + (toY + textLayoutBlock.textYOffset(messageView.getMessageObject().textLayoutBlocks, messageView.transitionParams)) * progress);
+        canvas.translate(fromX * (1f - progressX) + (toX - toXOffset) * progressX, fromY * (1f - yProgress) + (toY + textLayoutBlock.textYOffset(messageView.getMessageObject().textLayoutBlocks, messageView.transitionParams)) * yProgress);
         canvas.scale(scale, scale * scale2, 0, 0);
 
         if (drawBitmaps) {
@@ -801,7 +807,7 @@ public class TextMessageEnterTransition implements MessageEnterTransitionContain
 
         if (rtlLayout != null) {
             canvas.save();
-            canvas.translate(fromX * (1f - progressX) + (toX - toXOffsetRtl) * progressX, fromY * (1f - progress) + (toY + textLayoutBlock.textYOffset(messageView.getMessageObject().textLayoutBlocks, messageView.transitionParams)) * progress);
+            canvas.translate(fromX * (1f - progressX) + (toX - toXOffsetRtl) * progressX, fromY * (1f - yProgress) + (toY + textLayoutBlock.textYOffset(messageView.getMessageObject().textLayoutBlocks, messageView.transitionParams)) * yProgress);
             canvas.scale(scale, scale * scale2, 0, 0);
             if (drawBitmaps) {
                 if (crossfade) {
@@ -829,7 +835,7 @@ public class TextMessageEnterTransition implements MessageEnterTransitionContain
 
         if (crossfade) {
             canvas.save();
-            canvas.translate(messageView.getLeft() + listView.getX() - container.getX() + (fromX - toX) * (1f - progressX), messageViewY + (fromY - toY) * (1f - progress));
+            canvas.translate(messageView.getLeft() + listView.getX() - container.getX() + (fromX - toX) * (1f - progressX), messageViewY + (fromY - toY) * (1f - yProgress));
             canvas.scale(scale, scale * scale2, messageView.getTextX(), messageView.getTextY());
             canvas.translate(0, -crossfadeTextOffset);
 

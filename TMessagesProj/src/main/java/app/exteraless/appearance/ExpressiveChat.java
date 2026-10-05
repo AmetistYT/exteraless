@@ -177,6 +177,11 @@ public final class ExpressiveChat {
         return Theme.multAlpha(accent(resourcesProvider), isDark(resourcesProvider) ? 0.26f : 0.16f);
     }
 
+    /** Подложка полей ввода (поиск в панели эмодзи): слабее, чем выбранный элемент. */
+    public static int tonalFieldColor(Theme.ResourcesProvider resourcesProvider) {
+        return Theme.multAlpha(accent(resourcesProvider), isDark(resourcesProvider) ? 0.16f : 0.09f);
+    }
+
     public static int onSurfaceVariant(Theme.ResourcesProvider resourcesProvider) {
         final int text = Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider);
         return ColorUtils.blendARGB(text, surfaceColor(resourcesProvider), 0.22f) | 0xFF000000;

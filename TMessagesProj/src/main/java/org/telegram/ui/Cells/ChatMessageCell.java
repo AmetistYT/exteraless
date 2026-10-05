@@ -23711,11 +23711,14 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             } else {
                 checkBox.setResourcesProvider(resourcesProvider);
             }
+            // Expressive-чат: чекбоксы выделения — скруглённые квадраты
+            checkBox.setExpressiveSquare(app.exteraless.appearance.ExpressiveChat.selection() ? AndroidUtilities.dpf2(7) : 0);
         }
         if (visible && ((currentMessagesGroup != null && currentMessagesGroup.messages.size() > 1) || (groupedMessagesToSet != null && groupedMessagesToSet.messages.size() > 1))) {
             if (mediaCheckBox == null) {
                 mediaCheckBox = new CheckBoxBase(this, 21, resourcesProvider);
                 mediaCheckBox.setUseDefaultCheck(true);
+                mediaCheckBox.setExpressiveSquare(app.exteraless.appearance.ExpressiveChat.selection() ? AndroidUtilities.dpf2(7) : 0);
                 if (attachedToWindow) {
                     mediaCheckBox.onAttachedToWindow();
                 }

@@ -170,6 +170,15 @@ public class CheckBoxBase {
         invalidate();
     }
 
+    /** Expressive-чат: квадратный чекбокс — и контур, и заливка со скруглением [radius]. */
+    private float squareRadius;
+
+    public void setExpressiveSquare(float radius) {
+        squareRadius = radius;
+        setCustomRadius(radius);
+        setCustomRadiusFactor(1f);
+    }
+
     public void setCustomRadius(float customRadius) {
         if (this.customRadius == customRadius) {
             return;
@@ -462,6 +471,8 @@ public class CheckBoxBase {
             } else if (backgroundType == 6 || backgroundType == 7) {
                 canvas.drawCircle(cx, cy, rad - dp(1), paint);
                 canvas.drawCircle(cx, cy, rad - dp(1.5f), backgroundPaint);
+            } else if (squareRadius > 0) {
+                canvas.drawRoundRect(cx - rad, cy - rad, cx + rad, cy + rad, squareRadius, squareRadius, paint);
             } else {
                 canvas.drawCircle(cx, cy, rad, paint);
             }
@@ -484,7 +495,11 @@ public class CheckBoxBase {
                 canvas.drawCircle(cx, cy, (rad - dp(1)) * backgroundAlpha, backgroundPaint);
                 backgroundPaint.setStyle(Paint.Style.STROKE);
             } else if (backgroundType == 0 || backgroundType == 11) {
-                canvas.drawCircle(cx, cy, rad, backgroundPaint);
+                if (squareRadius > 0) {
+                    canvas.drawRoundRect(cx - rad, cy - rad, cx + rad, cy + rad, squareRadius, squareRadius, backgroundPaint);
+                } else {
+                    canvas.drawCircle(cx, cy, rad, backgroundPaint);
+                }
             } else {
                 rect.set(cx - outerRad, cy - outerRad, cx + outerRad, cy + outerRad);
                 int startAngle;

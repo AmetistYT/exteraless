@@ -844,7 +844,10 @@ public class EmojiView extends FrameLayout implements
             addView(backgroundView, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, searchFieldHeight));
 
             box = new FrameLayout(context);
-            box.setBackground(Theme.createRoundRectDrawable(dp(18), glassDesign ? getGlassIconColor(0.06f) : getThemedColor(Theme.key_chat_emojiSearchBackground)));
+            // Expressive-чат: поле поиска на тональной подложке
+            box.setBackground(Theme.createRoundRectDrawable(dp(18), app.exteraless.appearance.ExpressiveChat.emojiPanel()
+                    ? app.exteraless.appearance.ExpressiveChat.tonalFieldColor(resourcesProvider)
+                    : glassDesign ? getGlassIconColor(0.06f) : getThemedColor(Theme.key_chat_emojiSearchBackground)));
             box.setClipToOutline(true);
             box.setOutlineProvider(ViewOutlineProviderImpl.boundsWithPaddingRoundRect(0, dp(18)));
             if (type == 2) {
@@ -2960,18 +2963,24 @@ public class EmojiView extends FrameLayout implements
         }
     }
 
+    /** Кнопки панели: круг, а в Expressive-чате — скруглённый квадрат. */
+    private static float getExpressiveButtonRadius() {
+        return app.exteraless.appearance.ExpressiveChat.emojiPanel()
+                ? app.exteraless.appearance.ExpressiveChat.buttonRadius(dp(36)) : dp(18);
+    }
+
     public void setBlurredBackgroundDrawableFactory(BlurredBackgroundDrawableViewFactory factory) {
         if (backspaceButton != null) {
             backspaceButton.setBackground(factory.create(backspaceButton)
                 .setColorProvider(BlurredBackgroundProviderImpl.emojiViewButton(resourcesProvider))
-                .setRadius(dp(18))
+                .setRadius(getExpressiveButtonRadius())
                 .setPadding(dp(6)));
         }
 
         if (searchButton != null) {
             searchButton.setBackground(factory.create(searchButton)
                 .setColorProvider(BlurredBackgroundProviderImpl.emojiViewButton(resourcesProvider))
-                .setRadius(dp(18))
+                .setRadius(getExpressiveButtonRadius())
                 .setPadding(dp(6)));
         }
 
@@ -2985,7 +2994,7 @@ public class EmojiView extends FrameLayout implements
         if (stickerSettingsButton != null) {
             stickerSettingsButton.setBackground(factory.create(stickerSettingsButton)
                 .setColorProvider(BlurredBackgroundProviderImpl.emojiViewButton(resourcesProvider))
-                .setRadius(dp(18))
+                .setRadius(getExpressiveButtonRadius())
                 .setPadding(dp(6)));
         }
     }

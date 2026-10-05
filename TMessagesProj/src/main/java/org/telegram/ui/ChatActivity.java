@@ -738,6 +738,8 @@ public class ChatActivity extends BaseFragment implements
     private ImageView closePinned;
     private RadialProgressView pinnedProgress;
     private ImageView pinnedListButton;
+    /** Expressive-чат: скрепка в тональном квадрате у закрепа без превью. */
+    private ImageView expressivePinnedIcon;
     private AnimatorSet pinnedListAnimator;
     @Nullable
     private FrameLayout alertView;
@@ -12533,6 +12535,18 @@ public class ChatActivity extends BaseFragment implements
                 pinnedMessageTextView[a].setVisibility(View.INVISIBLE);
                 pinnedMessageImageView[a].setVisibility(View.INVISIBLE);
             }
+        }
+
+        if (app.exteraless.appearance.ExpressiveChat.panels()) {
+            expressivePinnedIcon = new ImageView(getContext());
+            expressivePinnedIcon.setScaleType(ImageView.ScaleType.CENTER);
+            expressivePinnedIcon.setImageResource(R.drawable.msg_pin_filled);
+            expressivePinnedIcon.setColorFilter(new PorterDuffColorFilter(app.exteraless.appearance.ExpressiveChat.accent(themeDelegate), PorterDuff.Mode.SRC_IN));
+            expressivePinnedIcon.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(10), app.exteraless.appearance.ExpressiveChat.tonalSelectorColor(themeDelegate)));
+            expressivePinnedIcon.setScaleX(0.8f);
+            expressivePinnedIcon.setScaleY(0.8f);
+            expressivePinnedIcon.setVisibility(View.GONE);
+            pinnedMessageView.addView(expressivePinnedIcon, LayoutHelper.createFrame(32, 32, Gravity.TOP | Gravity.LEFT, 22, 8, 0, 0));
         }
 
         pinnedListButton = new ImageView(getContext());
@@ -30319,12 +30333,21 @@ public class ChatActivity extends BaseFragment implements
                         pinnedMessageImageView[0].setImageBitmap(null);
                         pinnedMessageImageView[0].setVisibility(View.INVISIBLE);
                     }
-                    layoutParams1.leftMargin = layoutParams2.leftMargin = layoutParams3.leftMargin = layoutParams4.leftMargin = layoutParams5.leftMargin = dp(23);
+                    if (expressivePinnedIcon != null) {
+                        // Expressive-чат: вместо пустого места — скрепка, текст сдвигается как при превью
+                        expressivePinnedIcon.setVisibility(View.VISIBLE);
+                        layoutParams1.leftMargin = layoutParams2.leftMargin = layoutParams3.leftMargin = layoutParams4.leftMargin = layoutParams5.leftMargin = dp(60);
+                    } else {
+                        layoutParams1.leftMargin = layoutParams2.leftMargin = layoutParams3.leftMargin = layoutParams4.leftMargin = layoutParams5.leftMargin = dp(23);
+                    }
                 } else {
+                    if (expressivePinnedIcon != null) {
+                        expressivePinnedIcon.setVisibility(View.GONE);
+                    }
                     if (pinnedMessageObject.isRoundVideo()) {
                         pinnedMessageImageView[1].setRoundRadius(AndroidUtilities.dp(16));
                     } else {
-                        pinnedMessageImageView[1].setRoundRadius(AndroidUtilities.dp(2));
+                        pinnedMessageImageView[1].setRoundRadius(AndroidUtilities.dp(app.exteraless.appearance.ExpressiveChat.panels() ? 10 : 2));
                     }
                     pinnedImageHasBlur = pinnedMessageObject.hasMediaSpoilers();
                     pinnedImageSize = size;

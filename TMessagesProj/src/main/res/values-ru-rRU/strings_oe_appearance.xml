@@ -184,15 +184,15 @@
     <string name="OEExpressiveChatServicePills">Непрозрачные плашки дат и событий</string>
     <string name="OEExpressiveChatBubblesInfo">Подряд идущие сообщения одного автора образуют группу: большие углы снаружи, маленькие на стыке.</string>
     <string name="OEExpressiveChatScreenHeader">Экран</string>
-    <string name="OEExpressiveChatHeader">Шапка с чипом статуса</string>
-    <string name="OEExpressiveChatPanels">Круглее закреп и панели</string>
+    <string name="OEExpressiveChatHeader">Чип статуса и группа кнопок в шапке</string>
+    <string name="OEExpressiveChatPanels">Круглее закреп</string>
     <string name="OEExpressiveChatButtons">Квадратные плавающие кнопки</string>
     <string name="OEExpressiveChatInput">Кнопка отправки меняет форму</string>
     <string name="OEExpressiveChatEmojiPanel">Панель эмодзи, стикеров и GIF</string>
-    <string name="OEExpressiveChatScreenInfo">Кнопки «вниз» и «упоминания» становятся скруглёнными квадратами, а кнопка отправки вырастает из круга в скруглённый квадрат.</string>
+    <string name="OEExpressiveChatScreenInfo">Кнопки шапки разделяются на группу сегментов, у закрепа без превью появляется скрепка, кнопки «вниз» и «упоминания» становятся скруглёнными квадратами, а кнопка отправки вырастает из круга в скруглённый квадрат, и отправленное сообщение приземляется с пружиной.</string>
     <string name="OEExpressiveChatActionsHeader">Действия</string>
     <string name="OEExpressiveChatMenu">Меню сообщения</string>
     <string name="OEExpressiveChatMenuRadius">Скругление меню</string>
     <string name="OEExpressiveChatSelection">Скруглённое выделение</string>
-    <string name="OEExpressiveChatActionsInfo">Меню по удержанию становится круглее, а пункты подсвечиваются скруглёнными плашками. Выбранные и подсвеченные сообщения показываются скруглёнными карточками.</string>
+    <string name="OEExpressiveChatActionsInfo">Меню по удержанию становится круглее, а пункты подсвечиваются скруглёнными плашками. Выбранные и подсвеченные сообщения показываются скруглёнными карточками с квадратными чекбоксами, а кнопки панели выбора собираются в группу.</string>
 </resources>

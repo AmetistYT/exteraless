@@ -193,15 +193,15 @@
     <string name="OEExpressiveChatServicePills">Solid Date and Service Pills</string>
     <string name="OEExpressiveChatBubblesInfo">Consecutive messages from one sender form a group: large corners outside, small corners where they meet.</string>
     <string name="OEExpressiveChatScreenHeader">Screen</string>
-    <string name="OEExpressiveChatHeader">Header with Status Chip</string>
-    <string name="OEExpressiveChatPanels">Rounder Pinned Panels</string>
+    <string name="OEExpressiveChatHeader">Header Chip and Button Group</string>
+    <string name="OEExpressiveChatPanels">Rounder Pinned Panel</string>
     <string name="OEExpressiveChatButtons">Square Floating Buttons</string>
     <string name="OEExpressiveChatInput">Morphing Send Button</string>
     <string name="OEExpressiveChatEmojiPanel">Emoji, Sticker and GIF Panel</string>
-    <string name="OEExpressiveChatScreenInfo">The scroll-down and mention buttons become rounded squares, and the send button grows from a circle into a rounded square.</string>
+    <string name="OEExpressiveChatScreenInfo">Header buttons split into a button group, a pinned message without media gets a pin tile, the scroll-down and mention buttons become rounded squares, and the send button grows from a circle into a rounded square while sent messages land with a spring.</string>
     <string name="OEExpressiveChatActionsHeader">Actions</string>
     <string name="OEExpressiveChatMenu">Message Menu</string>
     <string name="OEExpressiveChatMenuRadius">Menu Corners</string>
     <string name="OEExpressiveChatSelection">Rounded Selection</string>
-    <string name="OEExpressiveChatActionsInfo">The long-press menu gets rounder and its items highlight as rounded plates. Selected and highlighted messages are shown as rounded cards.</string>
+    <string name="OEExpressiveChatActionsInfo">The long-press menu gets rounder and its items highlight as rounded plates. Selected and highlighted messages are shown as rounded cards with square checkboxes, and the selection bar groups its buttons.</string>
 </resources>
