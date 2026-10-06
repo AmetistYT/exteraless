@@ -36,9 +36,22 @@ PLUGINS_QUEUE = "PLUGINS_QUEUE"
 _queues = {}
 
 
+_jclass_cache = {}
+
+
 def _jclass(name: str):
+    cls = _jclass_cache.get(name)
+    if cls is not None:
+        return cls
     from java import jclass
-    return jclass(name)
+    cls = jclass(name)
+    try:
+        from extera_utils.plugin_loader import plain_java_class
+        if plain_java_class(name):
+            _jclass_cache[name] = cls
+    except Exception:
+        pass
+    return cls
 
 
 def _log(message):

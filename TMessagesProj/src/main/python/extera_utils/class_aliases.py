@@ -531,6 +531,21 @@ def substitute(name):
         return None
 
 
+_plain_cache = {}
+
+
+def is_plain(name):
+    cached = _plain_cache.get(name)
+    if cached is not None:
+        return cached
+    plain = (isinstance(name, str) and resolve(name) == name
+             and name not in _PYTHON_SUBSTITUTES and name not in _WRAP_RESULT
+             and _field_shape(name) is None)
+    if len(_plain_cache) < 4096:
+        _plain_cache[name] = plain
+    return plain
+
+
 def is_alias(name):
     """Стоит ли пытаться подставлять это имя."""
     return isinstance(name, str) and _under_root(name)

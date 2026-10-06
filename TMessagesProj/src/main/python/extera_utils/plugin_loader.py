@@ -533,6 +533,24 @@ def _java_class_permission_uncached(name):
     return None
 
 
+_plain_java_classes = set()
+
+
+def plain_java_class(name) -> bool:
+    if type(name) is not str:
+        return False
+    if name in _plain_java_classes:
+        return True
+    if name in _JAVA_CLASS_DENIED or java_class_permission(name) is not None:
+        return False
+    from .class_aliases import is_plain
+    if not is_plain(name):
+        return False
+    if len(_plain_java_classes) < 4096:
+        _plain_java_classes.add(name)
+    return True
+
+
 def engine_java_class(name):
     """Java-класс движка для кода SDK — в обход привязки к плагину.
 
@@ -1004,6 +1022,10 @@ def _sandboxed_import_module(name, package=None):
     Отдельно от __import__: import_module идёт в машинерию напрямую, минуя
     builtins.__import__, а для уже загруженного модуля — ещё и минуя meta_path.
     """
+    if package is None and type(name) is str and name in sys.modules and _plain_import(name):
+        module = sys.modules[name]
+        if module is not None:
+            return module
     if package is None:
         _deny_internal_import(name)
         _deny_denied_java_class(name)
@@ -1074,6 +1096,22 @@ def _import_as_neighbour(plugin_id, importer, *args):
         _context_state.import_barrier = previous
 
 
+_plain_imports = {}
+_INTERNAL_PARENTS = frozenset(name.rpartition(".")[0] for name in _INTERNAL_MODULES)
+
+
+def _plain_import(name) -> bool:
+    plain = _plain_imports.get(name)
+    if plain is None:
+        root = name.partition(".")[0]
+        plain = (name not in _INTERNAL_MODULES and name not in _INTERNAL_PARENTS
+                 and name not in _JAVA_CLASS_DENIED and name not in _DENIED_CLASS_PACKAGES
+                 and root not in _GATED_ROOTS and root not in _JAVA_ROOTS)
+        if len(_plain_imports) < 4096:
+            _plain_imports[name] = plain
+    return plain
+
+
 def _sandboxed_import(name, globals=None, locals=None, fromlist=(), level=0):
     """Обёртка builtins.__import__.
 
@@ -1081,6 +1119,13 @@ def _sandboxed_import(name, globals=None, locals=None, fromlist=(), level=0):
     старта движка уже лежат в sys.modules, а закэшированный импорт до
     meta_path вообще не доходит. Враппер ловит именно этот случай — для лога.
     """
+    if level == 0 and type(name) is str and name in sys.modules and _plain_import(name):
+        if fromlist:
+            return _original_import(name, globals, locals, fromlist, level)
+        if "." not in name:
+            module = sys.modules[name]
+            if module is not None:
+                return module
     if level == 0:
         _deny_internal_import(name, fromlist)
         _deny_denied_java_class(name, fromlist)
@@ -1640,6 +1685,8 @@ def _install_jclass_guard() -> None:
         from .class_aliases import resolve, adapt
 
         def jclass(name, *args, **kwargs):
+            if type(name) is str and plain_java_class(name):
+                return original(name, *args, **kwargs)
             requested = name
             try:
                 name = resolve(name)

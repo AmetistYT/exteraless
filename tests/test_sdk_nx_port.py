@@ -1406,3 +1406,29 @@ def test_least_trusted_owner_wins_when_plugins_share_the_stack(loader, monkeypat
     monkeypatch.setattr(loader, '_permissions', lambda: Bridge)
     assert loader._least_trusted(['trusted', 'isolated']) == 'isolated'
     assert loader._least_trusted(['isolated', 'trusted']) == 'isolated'
+
+
+def test_plain_class_fast_path_skips_gated_and_aliased_names(loader):
+    assert loader.plain_java_class('java.util.ArrayList')
+    assert not loader.plain_java_class('org.telegram.messenger.SendMessagesHelper')
+    assert not loader.plain_java_class('de.robv.android.xposed.XposedBridge')
+    assert not loader.plain_java_class('app.exteraless.plugins.PluginPermissions')
+    assert not loader.plain_java_class('com.exteragram.messenger.plugins.models.PluginItemFactory')
+    assert not loader.plain_java_class(None)
+
+
+def test_plain_import_fast_path_skips_internal_gated_and_java_roots(loader):
+    assert loader._plain_import('json')
+    assert not loader._plain_import('extera_utils')
+    assert not loader._plain_import('extera_utils.plugin_loader')
+    assert not loader._plain_import('socket')
+    assert not loader._plain_import('java')
+    assert not loader._plain_import('app.exteraless.plugins')
+
+
+def test_cached_internal_import_still_refused_for_plugins(loader, monkeypatch):
+    monkeypatch.setattr(loader, '_direct_plugin_caller', lambda: 'evil')
+    monkeypatch.setattr(loader, '_unsafe_mode', False)
+    monkeypatch.setattr(loader, '_original_import', lambda *a, **k: sys.modules['json'], raising=False)
+    with pytest.raises(ImportError):
+        loader._sandboxed_import('extera_utils.plugin_loader')
