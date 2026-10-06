@@ -161,8 +161,8 @@ public final class TextStyleDialog {
         items.add(new Item("translate", getString(R.string.TranslateMessage), NaConfig.INSTANCE.getShowTextTranslate()));
         items.add(new Item("bold", styled(getString(R.string.Bold), new TypefaceSpan(AndroidUtilities.bold())), NaConfig.INSTANCE.getShowTextBold()));
         items.add(new Item("italic", styled(getString(R.string.Italic), new TypefaceSpan(AndroidUtilities.getTypeface("fonts/ritalic.ttf"))), NaConfig.INSTANCE.getShowTextItalic()));
-        items.add(new Item("mono", styled(getString(R.string.Mono), new TypefaceSpan(Typeface.MONOSPACE)), NaConfig.INSTANCE.getShowTextMono()));
-        items.add(new Item("code", styled(getString(R.string.MonoCode), new TypefaceSpan(Typeface.MONOSPACE)), NaConfig.INSTANCE.getShowTextMonoCode()));
+        items.add(new Item("mono", styled(getString(R.string.Mono), new TypefaceSpan(AndroidUtilities.mono())), NaConfig.INSTANCE.getShowTextMono()));
+        items.add(new Item("code", styled(getString(R.string.MonoCode), new TypefaceSpan(AndroidUtilities.mono())), NaConfig.INSTANCE.getShowTextMonoCode()));
         items.add(new Item("strike", styled(getString(R.string.Strike), styleSpan(TextStyleSpan.FLAG_STYLE_STRIKE)), NaConfig.INSTANCE.getShowTextStrikethrough()));
         items.add(new Item("underline", styled(getString(R.string.Underline), styleSpan(TextStyleSpan.FLAG_STYLE_UNDERLINE)), NaConfig.INSTANCE.getShowTextUnderline()));
         items.add(new Item("quote", getString(R.string.Quote), NaConfig.INSTANCE.getShowTextQuote()));

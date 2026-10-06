@@ -98,7 +98,7 @@ public class TypefaceHelper {
             case AndroidUtilities.TYPEFACE_RITALIC ->
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ? Typeface.create(baseTypeface(), 400, true) : Typeface.create("sans-serif", Typeface.ITALIC);
             case AndroidUtilities.TYPEFACE_ROBOTO_MONO ->
-                    Typeface.MONOSPACE;
+                    AndroidUtilities.mono();
             default -> createTypefaceFromAsset(assetPath);
         };
     }

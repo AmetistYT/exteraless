@@ -673,7 +673,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         }
         TextView logView = new TextView(context);
         logView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
-        logView.setTypeface(Typeface.MONOSPACE);
+        logView.setTypeface(AndroidUtilities.mono());
         logView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         logView.setTextIsSelectable(true);
 

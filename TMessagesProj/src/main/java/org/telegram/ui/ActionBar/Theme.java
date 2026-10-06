@@ -8166,11 +8166,11 @@ public class Theme {
                 chat_adminPaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
                 chat_timePaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
                 chat_msgTextCodePaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-                chat_msgTextCodePaint.setTypeface(Typeface.MONOSPACE);
+                chat_msgTextCodePaint.setTypeface(AndroidUtilities.mono());
                 chat_msgTextCode2Paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-                chat_msgTextCode2Paint.setTypeface(Typeface.MONOSPACE);
+                chat_msgTextCode2Paint.setTypeface(AndroidUtilities.mono());
                 chat_msgTextCode3Paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-                chat_msgTextCode3Paint.setTypeface(Typeface.MONOSPACE);
+                chat_msgTextCode3Paint.setTypeface(AndroidUtilities.mono());
                 chat_msgCodeBgPaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
                 chat_ephemeralPaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
             }
