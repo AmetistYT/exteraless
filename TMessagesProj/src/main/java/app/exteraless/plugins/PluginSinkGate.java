@@ -416,8 +416,11 @@ public final class PluginSinkGate {
         XC_MethodHook hook = new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-                if (param.args == null || param.args.length == 0
-                        || !PluginGrantStore.isStore(param.args[0])) {
+                if (param.args == null || param.args.length == 0) {
+                    return;
+                }
+                String settingsOwner = foreignSettingsOwner(param.args[0]);
+                if (!PluginGrantStore.isStore(param.args[0]) && settingsOwner == null) {
                     return;
                 }
                 String pluginId = enterCheck();
@@ -425,7 +428,13 @@ public final class PluginSinkGate {
                     return;
                 }
                 try {
-                    if (!PluginGrantStore.isOwnCall()) {
+                    if (settingsOwner != null) {
+                        if (!settingsOwner.equals(pluginId)
+                                && !PluginPermissions.has(pluginId, PluginPermissions.HOOKS)) {
+                            deny(pluginId, owner.getName() + "." + param.method.getName(), "settings",
+                                    settingsOwner, "settings of other plugins are not available", param);
+                        }
+                    } else if (!PluginGrantStore.isOwnCall()) {
                         deny(pluginId, owner.getName() + "." + param.method.getName(), "settings",
                                 String.valueOf(param.args[0]),
                                 "plugin permissions are not available to plugins", param);
@@ -437,6 +446,18 @@ public final class PluginSinkGate {
         };
         return hookAll(owner, "getSharedPreferences", hook)
                 + hookAll(owner, "deleteSharedPreferences", hook);
+    }
+
+    private static String foreignSettingsOwner(Object target) {
+        String name = target instanceof String ? (String) target
+                : target instanceof java.io.File ? ((java.io.File) target).getName() : null;
+        if (name == null || !name.startsWith(PluginsConstants.SETTINGS_PREFS_PREFIX)) {
+            return null;
+        }
+        if (name.endsWith(".xml")) {
+            name = name.substring(0, name.length() - 4);
+        }
+        return name.substring(PluginsConstants.SETTINGS_PREFS_PREFIX.length());
     }
 
     /**
@@ -902,6 +923,43 @@ public final class PluginSinkGate {
         } finally {
             leaveCheck();
         }
+    }
+
+    public static String callingPlugin() {
+        if (PluginRuntime.current() == null && !PluginRuntime.isPythonActive()) {
+            return null;
+        }
+        String pluginId = enterCheck();
+        if (pluginId != null) {
+            leaveCheck();
+        }
+        return pluginId;
+    }
+
+    public static boolean refuseForeign(String targetPluginId, String what) {
+        String pluginId = callingPlugin();
+        if (pluginId == null || pluginId.equals(targetPluginId)) {
+            return false;
+        }
+        if (PluginPermissions.has(pluginId, PluginPermissions.HOOKS)) {
+            return false;
+        }
+        PluginAuditJournal.record(pluginId, what, "engine", String.valueOf(targetPluginId), false);
+        FileLog.w("PluginSinkGate: refused " + what + " on " + targetPluginId + " from plugin " + pluginId);
+        return true;
+    }
+
+    public static boolean refuseFromPlugin(String what, boolean allowTrusted) {
+        String pluginId = callingPlugin();
+        if (pluginId == null) {
+            return false;
+        }
+        if (allowTrusted && PluginPermissions.has(pluginId, PluginPermissions.HOOKS)) {
+            return false;
+        }
+        PluginAuditJournal.record(pluginId, what, "engine", "", false);
+        FileLog.w("PluginSinkGate: refused " + what + " from plugin " + pluginId);
+        return true;
     }
 
     /** id плагина, если проверять надо; null — приложение или мы уже внутри проверки. */

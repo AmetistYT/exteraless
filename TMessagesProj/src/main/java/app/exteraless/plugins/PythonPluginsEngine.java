@@ -155,6 +155,9 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     }
 
     public void setUnsafeMode(boolean value) {
+        if (PluginSinkGate.refuseFromPlugin("setUnsafeMode", false)) {
+            return;
+        }
         if (!started) {
             return;
         }
@@ -195,6 +198,9 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
 
     /** Забыть наблюдения плагина (удаление плагина, сброс профиля). */
     public void forgetAudit(String pluginId) {
+        if (PluginSinkGate.refuseFromPlugin("forgetAudit", false)) {
+            return;
+        }
         PluginAuditJournal.forget(pluginId);
         if (!started) {
             return;
@@ -228,6 +234,9 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
 
     /** Загрузить плагин (импорт модуля, инстанс BasePlugin, on_plugin_load). Синхронно. */
     public String loadPlugin(Plugin plugin) {
+        if (PluginSinkGate.refuseFromPlugin("loadPlugin", true)) {
+            return "{\"ok\":false,\"error\":\"not allowed\"}";
+        }
         dropSettingsJson(plugin.id);
         if (!started) {
             return "{\"ok\":false,\"error\":\"engine not started\"}";
@@ -286,6 +295,9 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
 
     /** Выгрузить плагин (on_plugin_unload + очистка). Синхронно. */
     public void unload(Plugin plugin) {
+        if (PluginSinkGate.refuseFromPlugin("unload", true)) {
+            return;
+        }
         if (plugin == null) {
             return;
         }
@@ -300,6 +312,9 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     private final java.util.concurrent.ConcurrentHashMap<String, Plugin> unloadingPlugins = new java.util.concurrent.ConcurrentHashMap<>();
 
     public void unloadPlugin(String pluginId) {
+        if (PluginSinkGate.refuseForeign(pluginId, "unloadPlugin")) {
+            return;
+        }
         if (pluginId == null) {
             return;
         }
@@ -332,6 +347,9 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     /** Полная деинсталляция на Python-стороне: pip-зависимости (refcount),
      *  вычистка elyx-экстракций. Звать ПОСЛЕ unloadPlugin. */
     public void uninstallPlugin(String pluginId) {
+        if (PluginSinkGate.refuseFromPlugin("uninstallPlugin", true)) {
+            return;
+        }
         if (!started) {
             return;
         }

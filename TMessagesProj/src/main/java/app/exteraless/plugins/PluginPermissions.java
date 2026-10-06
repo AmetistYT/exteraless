@@ -164,6 +164,9 @@ public final class PluginPermissions {
      * её наличие отличает разобранный плагин от попавшего в каталог мимо согласия.
      */
     public static void setGranted(String pluginId, Collection<String> perms) {
+        if (PluginSinkGate.refuseFromPlugin("setGranted", false)) {
+            return;
+        }
         SharedPreferences p = prefs();
         if (p == null || pluginId == null) {
             return;
@@ -199,6 +202,9 @@ public final class PluginPermissions {
 
     /** Стереть запись (вызывается при удалении плагина). */
     public static void clear(String pluginId) {
+        if (PluginSinkGate.refuseFromPlugin("clearGrants", true)) {
+            return;
+        }
         SharedPreferences p = prefs();
         if (p == null || pluginId == null) {
             return;
