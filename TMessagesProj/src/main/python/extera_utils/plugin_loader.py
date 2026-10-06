@@ -2391,10 +2391,14 @@ def _ensure_requirements(plugin_id: str, requirements) -> None:
             "механизм зависимостей недоступен, поставить "
             + ", ".join(str(r) for r in requirements)
             + " нечем" + (f": {_pip_import_error}" if _pip_import_error else ""))
+    previous = getattr(_context_state, "engine_write", False)
+    _context_state.engine_write = True
     try:
         pip_controller.ensure_requirements(plugin_id, requirements)
     except Exception as e:
         raise RuntimeError(f"не удалось поставить зависимости плагина: {e}")
+    finally:
+        _context_state.engine_write = previous
 
     import importlib.util
     for raw in requirements:
@@ -2585,11 +2589,15 @@ def uninstall_plugin(plugin_id: str) -> None:
     """
     _unload_record(plugin_id, quiet=False)
     if pip_controller is not None:
+        previous = getattr(_context_state, "engine_write", False)
+        _context_state.engine_write = True
         try:
             pip_controller.remove_requirements(plugin_id)
         except Exception as e:
             print(f"[exteraless:plugin_loader] remove_requirements({plugin_id!r}) "
                   f"failed: {e}", file=sys.stderr)
+        finally:
+            _context_state.engine_write = previous
     # Elyx: вычистить экстракции и локальные wheels (<plugins_dir>/.elyx_extracted/<id>).
     try:
         import elyx_runtime
