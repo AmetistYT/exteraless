@@ -140,6 +140,8 @@ public final class PluginSinkGate {
         ok += hookMessengerSinks();
         ok += hookGrantStore();
         ok += hookPythonCallbacks();
+        ok += hookSetAccessible();
+        ok += hookJavaFileWrites();
         FileLog.d("PluginSinkGate: " + ok + " hooks installed");
     }
 
@@ -458,6 +460,151 @@ public final class PluginSinkGate {
             name = name.substring(0, name.length() - 4);
         }
         return name.substring(PluginsConstants.SETTINGS_PREFS_PREFIX.length());
+    }
+
+    private static int hookSetAccessible() {
+        return hookAll(java.lang.reflect.AccessibleObject.class, "setAccessible", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                if (param.args == null || param.args.length == 0
+                        || !Boolean.TRUE.equals(param.args[param.args.length - 1])) {
+                    return;
+                }
+                String pluginId = enterCheck();
+                if (pluginId == null) {
+                    return;
+                }
+                try {
+                    String detail = describeReflectTarget(param);
+                    if (PluginPermissions.check(pluginId, PluginPermissions.HOOKS)) {
+                        PluginAuditJournal.record(pluginId, "setAccessible", "reflection", detail, true);
+                        return;
+                    }
+                    denySilently(pluginId, "setAccessible", "reflection", detail,
+                            "making members accessible needs the 'hooks' permission", param);
+                } finally {
+                    leaveCheck();
+                }
+            }
+        });
+    }
+
+    private static String describeReflectTarget(XC_MethodHook.MethodHookParam param) {
+        Object source = param.thisObject;
+        if (source == null && param.args != null && param.args.length > 0
+                && param.args[0] instanceof Object[]) {
+            Object[] array = (Object[]) param.args[0];
+            if (array.length > 0) {
+                source = array[0];
+            }
+        }
+        if (source instanceof Member) {
+            return ((Member) source).getDeclaringClass().getName()
+                    + "." + ((Member) source).getName();
+        }
+        return source == null ? "" : String.valueOf(source);
+    }
+
+    private static int hookJavaFileWrites() {
+        return hookWriteConstructors(java.io.FileOutputStream.class)
+                + hookWriteConstructors(java.io.RandomAccessFile.class);
+    }
+
+    private static int hookWriteConstructors(final Class<?> owner) {
+        final boolean writeByMode = owner == java.io.RandomAccessFile.class;
+        int count = 0;
+        try {
+            for (java.lang.reflect.Constructor<?> constructor : owner.getDeclaredConstructors()) {
+                app.exteraless.plugins.xposed.HookGate.prewarm(constructor);
+                XposedBridge.hookMethod(constructor, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        String pluginId = enterCheck();
+                        if (pluginId == null) {
+                            return;
+                        }
+                        try {
+                            String path = writeTargetPath(param.args, writeByMode);
+                            if (path == null) {
+                                return;
+                            }
+                            String dir = protectedWriteDir(path, pluginId);
+                            if (dir != null && !fromSharedPreferences()) {
+                                deny(pluginId, owner.getSimpleName() + ".write", "files", path,
+                                        "writing to " + dir + " is never available to plugins", param);
+                            }
+                        } finally {
+                            leaveCheck();
+                        }
+                    }
+                });
+                count++;
+            }
+        } catch (Throwable t) {
+            FileLog.e("PluginSinkGate: cannot hook constructors of " + owner.getName(), t);
+        }
+        return count;
+    }
+
+    private static String writeTargetPath(Object[] args, boolean writeByMode) {
+        if (args == null || args.length == 0) {
+            return null;
+        }
+        if (writeByMode) {
+            Object mode = args[args.length - 1];
+            if (!(mode instanceof String) || !((String) mode).startsWith("rw")) {
+                return null;
+            }
+        }
+        Object target = args[0];
+        if (target instanceof String) {
+            return (String) target;
+        }
+        if (target instanceof java.io.File) {
+            return ((java.io.File) target).getAbsolutePath();
+        }
+        return null;
+    }
+
+    private static boolean fromSharedPreferences() {
+        for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+            if ("android.app.SharedPreferencesImpl".equals(element.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String protectedWriteDir(String path, String pluginId) {
+        try {
+            android.content.Context context = org.telegram.messenger.ApplicationLoader.applicationContext;
+            if (context == null) {
+                return null;
+            }
+            java.io.File filesDir = context.getFilesDir();
+            if (filesDir == null) {
+                return null;
+            }
+            java.io.File dataDir = filesDir.getParentFile();
+            String target = new java.io.File(path).getCanonicalPath();
+            String own = new java.io.File(new java.io.File(new java.io.File(filesDir, PluginsConstants.PLUGINS), ".data"),
+                    pluginId).getCanonicalPath();
+            if (target.equals(own) || target.startsWith(own + java.io.File.separator)) {
+                return null;
+            }
+            String[] dirs = {
+                    dataDir == null ? null : new java.io.File(dataDir, "shared_prefs").getCanonicalPath(),
+                    dataDir == null ? null : new java.io.File(dataDir, "databases").getCanonicalPath(),
+                    new java.io.File(filesDir, PluginsConstants.PLUGINS).getCanonicalPath(),
+            };
+            for (String dir : dirs) {
+                if (dir != null && (target.equals(dir) || target.startsWith(dir + java.io.File.separator))) {
+                    return dir;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     /**
