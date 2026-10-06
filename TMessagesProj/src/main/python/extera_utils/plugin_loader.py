@@ -771,15 +771,45 @@ def plugin_frame_owner() -> Optional[str]:
         frame = None
     barrier = getattr(_context_state, "import_barrier", None)
     depth = 0
+    first = None
+    others = None
     while frame is not None and depth < _MAX_FRAMES:
         if frame is barrier:
-            return None
+            break
         owner = _owner_of_frame(frame)
         if owner is not None:
-            return owner
+            if first is None:
+                first = owner
+            elif owner != first:
+                if others is None:
+                    others = []
+                if owner not in others:
+                    others.append(owner)
         frame = frame.f_back
         depth += 1
-    return None
+    if others is None:
+        return first
+    return _least_trusted([first] + others)
+
+
+_RANKED_PERMISSIONS = ("hooks", "native", "files", "network", "messages.send",
+                       "messages.read", "settings")
+
+
+def _least_trusted(owners):
+    java = _permissions()
+    if java is None:
+        return owners[0]
+    best = owners[0]
+    best_score = None
+    for owner in owners:
+        try:
+            score = sum(1 for perm in _RANKED_PERMISSIONS if java.hasPermission(owner, perm))
+        except Exception:
+            score = 0
+        if best_score is None or score < best_score:
+            best, best_score = owner, score
+    return best
 
 
 def _direct_plugin_caller() -> Optional[str]:
@@ -844,19 +874,23 @@ _unsafe_mode: Optional[bool] = None
 
 def set_unsafe_mode(value) -> None:
     global _unsafe_mode
+    if plugin_frame_owner() is not None:
+        _log_once("plugin|set_unsafe_mode", "refused to switch unsafe mode from plugin code")
+        return
     _unsafe_mode = bool(value)
 
 
 def unsafe_mode() -> bool:
     global _unsafe_mode
-    if _unsafe_mode is None:
-        java = _permissions()
-        if java is None:
-            return False
-        try:
-            _unsafe_mode = bool(java.isUnsafeMode())
-        except Exception:
-            return False
+    if _unsafe_mode is False:
+        return False
+    java = _permissions()
+    if java is None:
+        return False
+    try:
+        _unsafe_mode = bool(java.isUnsafeMode())
+    except Exception:
+        return False
     return _unsafe_mode
 
 

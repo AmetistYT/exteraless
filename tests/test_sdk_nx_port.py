@@ -1377,3 +1377,32 @@ def test_new_proxy_class_methods_are_guarded(loader, monkeypatch):
     assert proxy.compare(proxy, 1, 2) == 0
     with pytest.raises(ValueError):
         plain.compare(plain, 1, 2)
+
+
+def test_set_unsafe_mode_is_refused_from_plugin_code(loader, monkeypatch):
+    monkeypatch.setattr(loader, 'plugin_frame_owner', lambda: 'evil')
+    monkeypatch.setattr(loader, '_unsafe_mode', False)
+    loader.set_unsafe_mode(True)
+    assert loader._unsafe_mode is False
+
+
+def test_unsafe_mode_true_is_confirmed_by_java(loader, monkeypatch):
+    class Bridge:
+        @staticmethod
+        def isUnsafeMode():
+            return False
+
+    monkeypatch.setattr(loader, '_permissions', lambda: Bridge)
+    monkeypatch.setattr(loader, '_unsafe_mode', True)
+    assert loader.unsafe_mode() is False
+
+
+def test_least_trusted_owner_wins_when_plugins_share_the_stack(loader, monkeypatch):
+    class Bridge:
+        @staticmethod
+        def hasPermission(owner, perm):
+            return owner == 'trusted'
+
+    monkeypatch.setattr(loader, '_permissions', lambda: Bridge)
+    assert loader._least_trusted(['trusted', 'isolated']) == 'isolated'
+    assert loader._least_trusted(['isolated', 'trusted']) == 'isolated'
