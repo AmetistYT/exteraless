@@ -139,6 +139,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         watchdog.start();
         PythonPluginsEngine.getInstance().ensureStarted(appContext, ok -> {
             if (ok) {
+                PluginGrantStore.warmUp();
                 rescanAndLoadEnabled();
                 executeOnAppEvent(PluginsConstants.EVENT_APP_START);
             }

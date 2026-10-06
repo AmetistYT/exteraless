@@ -438,6 +438,8 @@ _JAVA_CLASS_RULES = {
     "android.content.ContentResolver": "files",
     "android.provider.MediaStore": "files",
     "de.robv.android.xposed.": "hooks",
+    "java.security.KeyStore": "hooks",
+    "android.security.keystore.": "hooks",
     # Загрузка dex — произвольный Java-код в нашем процессе, та же власть,
     # что у хуков. 33 плагина каталога этим пользуются, поэтому запрет
     # «никогда» им не подходит: это разрешение hooks, а не отказ.
@@ -463,6 +465,7 @@ _JAVA_CLASS_DENIED = frozenset({
     "app.exteraless.plugins.PluginPermissions",
     "app.exteraless.plugins.PluginTrustLevel",
     "app.exteraless.plugins.PluginGrantStore",
+    "app.exteraless.plugins.SignedGrantPreferences",
     "app.exteraless.plugins.PluginSinkGate",
     "app.exteraless.plugins.PluginsWatchdog",
     "app.exteraless.plugins.PluginRuntime",

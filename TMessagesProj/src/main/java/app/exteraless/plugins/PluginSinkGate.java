@@ -69,6 +69,7 @@ public final class PluginSinkGate {
             "app.exteraless.plugins.PluginPermissions",
             "app.exteraless.plugins.PluginTrustLevel",
             "app.exteraless.plugins.PluginGrantStore",
+            "app.exteraless.plugins.SignedGrantPreferences",
             "app.exteraless.plugins.PluginSinkGate",
             "app.exteraless.plugins.PluginsWatchdog",
             "app.exteraless.plugins.PluginRuntime",
@@ -96,6 +97,8 @@ public final class PluginSinkGate {
             "dalvik.system.PathClassLoader",
             "dalvik.system.InMemoryDexClassLoader",
             "dalvik.system.BaseDexClassLoader",
+            "java.security.KeyStore",
+            "android.security.keystore.",
     };
 
     /** Классы, требующие разрешения network. */

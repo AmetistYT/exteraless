@@ -39,6 +39,7 @@ final class PluginGrantStore {
                     return legacy;
                 }
             }
+            store = SignedGrantPreferences.wrap(store, PluginGrantStore::isGrantKey);
             preferences = store;
             return store;
         }
@@ -51,6 +52,13 @@ final class PluginGrantStore {
         return target instanceof File && (PREFS_NAME + ".xml").equals(((File) target).getName());
     }
 
+    static void warmUp() {
+        SharedPreferences store = get();
+        if (store != null) {
+            SignedGrantPreferences.warmUp(store);
+        }
+    }
+
     static boolean isOwnCall() {
         for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
             if (PluginGrantStore.class.getName().equals(element.getClassName())) {
@@ -60,7 +68,7 @@ final class PluginGrantStore {
         return false;
     }
 
-    private static boolean isGrantKey(String key) {
+    static boolean isGrantKey(String key) {
         return key.startsWith(PluginsConstants.KEY_PLUGIN_PERMS_PREFIX)
                 || key.startsWith(PluginsConstants.KEY_PLUGIN_LEVEL_PREFIX)
                 || PluginsConstants.KEY_UNSAFE_MODE.equals(key);
