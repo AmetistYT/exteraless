@@ -1,6 +1,7 @@
 package app.exteraless.settings;
 
 import static org.telegram.messenger.LocaleController.getString;
+import static org.telegram.messenger.LocaleController.formatString;
 
 import android.app.Activity;
 import android.content.Context;
@@ -18,7 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
-import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.LiteMode;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
@@ -26,6 +27,7 @@ import org.telegram.ui.Cells.TextDetailSettingsCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.BulletinFactory;
+import org.telegram.ui.LiteModeSettingsActivity;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
@@ -291,6 +293,18 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         if (parentLayout != null) {
             parentLayout.rebuildAllFragmentViews(false, false);
         }
+    }
+
+    private void showPowerSaverNotice() {
+        if (!LiteMode.isPowerSaverApplied() || getParentActivity() == null) {
+            return;
+        }
+        BulletinFactory.of(this)
+                .createSimpleBulletin(R.raw.info,
+                        formatString(R.string.OEAppearancePowerSaverActive, LiteMode.getPowerSaverLevel()),
+                        getString(R.string.OEAppearancePowerSaverSettings),
+                        () -> presentFragment(new LiteModeSettingsActivity()))
+                .show();
     }
 
     /**
@@ -698,13 +712,20 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                 ((TextCheckCell) view).setChecked(enabled);
             }
             rebuildAll();
+            if (enabled) {
+                showPowerSaverNotice();
+            }
             return;
         } else if (position == forceBlurRow) {
-            SharedConfig.toggleChatBlur();
+            boolean enabled = !LiteMode.isEnabledSetting(LiteMode.FLAG_CHAT_BLUR);
+            LiteMode.toggleFlag(LiteMode.FLAG_CHAT_BLUR, enabled);
             if (view instanceof TextCheckCell) {
-                ((TextCheckCell) view).setChecked(SharedConfig.chatBlurEnabled());
+                ((TextCheckCell) view).setChecked(enabled);
             }
             rebuildAll();
+            if (enabled) {
+                showPowerSaverNotice();
+            }
             return;
         } else if (position == glassMessageMenuRow) {
             boolean enabled = AppearanceConfig.glassMessageMenu.toggleConfigBool();
@@ -713,13 +734,20 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             }
             // Стеклянное меню рисуется поверх
             // блюра, и без него настройка не даёт ничего видимого, поэтому предлагаем включить.
-            if (enabled && !SharedConfig.chatBlurEnabled() && getParentActivity() != null) {
+            if (enabled && !LiteMode.isEnabledSetting(LiteMode.FLAG_CHAT_BLUR) && getParentActivity() != null) {
                 BulletinFactory.of(this)
                         .createSimpleBulletin(R.raw.info,
                                 getString(R.string.OEAppearanceGlassMessageMenuBlurOff),
                                 getString(R.string.Enable),
-                                SharedConfig::toggleChatBlur)
+                                () -> {
+                                    LiteMode.toggleFlag(LiteMode.FLAG_CHAT_BLUR, true);
+                                    notifyRow(forceBlurRow);
+                                    rebuildAll();
+                                    showPowerSaverNotice();
+                                })
                         .show();
+            } else if (enabled) {
+                showPowerSaverNotice();
             }
             return;
         } else if (position == separateHeadersRow
@@ -888,7 +916,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     } else if (position == glassMessageMenuRow) {
                         cell.setTextAndValueAndCheck(getString(R.string.OEAppearanceGlassMessageMenu), getString(R.string.OEAppearanceGlassMessageMenuInfo), AppearanceConfig.glassMessageMenu.Bool(), true, true);
                     } else if (position == forceBlurRow) {
-                        cell.setTextAndCheck(getString(R.string.OEAppearanceForceBlur), SharedConfig.chatBlurEnabled(), true);
+                        cell.setTextAndCheck(getString(R.string.OEAppearanceForceBlur), LiteMode.isEnabledSetting(LiteMode.FLAG_CHAT_BLUR), true);
                     } else if (position == disableAvatarBlurRow) {
                         cell.setTextAndCheck(getString(R.string.OEAppearanceDisableAvatarBlur), NaConfig.INSTANCE.getDisableAvatarBlur().Bool(), false);
                     } else if (position == singleCornerRadiusRow) {
