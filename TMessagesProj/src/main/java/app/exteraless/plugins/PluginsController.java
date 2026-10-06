@@ -1163,12 +1163,18 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void addXposedHook(String pluginId, de.robv.android.xposed.XC_MethodHook.Unhook unhook) {
+        if (PluginSinkGate.refuseForeign(pluginId, "addXposedHook")) {
+            return;
+        }
         app.exteraless.plugins.xposed.XposedHooks.addPluginUnhook(pluginId, unhook);
     }
 
     @Override
     public void addXposedHooks(String pluginId,
                                java.util.ArrayList<de.robv.android.xposed.XC_MethodHook.Unhook> unhooks) {
+        if (PluginSinkGate.refuseForeign(pluginId, "addXposedHooks")) {
+            return;
+        }
         if (unhooks == null) {
             return;
         }
@@ -1178,6 +1184,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void removeXposedHook(String pluginId, de.robv.android.xposed.XC_MethodHook.Unhook unhook) {
+        if (PluginSinkGate.refuseForeign(pluginId, "removeXposedHook")) {
+            return;
+        }
         app.exteraless.plugins.xposed.XposedHooks.removePluginUnhook(pluginId, unhook);
     }
 
@@ -1593,6 +1602,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     // ---------- реестры хуков (зовётся из PythonBridge) ----------
 
     public void registerSendMessageHook(String pluginId, int priority) {
+        if (PluginSinkGate.refuseForeign(pluginId, "registerSendMessageHook")) {
+            return;
+        }
         // PLUGINS-SECURITY.md, «Точки проверки»: хук исходящих даёт и чтение текста,
         // и отмену отправки. Отказ — молча не регистрируем, плагин продолжает жить.
         if (!PluginPermissions.check(pluginId, PluginPermissions.MESSAGES_SEND,
@@ -1604,6 +1616,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void registerRequestHook(String pluginId, String requestName, boolean matchSubstring, int priority) {
+        if (PluginSinkGate.refuseForeign(pluginId, "registerRequestHook")) {
+            return;
+        }
         if (pluginId == null || requestName == null || requestName.isEmpty()) {
             return;
         }
@@ -1657,6 +1672,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     /** Снять один request-хук плагина (SDK: {@code remove_hook(name)}). */
     public void unregisterRequestHook(String pluginId, String requestName) {
+        if (PluginSinkGate.refuseForeign(pluginId, "unregisterRequestHook")) {
+            return;
+        }
         if (pluginId == null || requestName == null) {
             return;
         }
@@ -1678,6 +1696,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     /** Снять хук исходящих сообщений (SDK: {@code remove_hook("on_send_message_hook")}). */
     public void unregisterSendMessageHook(String pluginId) {
+        if (PluginSinkGate.refuseForeign(pluginId, "unregisterSendMessageHook")) {
+            return;
+        }
         if (pluginId != null) {
             sendMessageHooks.remove(pluginId);
             sendTargetsCache.invalidate();
@@ -1709,6 +1730,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void unregisterPluginHooks(String pluginId) {
+        if (PluginSinkGate.refuseForeign(pluginId, "unregisterPluginHooks")) {
+            return;
+        }
         removeHooksByPluginId(pluginId);
         synchronized (menuItems) {
             menuItems.removeIf(item -> item.pluginId.equals(pluginId));
@@ -1721,6 +1745,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     @Override
     public void removeHooksByPluginId(String pluginId) {
+        if (PluginSinkGate.refuseForeign(pluginId, "removeHooksByPluginId")) {
+            return;
+        }
         if (pluginId == null) {
             return;
         }
@@ -1744,17 +1771,26 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     @Override
     public void cleanupPlugin(String pluginId) {
+        if (PluginSinkGate.refuseForeign(pluginId, "cleanupPlugin")) {
+            return;
+        }
         unregisterPluginHooks(pluginId);
         invalidatePluginSettings(pluginId);
     }
 
     @Override
     public void addEventHook(String pluginId, String hookName, boolean matchSubstring, int priority) {
+        if (PluginSinkGate.refuseForeign(pluginId, "addEventHook")) {
+            return;
+        }
         registerRequestHook(pluginId, hookName, matchSubstring, priority);
     }
 
     @Override
     public void removeEventHook(String pluginId, String hookName) {
+        if (PluginSinkGate.refuseForeign(pluginId, "removeEventHook")) {
+            return;
+        }
         unregisterRequestHook(pluginId, hookName);
     }
 
@@ -2035,6 +2071,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     public String registerMenuItem(String pluginId, String jsonMenuItem,
                                    com.chaquo.python.PyObject onClick) {
+        if (PluginSinkGate.refuseForeign(pluginId, "registerMenuItem")) {
+            return null;
+        }
         try {
             JSONObject obj = new JSONObject(jsonMenuItem);
             String requestedId = obj.optString("item_id");
@@ -2087,6 +2126,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     @Override
     public boolean removeMenuItem(String pluginId, String itemId) {
+        if (PluginSinkGate.refuseForeign(pluginId, "removeMenuItem")) {
+            return false;
+        }
         boolean removed;
         synchronized (menuItems) {
             removed = menuItems.removeIf(i -> i.pluginId.equals(pluginId) && i.itemId.equals(itemId));
@@ -2097,6 +2139,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     @Override
     public void removeMenuItemsByPluginId(String pluginId) {
+        if (PluginSinkGate.refuseForeign(pluginId, "removeMenuItemsByPluginId")) {
+            return;
+        }
         boolean removed;
         synchronized (menuItems) {
             removed = menuItems.removeIf(i -> i.pluginId.equals(pluginId));
