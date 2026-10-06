@@ -152,6 +152,7 @@ import xyz.nextalone.nagram.helper.LocalPremiumStatusHelper;
 import com.radolyn.ayugram.AyuConstants;
 import com.radolyn.ayugram.messages.AyuSavePreferences;
 import com.radolyn.ayugram.messages.AyuMessagesController;
+import com.radolyn.ayugram.utils.AyuGhostUtils;
 import com.radolyn.ayugram.utils.AyuState;
 import com.radolyn.ayugram.utils.LastSeenHelper;
 
@@ -14746,7 +14747,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void markMentionMessageAsRead(int mid, long channelId, long did) {
-        getMessagesStorage().markMentionMessageAsRead(-channelId, mid, did);
+        getMessagesStorage().markMentionMessageAsRead(did, mid, did);
         if (channelId != 0) {
             TLRPC.TL_channels_readMessageContents req = new TLRPC.TL_channels_readMessageContents();
             req.channel = getInputChannel(channelId);
@@ -14754,13 +14755,13 @@ public class MessagesController extends BaseController implements NotificationCe
                 return;
             }
             req.id.add(mid);
-            getConnectionsManager().sendRequest(req, (response, error) -> {
+            getConnectionsManager().sendRequest(AyuGhostUtils.bypass(req), (response, error) -> {
 
             });
         } else {
             TLRPC.TL_messages_readMessageContents req = new TLRPC.TL_messages_readMessageContents();
             req.id.add(mid);
-            getConnectionsManager().sendRequest(req, (response, error) -> {
+            getConnectionsManager().sendRequest(AyuGhostUtils.bypass(req), (response, error) -> {
                 if (error == null) {
                     TLRPC.TL_messages_affectedMessages res = (TLRPC.TL_messages_affectedMessages) response;
                     processNewDifferenceParams(-1, res.pts, -1, res.pts_count);
