@@ -1202,7 +1202,7 @@ def _sandboxed_open(file, mode="r", *args, **kwargs):
         if pid is not None and target is not None:
             from file_utils import _is_own_path
             decoded = os.fsdecode(target)
-            if not _is_own_path(pid, decoded):
+            if has_permission(PERM_FILES, pid) or not _is_own_path(pid, decoded):
                 require_permission(PERM_FILES, "open a file",
                                    detail=f"{decoded} ({mode})",
                                    plugin_id=pid)
