@@ -219,6 +219,10 @@ public final class AnimatedFileDrawable extends BitmapDrawable implements Animat
 
     @UiThread
     public void invalidateInternal() {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            AndroidUtilities.runOnUIThread(this::invalidateInternal);
+            return;
+        }
         for (ImageReceiver imageReceiver : parents) {
             imageReceiver.invalidate();
         }

@@ -1744,6 +1744,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private void updateActionBarTitleAlpha(float titleAlpha) {
         lastActionBarTitleAlpha = titleAlpha;
+        if (actionBar == null) {
+            return;
+        }
         titleAlpha *= 1f - getRightSlidingProgress();
         actionBar.getTitlesContainer().setAlpha(titleAlpha);
         actionBar.getTitlesContainer().setVisibility(titleAlpha > 0 ? View.VISIBLE : View.INVISIBLE);
@@ -5755,6 +5758,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
             @Override
             void setOpenProgress(float progress) {
+                if (actionBar == null) {
+                    return;
+                }
                 boolean opened = progress > 0f;
                 if (anotherFragmentOpened != opened) {
                     anotherFragmentOpened = opened;
