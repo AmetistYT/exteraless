@@ -8569,6 +8569,13 @@ public class MessageObject {
                 setRun = true;
                 spannable.setSpan(new TextStyleSpan(run), run.start, run.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            if (!setRun && (run.flags & TextStyleSpan.FLAG_STYLE_MONO) == 0
+                    && (run.flags & (TextStyleSpan.FLAG_STYLE_BOLD | TextStyleSpan.FLAG_STYLE_ITALIC)) != 0) {
+                Typeface linkTypeface = run.getTypeface();
+                if (linkTypeface != null) {
+                    spannable.setSpan(new app.exteraless.chats.LinkTypefaceSpan(linkTypeface), run.start, run.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
             if (!setRun && (run.flags & TextStyleSpan.FLAG_STYLE_SPOILER) != 0) {
                 if (spoilersCount >= SpoilerEffect.MAX_SPOILERS_COUNT) continue;
                 spoilersCount++;
