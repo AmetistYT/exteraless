@@ -549,10 +549,8 @@ public final class PluginSinkGate {
                 try {
                     final Object request = param.args == null || param.args.length == 0
                             ? null : param.args[0];
-                    final String name = request == null ? "" : request.getClass().getSimpleName();
-                    final boolean writes = isWritingRequest(name);
-                    final String permission = writes
-                            ? PluginPermissions.MESSAGES_SEND : PluginPermissions.MESSAGES_READ;
+                    final String name = requestName(request);
+                    final String permission = requestPermission(name);
                     if (PluginPermissions.check(pluginId, permission)) {
                         PluginAuditJournal.record(pluginId, "sendRequest", "messages", name, true);
                         return;
@@ -709,15 +707,71 @@ public final class PluginSinkGate {
     }
 
     /** Запрос меняет что-то на сервере, а не только читает. */
-    private static boolean isWritingRequest(String name) {
-        if (name == null) {
-            return false;
+    static String requestName(Object request) {
+        if (request == null) {
+            return "";
         }
-        String lower = name.toLowerCase(java.util.Locale.ROOT);
-        return lower.contains("send") || lower.contains("edit") || lower.contains("delete")
-                || lower.contains("forward") || lower.contains("set") || lower.contains("save")
-                || lower.contains("upload") || lower.contains("create") || lower.contains("join")
-                || lower.contains("leave") || lower.contains("invite") || lower.contains("report");
+        String name = request.getClass().getName();
+        name = name.substring(name.lastIndexOf('.') + 1).replace('$', '_');
+        return name.startsWith("TLRPC_") ? name.substring("TLRPC_".length()) : name;
+    }
+
+    private static final String[] ACCOUNT_NAMESPACES = {"TL_auth_", "TL_account_"};
+
+    private static final String[] PAYMENT_NAMESPACES = {"TL_payments_", "TL_stars_"};
+
+    private static final java.util.Set<String> SENSITIVE_ACCOUNT_READS = new java.util.HashSet<>(java.util.Arrays.asList(
+            "getAuthorizations", "getPassword", "getTmpPassword", "getAuthorizationForm",
+            "getWebAuthorizations", "getAllSecureValues", "getSecureValue", "getPasswordSettings"));
+
+    private static final java.util.Set<String> ROUTINE_ACCOUNT_WRITES = new java.util.HashSet<>(java.util.Arrays.asList(
+            "updateStatus", "updateNotifySettings", "updateDeviceLocked"));
+
+    private static final String[] READ_VERBS = {"get", "search", "check", "resolve", "read", "fetch"};
+
+    static String requestPermission(String name) {
+        String method = null;
+        String namespace = null;
+        for (String prefix : ACCOUNT_NAMESPACES) {
+            if (name.startsWith(prefix)) {
+                namespace = prefix;
+            }
+        }
+        if (namespace != null) {
+            method = name.substring(namespace.length());
+            if ("TL_auth_".equals(namespace)) {
+                return PluginPermissions.HOOKS;
+            }
+            if (ROUTINE_ACCOUNT_WRITES.contains(method)) {
+                return PluginPermissions.MESSAGES_SEND;
+            }
+            if (method.startsWith("get") && !SENSITIVE_ACCOUNT_READS.contains(method)) {
+                return PluginPermissions.MESSAGES_READ;
+            }
+            return PluginPermissions.HOOKS;
+        }
+        for (String prefix : PAYMENT_NAMESPACES) {
+            if (name.startsWith(prefix)) {
+                return isReadVerb(name.substring(prefix.length()))
+                        ? PluginPermissions.MESSAGES_READ : PluginPermissions.HOOKS;
+            }
+        }
+        if (name.endsWith("_acceptUrlAuth") || name.endsWith("_requestUrlAuth")
+                || name.endsWith("_editCreator")) {
+            return PluginPermissions.HOOKS;
+        }
+        int separator = name.indexOf('_', name.startsWith("TL_") ? 3 : 0);
+        String verb = separator < 0 ? name : name.substring(separator + 1);
+        return isReadVerb(verb) ? PluginPermissions.MESSAGES_READ : PluginPermissions.MESSAGES_SEND;
+    }
+
+    private static boolean isReadVerb(String method) {
+        for (String verb : READ_VERBS) {
+            if (method.startsWith(verb)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Class<?> classForName(String name) {
