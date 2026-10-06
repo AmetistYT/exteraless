@@ -49,7 +49,7 @@ public final class DeletedReplyQuote {
             return;
         }
         long selfId = UserConfig.getInstance(currentAccount).clientUserId;
-        if (!AyuMessagesController.getInstance()
+        if (!source.isAyuDeleted() && !AyuMessagesController.getInstance()
                 .isAyuDeletedMessageId(selfId, source.getDialogId(), source.getId())) {
             return;
         }
