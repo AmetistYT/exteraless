@@ -636,6 +636,107 @@ def guard_java_class(name):
     return False
 
 
+_UNSAFE_CLASSES = frozenset({"sun.misc.Unsafe", "jdk.internal.misc.Unsafe"})
+
+_REFLECTION_VERDICT_CACHE = {}
+_REFLECTION_ALLOW = object()
+
+
+def _reflection_normalize(name):
+    name = name.lstrip("[")
+    if len(name) > 2 and name.startswith("L") and name.endswith(";"):
+        name = name[1:-1]
+    if not name:
+        return None
+    return name.replace("/", ".")
+
+
+def _reflection_verdict(name):
+    cached = _REFLECTION_VERDICT_CACHE.get(name)
+    if cached is not None:
+        return None if cached is _REFLECTION_ALLOW else cached
+    verdict = _reflection_verdict_uncached(name)
+    if len(_REFLECTION_VERDICT_CACHE) < 4096:
+        _REFLECTION_VERDICT_CACHE[name] = _REFLECTION_ALLOW if verdict is None else verdict
+    return verdict
+
+
+def _reflection_verdict_uncached(name):
+    name = _reflection_normalize(name)
+    if not name:
+        return None
+    try:
+        from .class_aliases import resolve
+        name = resolve(name)
+    except Exception:
+        pass
+    if name in _JAVA_CLASS_DENIED:
+        return "deny"
+    if name in _UNSAFE_CLASSES:
+        return "native"
+    perm = java_class_permission(name)
+    if perm is not None:
+        return ("perm", perm)
+    return None
+
+
+def _reflection_gate(op, target, member):
+    if type(target) is tuple:
+        for interface in target:
+            if not _reflection_gate(op, interface, None):
+                return False
+        return True
+    if type(target) is not str:
+        return True
+    verdict = _reflection_verdict(target)
+    if verdict is None:
+        return True
+    if unsafe_mode() or _engine_lookup():
+        return True
+    pid = plugin_frame_owner()
+    if pid is None:
+        return True
+    if verdict == "deny":
+        _log_once(f"{pid}|reflect|{op}|{target}",
+                  f"plugin {pid!r}: reflection {op} on {target!r} "
+                  f"is not available to plugins")
+        return False
+    if verdict == "native":
+        wanted = ("native",)
+    else:
+        perm = verdict[1]
+        wanted = perm if isinstance(perm, tuple) else (perm,)
+    if any(has_permission(single, pid) for single in wanted):
+        return True
+    perm = " или ".join(wanted)
+    _log_once(f"{pid}|reflect|{op}|{target}",
+              f"plugin {pid!r}: reflection {op} on {target!r} refused, missing {perm!r}")
+    try:
+        java = _permissions()
+        if java is not None:
+            java.check(pid, wanted[0], f"reflection {op} {target}")
+    except Exception:
+        pass
+    try:
+        from . import audit_gate
+        audit_gate.note_denied_class(pid, target, perm)
+    except Exception:
+        pass
+    return False
+
+
+def _install_reflection_gate() -> None:
+    try:
+        from java.chaquopy import set_reflection_policy
+    except Exception:
+        return
+    try:
+        set_reflection_policy(_reflection_gate)
+    except Exception as e:
+        print(f"[exteraless:plugin_loader] reflection gate install failed: {e}",
+              file=sys.stderr)
+
+
 def _log(message: str) -> None:
     try:
         from android_utils import log as _android_log
@@ -2084,6 +2185,7 @@ def _install_sandbox() -> None:
         audit_gate.install(sys.modules[__name__])
         _install_thread_marking()
         _install_jclass_guard()
+        _install_reflection_gate()
         _install_color_int_shims()
         _install_dual_member_setters()
         _install_java_getters()
