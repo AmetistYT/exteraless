@@ -5336,7 +5336,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
         if (filterTabsView != null) {
             BlurredBackgroundDrawable filterTabsViewBackground = iBlur3FactoryLiquidGlass.create(filterTabsView, BlurredBackgroundProviderImpl.topPanel(resourceProvider));
-            filterTabsViewBackground.setRadius(dp(18));
+            // Expressive-вкладки: скругление островка настраивается
+            filterTabsViewBackground.setRadius(app.exteraless.appearance.ExpressiveTabs.enabled()
+                    ? app.exteraless.appearance.ExpressiveTabs.islandBackgroundRadius() : dp(18));
             filterTabsViewBackground.setPadding(dp(6.666f));
             filterTabsView.setPadding(0, dp(7), 0, dp(7));
             filterTabsView.setBlurredBackground(filterTabsViewBackground);

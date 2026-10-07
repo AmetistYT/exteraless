@@ -472,6 +472,81 @@ object AppearanceConfig {
         }
     }
 
+    // ---- Expressive-вкладки папок ----
+
+    /** Верхняя плашка папок с пилюлями M3 Expressive. Островок остаётся. */
+    @JvmField
+    val expressiveTabs = addConfig("OEAppearanceExpressiveTabs", ConfigItem.configTypeBool, false)
+
+    /** Высота пилюли выбранной вкладки, dp. */
+    @JvmField
+    val expressiveTabsPillHeight = addConfig("OEAppearanceExpressiveTabsPillHeight", ConfigItem.configTypeInt, 30)
+
+    /** Скругление пилюли, % от половины высоты. */
+    @JvmField
+    val expressiveTabsPillRoundness = addConfig("OEAppearanceExpressiveTabsPillRoundness", ConfigItem.configTypeInt, 100)
+
+    /** Скругление островка, % от половины высоты. */
+    @JvmField
+    val expressiveTabsIslandRoundness = addConfig("OEAppearanceExpressiveTabsIslandRoundness", ConfigItem.configTypeInt, 100)
+
+    /** Цвет пилюли: 0 — тональный, 1 — акцентный, 2 — полупрозрачный. */
+    @JvmField
+    val expressiveTabsIndicator = addConfig("OEAppearanceExpressiveTabsIndicator", ConfigItem.configTypeInt, 0)
+
+    /** Чипы-подложки под неактивными вкладками. */
+    @JvmField
+    val expressiveTabsChips = addConfig("OEAppearanceExpressiveTabsChips", ConfigItem.configTypeBool, false)
+
+    /** Пилюля тянется при переходе: передний край обгоняет задний. */
+    @JvmField
+    val expressiveTabsStretch = addConfig("OEAppearanceExpressiveTabsStretch", ConfigItem.configTypeBool, true)
+
+    /** Пружинный перелёт пилюли при нажатии на вкладку. */
+    @JvmField
+    val expressiveTabsSpring = addConfig("OEAppearanceExpressiveTabsSpring", ConfigItem.configTypeBool, true)
+
+    /** Вкладка вдавливается при нажатии. */
+    @JvmField
+    val expressiveTabsPressBounce = addConfig("OEAppearanceExpressiveTabsPressBounce", ConfigItem.configTypeBool, true)
+
+    /** Скорость анимаций: 0 — медленно, 1 — обычно, 2 — быстро. */
+    @JvmField
+    val expressiveTabsSpeed = addConfig("OEAppearanceExpressiveTabsSpeed", ConfigItem.configTypeInt, 1)
+
+    @JvmStatic
+    fun expressiveTabs(): Boolean {
+        ensureLoaded()
+        return expressiveTabs.Bool()
+    }
+
+    /** Параметры вкладок без общего выключателя — для кнопки сброса. */
+    @JvmStatic
+    fun expressiveTabsItems(): List<ConfigItem> = listOf(
+        expressiveTabsPillHeight, expressiveTabsPillRoundness, expressiveTabsIslandRoundness,
+        expressiveTabsIndicator, expressiveTabsChips, expressiveTabsStretch, expressiveTabsSpring,
+        expressiveTabsPressBounce, expressiveTabsSpeed,
+    )
+
+    @JvmStatic
+    fun isExpressiveTabsDefault(): Boolean {
+        ensureLoaded()
+        return expressiveTabsItems().all { it.value == it.defaultValue }
+    }
+
+    @JvmStatic
+    fun resetExpressiveTabs() {
+        ensureLoaded()
+        synchronized(sync) {
+            val editor = getPreferences().edit()
+            for (item in expressiveTabsItems()) {
+                editor.remove(item.key)
+                item.value = item.defaultValue
+            }
+            editor.apply()
+        }
+    }
+
     @JvmField
     val profileMusicCard =
         addConfig("OEAppearanceProfileMusicCard", ConfigItem.configTypeBool, true)

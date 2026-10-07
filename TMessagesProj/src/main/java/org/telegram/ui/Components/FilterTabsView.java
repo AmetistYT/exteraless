@@ -259,6 +259,9 @@ public class FilterTabsView extends FrameLayout {
         private float rotation;
         private float progressToLocked;
 
+        private final Paint expressiveChipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF expressiveChipRect = new RectF();
+
         public TabView(Context context) {
             super(context);
         }
@@ -382,6 +385,19 @@ public class FilterTabsView extends FrameLayout {
                     textPaint.setColor(ColorUtils.blendARGB(color1, color2, animationValue));
                 }
             }
+            float expressiveSelection = 0f;
+            if (app.exteraless.appearance.ExpressiveTabs.enabled()) {
+                // Expressive: текст на пилюле — цвета пилюли, переход по ходу индикатора
+                final boolean moving = animatingIndicator || manualScrollingToId != -1;
+                if (currentTab.id == id1) {
+                    expressiveSelection = moving ? animatingIndicatorProgress : 1f;
+                } else if (currentTab.id == id2 && moving) {
+                    expressiveSelection = 1f - animatingIndicatorProgress;
+                }
+                expressiveSelection = Math.max(0f, Math.min(1f, expressiveSelection));
+                textPaint.setColor(ColorUtils.blendARGB(Theme.getColor(unactiveTextColorKey, resourcesProvider),
+                        app.exteraless.appearance.ExpressiveTabs.selectedContentColor(resourcesProvider), expressiveSelection));
+            }
             emojiColorFilter = new PorterDuffColorFilter(textPaint.getColor(), PorterDuff.Mode.SRC_IN);
 
             float counterWidth;
@@ -423,6 +439,17 @@ public class FilterTabsView extends FrameLayout {
             float textX = ((getMeasuredWidth() - tabWidth) / 2f) + currentTab.iconWidth;
             if (animateTextX) {
                 textX = textX * changeProgress + animateFromTextX * (1f - changeProgress);
+            }
+            if (app.exteraless.appearance.ExpressiveTabs.enabled() && app.exteraless.appearance.ExpressiveTabs.chips() && expressiveSelection < 1f) {
+                // Expressive: неактивная вкладка лежит на своём чипе, под выбранной он гаснет
+                final float chipHeight = dp(app.exteraless.appearance.ExpressiveTabs.pillHeightDp());
+                final float chipPadding = dp(FolderIconHelper.getTabInternalPadding()) + additionalTabWidth / 2f;
+                final float chipLeft = (getMeasuredWidth() - tabWidth) / 2f - chipPadding;
+                expressiveChipRect.set(chipLeft, (getMeasuredHeight() - chipHeight) / 2f, chipLeft + tabWidth + chipPadding * 2, (getMeasuredHeight() + chipHeight) / 2f);
+                final float chipRadius = app.exteraless.appearance.ExpressiveTabs.pillRadius(chipHeight);
+                final int chipColor = app.exteraless.appearance.ExpressiveTabs.chipColor(resourcesProvider);
+                expressiveChipPaint.setColor(Theme.multAlpha(chipColor, 1f - expressiveSelection));
+                canvas.drawRoundRect(expressiveChipRect, chipRadius, chipRadius, expressiveChipPaint);
             }
 
             if (!TextUtils.equals(currentTab.title, currentText)) {
@@ -976,7 +1003,8 @@ public class FilterTabsView extends FrameLayout {
             if (dt > 17) {
                 dt = 17;
             }
-            animationTime += dt / 320.0f;
+            animationTime += dt / (app.exteraless.appearance.ExpressiveTabs.enabled()
+                    ? app.exteraless.appearance.ExpressiveTabs.durationMs() : 320.0f);
             setAnimationIdicatorProgress(interpolator.getInterpolation(animationTime));
             if (animationTime > 1.0f) {
                 animationTime = 1.0f;
@@ -1169,7 +1197,7 @@ public class FilterTabsView extends FrameLayout {
         itemAnimator.setDelayAnimations(false);
         listView.setItemAnimator(itemAnimator);
         listView.setSelectorType(9);
-        listView.setSelectorRadius(6);
+        listView.setSelectorRadius(app.exteraless.appearance.ExpressiveTabs.enabled() ? 14 : 6);
         listView.setSelectorDrawableColor(Theme.getColor(selectorColorKey, resourcesProvider));
         listView.setLayoutManager(layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false) {
 
@@ -1531,8 +1559,13 @@ public class FilterTabsView extends FrameLayout {
 
     @Override
     protected boolean drawChild(@NonNull Canvas canvas, View child, long drawingTime) {
+        // Expressive: пилюля выбранной вкладки — под текстом, а не полупрозрачной заливкой поверх
+        final boolean expressive = app.exteraless.appearance.ExpressiveTabs.enabled();
+        if (expressive && child == listView) {
+            drawExpressiveSelector(canvas);
+        }
         boolean result = super.drawChild(canvas, child, drawingTime);
-        if (child == listView) {
+        if (child == listView && !expressive) {
             drawSelector(canvas);
         }
         long newTime = SystemClock.elapsedRealtime();
@@ -1586,6 +1619,102 @@ public class FilterTabsView extends FrameLayout {
             invalidate();
         }
         return result;
+    }
+
+    private final Paint expressivePillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF expressivePillRect = new RectF();
+
+    /**
+     * Пилюля M3 Expressive. Края считаются отдельно: передний уходит к цели быстрее
+     * заднего, поэтому на ходу пилюля вытягивается и слегка сплющивается по высоте, а
+     * на месте снова становится ровной. При нажатии на вкладку ход идёт по пружине с
+     * перелётом; при свайпе страниц — точно за пальцем.
+     */
+    private void drawExpressiveSelector(Canvas canvas) {
+        final int height = getMeasuredHeight();
+        float fromL = 0, fromR = 0, toL = 0, toR = 0, p = 1f;
+        float pressScale = 1f;
+        boolean have = false;
+        if (animatingIndicator || manualScrollingToPosition != -1) {
+            int position = layoutManager.findFirstVisibleItemPosition();
+            if (position != RecyclerListView.NO_POSITION) {
+                RecyclerListView.ViewHolder holder = listView.findViewHolderForAdapterPosition(position);
+                if (holder != null) {
+                    int idx1;
+                    int idx2;
+                    if (animatingIndicator) {
+                        idx1 = previousPosition;
+                        idx2 = currentPosition;
+                    } else {
+                        idx1 = currentPosition;
+                        idx2 = manualScrollingToPosition;
+                    }
+                    float padding = FolderIconHelper.getTabPadding();
+                    final float offset = additionalTabWidth != 0
+                            ? dp(padding / 2f)
+                            : -(positionToX.get(position) - holder.itemView.getLeft()) + dp(padding / 2f);
+                    fromL = positionToX.get(idx1) + offset;
+                    fromR = fromL + positionToWidth.get(idx1);
+                    toL = positionToX.get(idx2) + offset;
+                    toR = toL + positionToWidth.get(idx2);
+                    p = animatingIndicator
+                            ? app.exteraless.appearance.ExpressiveTabs.springProgress(animationTime)
+                            : animatingIndicatorProgress;
+                    have = true;
+                }
+            }
+        } else {
+            RecyclerListView.ViewHolder holder = listView.findViewHolderForAdapterPosition(currentPosition);
+            if (holder != null) {
+                final TabView tabView = (TabView) holder.itemView;
+                final float indicatorWidthC = tabView.animateTabWidth ?
+                        lerp(tabView.animateFromTabWidth, tabView.tabWidth, tabView.changeProgress) :
+                        tabView.tabWidth;
+                final float indicatorWidth = Math.max(dp(16), indicatorWidthC);
+                final float viewWidth = tabView.animateTabWidth ?
+                        lerp(tabView.animateFromTabWidth + dp(20), tabView.getMeasuredWidth(), tabView.changeProgress) :
+                        tabView.getMeasuredWidth();
+                fromL = toL = (int) (tabView.getX() + (viewWidth - indicatorWidth) / 2);
+                fromR = toR = fromL + indicatorWidth;
+                pressScale = tabView.getScaleX();
+                have = true;
+            }
+        }
+        if (!have) {
+            return;
+        }
+
+        final boolean forward = toL >= fromL;
+        final float leftProgress = forward
+                ? app.exteraless.appearance.ExpressiveTabs.trailingProgress(p)
+                : app.exteraless.appearance.ExpressiveTabs.leadingProgress(p);
+        final float rightProgress = forward
+                ? app.exteraless.appearance.ExpressiveTabs.leadingProgress(p)
+                : app.exteraless.appearance.ExpressiveTabs.trailingProgress(p);
+        final float left = lerp(fromL, toL, leftProgress);
+        final float right = Math.max(left + dp(16), lerp(fromR, toR, rightProgress));
+
+        // Чем сильнее растянута, тем ниже — «сохранение объёма» капли
+        final float restWidth = lerp(fromR - fromL, toR - toL, Math.max(0f, Math.min(1f, p)));
+        final float stretch = restWidth > 0 ? Math.max(0f, (right - left) / restWidth - 1f) : 0f;
+        final float pillHeight = dp(app.exteraless.appearance.ExpressiveTabs.pillHeightDp()) * (1f - Math.min(0.18f, stretch * 0.25f));
+
+        final float add = additionalTabWidth / 2f;
+        final float internalPadding = dp(FolderIconHelper.getTabInternalPadding());
+        expressivePillRect.set(left - internalPadding - add, height / 2f - pillHeight / 2f,
+                right + internalPadding + add, height / 2f + pillHeight / 2f);
+
+        canvas.save();
+        canvas.translate(listView.getTranslationX(), 0);
+        canvas.scale(listView.getScaleX(), 1f, listView.getPivotX() + listView.getX(), listView.getPivotY());
+        if (pressScale != 1f) {
+            canvas.scale(pressScale, pressScale, expressivePillRect.centerX(), expressivePillRect.centerY());
+        }
+        expressivePillPaint.setColor(app.exteraless.appearance.ExpressiveTabs.indicatorColor(resourcesProvider));
+        expressivePillPaint.setAlpha((int) (expressivePillPaint.getAlpha() * listView.getAlpha()));
+        final float r = app.exteraless.appearance.ExpressiveTabs.pillRadius(expressivePillRect.height());
+        canvas.drawRoundRect(expressivePillRect, r, r, expressivePillPaint);
+        canvas.restore();
     }
 
     private void drawSelector(Canvas canvas) {
@@ -1667,8 +1796,10 @@ public class FilterTabsView extends FrameLayout {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         clipPath.rewind();
-        clipPath.addRoundRect(dp(9), dp(9), w - dp(9), h - dp(9),
-            AndroidUtilities.dpf2(com.exteragram.messenger.ExteraConfig.getPillRadius(16)), AndroidUtilities.dpf2(com.exteragram.messenger.ExteraConfig.getPillRadius(16)), Path.Direction.CW);
+        final float islandRadius = app.exteraless.appearance.ExpressiveTabs.enabled()
+                ? app.exteraless.appearance.ExpressiveTabs.islandClipRadius()
+                : AndroidUtilities.dpf2(com.exteragram.messenger.ExteraConfig.getPillRadius(16));
+        clipPath.addRoundRect(dp(9), dp(9), w - dp(9), h - dp(9), islandRadius, islandRadius, Path.Direction.CW);
     }
 
     @Override
@@ -1949,7 +2080,12 @@ public class FilterTabsView extends FrameLayout {
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new RecyclerListView.Holder(new TabView(mContext));
+            final TabView tabView = new TabView(mContext);
+            if (app.exteraless.appearance.ExpressiveTabs.enabled() && app.exteraless.appearance.ExpressiveTabs.pressBounce()) {
+                // Expressive: вкладка вдавливается и отпружинивает
+                ScaleStateListAnimator.apply(tabView, .08f, 1.8f);
+            }
+            return new RecyclerListView.Holder(tabView);
         }
 
         @Override

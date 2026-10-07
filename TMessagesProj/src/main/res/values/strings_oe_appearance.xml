@@ -204,4 +204,22 @@
     <string name="OEExpressiveChatMenuRadius">Menu Corners</string>
     <string name="OEExpressiveChatSelection">Rounded Selection</string>
     <string name="OEExpressiveChatActionsInfo">The long-press menu gets rounder and its items highlight as rounded plates. Selected and highlighted messages are shown as rounded cards with square checkboxes, and the selection bar groups its buttons.</string>
+    <string name="OEExpressiveTabs">Expressive Folder Tabs</string>
+    <string name="OEExpressiveTabsInfo">Folder tabs with Material 3 Expressive pills</string>
+    <string name="OEExpressiveTabsEnable">Expressive Folder Tabs</string>
+    <string name="OEExpressiveTabsEnableInfo">The tab bar stays a floating island. The selected folder becomes a solid pill under its title that stretches toward the next tab and lands with a spring.</string>
+    <string name="OEExpressiveTabsShape">Shape</string>
+    <string name="OEExpressiveTabsPillHeight">Pill Height</string>
+    <string name="OEExpressiveTabsPillRoundness">Pill Roundness</string>
+    <string name="OEExpressiveTabsIslandRoundness">Island Roundness</string>
+    <string name="OEExpressiveTabsLook">Look</string>
+    <string name="OEExpressiveTabsIndicator">Selected Tab Color</string>
+    <string name="OEExpressiveTabsChips">Chips Under Other Tabs</string>
+    <string name="OEExpressiveTabsChipsInfo">Every folder gets a faint chip, so the bar reads as a row of buttons.</string>
+    <string name="OEExpressiveTabsMotion">Motion</string>
+    <string name="OEExpressiveTabsStretch">Stretch Between Tabs</string>
+    <string name="OEExpressiveTabsSpring">Spring on Tap</string>
+    <string name="OEExpressiveTabsPress">Press Bounce</string>
+    <string name="OEExpressiveTabsSpeed">Animation Speed</string>
+    <string name="OEExpressiveTabsMotionInfo">While moving, the leading edge of the pill runs ahead and the pill flattens a little. Swiping between folders moves it exactly with your finger.</string>
 </resources>

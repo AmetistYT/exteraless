@@ -195,4 +195,22 @@
     <string name="OEExpressiveChatMenuRadius">Скругление меню</string>
     <string name="OEExpressiveChatSelection">Скруглённое выделение</string>
     <string name="OEExpressiveChatActionsInfo">Меню по удержанию становится круглее, а пункты подсвечиваются скруглёнными плашками. Выбранные и подсвеченные сообщения показываются скруглёнными карточками с квадратными чекбоксами, а кнопки панели выбора собираются в группу.</string>
+    <string name="OEExpressiveTabs">Expressive-вкладки папок</string>
+    <string name="OEExpressiveTabsInfo">Вкладки папок с пилюлями Material 3 Expressive</string>
+    <string name="OEExpressiveTabsEnable">Expressive-вкладки папок</string>
+    <string name="OEExpressiveTabsEnableInfo">Плашка вкладок остаётся плавающим островком. Выбранная папка становится сплошной пилюлей под названием, которая тянется к следующей вкладке и приземляется с пружиной.</string>
+    <string name="OEExpressiveTabsShape">Форма</string>
+    <string name="OEExpressiveTabsPillHeight">Высота пилюли</string>
+    <string name="OEExpressiveTabsPillRoundness">Скругление пилюли</string>
+    <string name="OEExpressiveTabsIslandRoundness">Скругление островка</string>
+    <string name="OEExpressiveTabsLook">Вид</string>
+    <string name="OEExpressiveTabsIndicator">Цвет выбранной вкладки</string>
+    <string name="OEExpressiveTabsChips">Чипы под остальными вкладками</string>
+    <string name="OEExpressiveTabsChipsInfo">У каждой папки появляется бледный чип, и плашка читается как ряд кнопок.</string>
+    <string name="OEExpressiveTabsMotion">Движение</string>
+    <string name="OEExpressiveTabsStretch">Растяжение между вкладками</string>
+    <string name="OEExpressiveTabsSpring">Пружина при нажатии</string>
+    <string name="OEExpressiveTabsPress">Отскок при нажатии</string>
+    <string name="OEExpressiveTabsSpeed">Скорость анимаций</string>
+    <string name="OEExpressiveTabsMotionInfo">На ходу передний край пилюли убегает вперёд, а сама она чуть сплющивается. При свайпе между папками пилюля идёт ровно за пальцем.</string>
 </resources>
