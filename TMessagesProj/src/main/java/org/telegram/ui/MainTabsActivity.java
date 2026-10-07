@@ -15,6 +15,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.ShapeDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -50,6 +51,7 @@ import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLoader;
+import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
@@ -477,6 +479,10 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
         updateLayout();
         checkUnreadCount(false);
+        Looper.myQueue().addIdleHandler(() -> {
+            prewarmProfileFragment();
+            return false;
+        });
         return contentView;
     }
 
@@ -858,9 +864,6 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
                 dropFragmentAtPosition(getPositionCallsOrSettings());
                 dropCallsFragmentAfterPageScroll = false;
             }
-            if (getPositionProfile() >= 0 && currentPosition != getPositionProfile()) {
-                dropFragmentAtPosition(getPositionProfile());
-            }
             if (pendingFolderId != null && currentPosition == POSITION_CHATS && dialogsActivity != null) {
                 dialogsActivity.scrollToFolder(pendingFolderId);
                 pendingFolderId = null;
@@ -967,6 +970,20 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
     public DialogsActivity getDialogsActivity() {
         return dialogsActivity;
+    }
+
+    private void prewarmProfileFragment() {
+        try {
+            if (isFinished || viewPager == null) {
+                return;
+            }
+            final int pos = getPositionProfile();
+            if (pos >= 0) {
+                prewarmFragmentAtPosition(pos, getContext());
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
     }
 
     /* */
@@ -1250,7 +1267,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
         fadeView.setAlpha(alpha);
         fadeView.setTranslationY(isProfile * dp(48));
-        fadeView.setVisibility(alpha > 0 ? View.VISIBLE : View.GONE);
+        fadeView.setVisibility(alpha > 0.001f ? View.VISIBLE : View.INVISIBLE);
     }
 
     private void checkUi_tabsPosition() {

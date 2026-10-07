@@ -17,6 +17,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -170,6 +171,7 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, ExpressiveDock.LABEL_TEXT_SIZE_DP);
         defaultTextPaint.setTextSize(dp(ExpressiveDock.LABEL_TEXT_SIZE_DP));
         textView.setTypeface(AndroidUtilities.bold());
+        defaultTextPaint.setTypeface(AndroidUtilities.bold());
         textView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
         textView.setMaxWidth(dp(ExpressiveDock.LABEL_MAX_WIDTH_DP));
         textView.setVisibility(VISIBLE);
@@ -266,7 +268,8 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     }
 
     private float getExpressiveIconCenterX() {
-        return imageView.getTranslationX() + dp(ExpressiveDock.iconSize()) / 2f;
+        final View iconView = backupImageView != null ? backupImageView : imageView;
+        return iconView.getTranslationX() + dp(ExpressiveDock.iconSize()) / 2f;
     }
 
     public void setGestureSelectedOverride(float gestureSelectedOverride, boolean allow) {

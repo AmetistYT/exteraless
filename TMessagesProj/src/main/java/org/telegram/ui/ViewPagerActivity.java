@@ -132,6 +132,28 @@ public abstract class ViewPagerActivity extends BaseFragment {
         fragmentsArr.put(position, new FragmentState(fragment));
     }
 
+    protected void prewarmFragmentAtPosition(int position, Context context) {
+        FragmentState state = fragmentsArr.get(position);
+        if (state == null) {
+            final BaseFragment fragment = createBaseFragmentAt(position);
+            if (fragment == null) {
+                return;
+            }
+            state = new FragmentState(fragment);
+            fragmentsArr.put(position, state);
+        }
+        if (!state.onCreateCalled) {
+            state.fragment.onFragmentCreate();
+            state.onCreateCalled = true;
+        }
+        state.fragment.setParentLayout(getParentLayout());
+        if (state.fragment.getFragmentView() == null && context != null) {
+            state.fragment.performCreateView(context);
+            state.fragment.setTitleOverlayText(titleOverlay, titleOverlayId, titleOverlayAction);
+        }
+        state.setVisibility(0, 0, false, false);
+    }
+
     protected boolean canScrollBackward(MotionEvent ev) {
         return true;
     }
