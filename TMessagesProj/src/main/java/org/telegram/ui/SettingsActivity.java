@@ -1,6 +1,7 @@
 package org.telegram.ui;
 
 import tw.nekomimi.nekogram.utils.ShareUtil;
+import app.exteraless.debug.EnergyProfiler;
 import app.exteraless.debug.JankProfiler;
 import app.exteraless.settings.OpenExteraSettingsActivity;
 
@@ -1642,6 +1643,30 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         if (!JankProfiler.isRunning() && JankProfiler.getLastReport() != null) {
             builder.addItem(getString(R.string.OEProfilerShareLast), R.drawable.msg_share, (it) -> {
                 shareProfilerReport(getParentActivity(), JankProfiler.getLastReport());
+                return Unit.INSTANCE;
+            });
+        }
+
+        builder.addItem(getString(EnergyProfiler.isRunning() ? R.string.OEEnergyProfilerStop : R.string.OEEnergyProfilerStart), R.drawable.msg_speed, (it) -> {
+            final Activity activity = getParentActivity();
+            if (EnergyProfiler.isRunning()) {
+                EnergyProfiler.stop(file -> shareProfilerReport(activity, file));
+            } else if (activity != null) {
+                EnergyProfiler.start(activity);
+                BulletinFactory.of(SettingsActivity.this).createSimpleBulletin(R.raw.info, getString(R.string.OEEnergyProfilerStarted)).show();
+            }
+            return Unit.INSTANCE;
+        });
+
+        if (EnergyProfiler.isRunning()) {
+            builder.addItem(getString(R.string.OEEnergyProfilerShareCurrent), R.drawable.msg_share, (it) -> {
+                final Activity activity = getParentActivity();
+                EnergyProfiler.shareCurrent(file -> shareProfilerReport(activity, file));
+                return Unit.INSTANCE;
+            });
+        } else if (EnergyProfiler.getLastReport() != null) {
+            builder.addItem(getString(R.string.OEEnergyProfilerShareLast), R.drawable.msg_share, (it) -> {
+                shareProfilerReport(getParentActivity(), EnergyProfiler.getLastReport());
                 return Unit.INSTANCE;
             });
         }

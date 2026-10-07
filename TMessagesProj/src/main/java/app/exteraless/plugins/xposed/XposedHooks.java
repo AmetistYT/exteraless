@@ -59,6 +59,10 @@ public final class XposedHooks {
         return ensureInitialized();
     }
 
+    public static boolean isReady() {
+        return initAttempted && initOk;
+    }
+
     public static boolean isNativeHooksBroken() {
         SharedPreferences preferences = PluginsController.getInstance().getPreferences();
         return preferences != null

@@ -124,6 +124,10 @@ public final class HookStats {
         blockers.clear();
     }
 
+    public static boolean isEnabled() {
+        return enabled;
+    }
+
     public static void start() {
         synchronized (ALL) {
             for (HookStats stats : ALL) {
