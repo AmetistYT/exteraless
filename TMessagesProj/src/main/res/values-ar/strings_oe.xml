@@ -38,4 +38,6 @@
     <string name="MainTabsHideCallsSettings">إخفاء تبويب المكالمات</string>
     <string name="MainTabsHideProfile">إخفاء تبويب الملف الشخصي</string>
     <string name="OEBotWebViewUpdate">تحديث WebView</string>
+    <string name="AppIconsSelect">اختيار</string>
+    <string name="AppIconsKeep">الإبقاء على هذه</string>
 </resources>

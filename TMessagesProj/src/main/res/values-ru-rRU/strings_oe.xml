@@ -49,4 +49,6 @@
     <string name="MainTabsHideProfile">Скрыть вкладку профиля</string>
     <string name="OENowPlayingScrobbling">Сейчас играет</string>
     <string name="OEBotWebViewUpdate">Обновить WebView</string>
+    <string name="AppIconsSelect">Выбрать</string>
+    <string name="AppIconsKeep">Оставить эту</string>
 </resources>
