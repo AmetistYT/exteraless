@@ -812,7 +812,14 @@ public class ScrollSlidingTabStrip extends HorizontalScrollView {
                 selectorPaint.setColor(ColorUtils.setAlphaComponent(getThemedColor(Theme.key_chat_emojiPanelIcon), 0x2e));
                 selectorPaint.setAlpha((int) (selectorPaint.getAlpha() * selectedAlpha));
             }
-            canvas.drawRoundRect(tabBounds, tabBounds.height() / 2, tabBounds.height() / 2, selectorPaint);
+            float selectorRadius = tabBounds.height() / 2;
+            if (app.exteraless.appearance.ExpressiveChat.emojiPanel()) {
+                // Expressive-чат: выбранный набор — тональный скруглённый квадрат
+                selectorPaint.setColor(app.exteraless.appearance.ExpressiveChat.tonalSelectorColor(resourcesProvider));
+                selectorPaint.setAlpha((int) (selectorPaint.getAlpha() * selectedAlpha));
+                selectorRadius = app.exteraless.appearance.ExpressiveChat.buttonRadius(tabBounds.height());
+            }
+            canvas.drawRoundRect(tabBounds, selectorRadius, selectorRadius, selectorPaint);
         }
 
         super.dispatchDraw(canvas);

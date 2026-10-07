@@ -518,8 +518,36 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         canvas.save();
         final float s = bounce.getScale(.02f);
         canvas.scale(s, s, getPivotX(), getHeight() - ActionBar.getCurrentActionBarHeight() / 2f);
+        if (app.exteraless.appearance.ExpressiveChat.header()) {
+            drawExpressiveStatusChip(canvas);
+        }
         super.dispatchDraw(canvas);
         canvas.restore();
+    }
+
+    private android.graphics.Paint expressiveChipPaint;
+
+    /**
+     * Expressive-шапка: «в сети» и «печатает» сидят на тональном чипе цвета статуса,
+     * а не просто перекрашивают текст.
+     */
+    private void drawExpressiveStatusChip(Canvas canvas) {
+        final SimpleTextView subtitle = subtitleTextView;
+        if (subtitle == null || subtitle.getVisibility() != VISIBLE || subtitle.getAlpha() <= 0
+                || lastSubtitleColorKey != Theme.key_chat_status || overrideSubtitleColor != null
+                || subtitle.getTextWidth() <= 0) {
+            return;
+        }
+        if (expressiveChipPaint == null) {
+            expressiveChipPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        }
+        final float left = subtitle.getX() - dp(6);
+        final float right = subtitle.getTextStartX() + subtitle.getTextWidth() + dp(6);
+        final float cy = subtitle.getY() + subtitle.getMeasuredHeight() / 2f;
+        final float half = subtitle.getTextHeight() / 2f + dp(2);
+        expressiveChipPaint.setColor(Theme.multAlpha(getThemedColor(Theme.key_chat_status), 0.16f * subtitle.getAlpha()));
+        AndroidUtilities.rectTmp.set(left, cy - half, right, cy + half);
+        canvas.drawRoundRect(AndroidUtilities.rectTmp, half, half, expressiveChipPaint);
     }
 
     @Override
@@ -944,7 +972,8 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     private boolean glassMode;
     public void setGlassMode() {
         if (titleTextView != null) {
-            titleTextView.setTextSizePx(dp(17.5f));
+            // Expressive-шапка: заголовок крупнее, как headline в M3 Expressive
+            titleTextView.setTextSizePx(dp(app.exteraless.appearance.ExpressiveChat.header() ? 19f : 17.5f));
         }
         if (subtitleTextView != null) {
             subtitleTextView.setTextSizePx(dp(13.5f));

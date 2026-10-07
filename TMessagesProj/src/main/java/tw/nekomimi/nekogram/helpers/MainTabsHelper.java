@@ -1,6 +1,7 @@
 package tw.nekomimi.nekogram.helpers;
 
 import app.exteraless.appearance.AppearanceConfig;
+import app.exteraless.appearance.ExpressiveDock;
 import app.exteraless.appearance.MainTabsUiHelper;
 
 import org.telegram.messenger.UserConfig;
@@ -25,6 +26,10 @@ public final class MainTabsHelper {
     }
 
     public static int getMainTabsHeight() {
+        // У дока своя высота: подписи там и так не под иконкой, а сбоку.
+        if (MainTabsUiHelper.isExpressiveNavigationBar()) {
+            return ExpressiveDock.height();
+        }
         if (isMainTabsHideTitleStyle()) {
             return FILTER_TABS_HEIGHT;
         }
@@ -32,6 +37,9 @@ public final class MainTabsHelper {
     }
 
     public static int getMainTabsMargin() {
+        if (MainTabsUiHelper.isExpressiveNavigationBar()) {
+            return ExpressiveDock.margin();
+        }
         return isMainTabsHideTitleStyle() ? MAIN_TABS_MARGIN_COMPACT : MAIN_TABS_MARGIN;
     }
 

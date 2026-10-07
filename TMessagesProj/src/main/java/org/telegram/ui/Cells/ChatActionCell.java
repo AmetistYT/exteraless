@@ -1731,6 +1731,9 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
             paint = (TextPaint) getThemedPaint(Theme.key_paint_chatActionText);
         }
         paint.linkColor = paint.getColor();
+        if (oeExpressiveService()) {
+            paint = app.exteraless.appearance.ExpressiveChat.serviceTextPaint(paint, themeDelegate);
+        }
 
         if (isMessageActionSuggestedPostApproval()) {
             if (text instanceof Spannable) {
@@ -3345,6 +3348,14 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
             backgroundPaint = overrideBackgroundPaint;
             textPaint = overrideTextPaint;
         }
+        if (oeExpressiveService()) {
+            // Expressive-чат: непрозрачная тональная пилюля вместо стекла под датами и сервисными
+            backgroundPaint = app.exteraless.appearance.ExpressiveChat.serviceBackgroundPaint(themeDelegate);
+            darkenBackgroundPaint = app.exteraless.appearance.ExpressiveChat.serviceDarkenPaint();
+            if (textLayout != null && textLayout.getPaint() instanceof TextPaint) {
+                textPaint = (TextPaint) textLayout.getPaint();
+            }
+        }
         if (invalidatePath) {
             invalidatePath = false;
             backgroundLeft = getWidth();
@@ -4032,6 +4043,19 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
         }
 
         drawBotButtons(canvas, botButtons);
+    }
+
+    /**
+     * Expressive-плашка только у простых сервисных сообщений и дат: у подарков, дней
+     * рождения и карточек с кнопками свои цвета текста, рассчитанные на стекло.
+     */
+    private boolean oeExpressiveService() {
+        return app.exteraless.appearance.ExpressiveChat.servicePills()
+                && overrideBackground < 0
+                && !starGiftLayout.has()
+                && birthdayLayout == null
+                && !isButtonLayout(currentMessageObject)
+                && !isMessageActionSuggestedPostApproval();
     }
 
     private boolean isButtonLayout(MessageObject messageObject) {

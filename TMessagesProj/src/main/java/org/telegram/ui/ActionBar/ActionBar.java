@@ -2415,6 +2415,66 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     public boolean doNotDrawGlassMenu;
 
+    private final java.util.ArrayList<View> expressiveGroupItems = new java.util.ArrayList<>();
+
+    /**
+     * Группа кнопок M3 Expressive: вместо одной стеклянной пилюли под всеми кнопками меню
+     * каждая кнопка получает свой сегмент. Снаружи сегменты скруглены полностью, на
+     * стыках — слегка, между ними зазор. Границы делят расстояние между соседними
+     * кнопками пополам, поэтому сегменты вместе занимают ровно место прежней пилюли.
+     *
+     * @return false, если кнопок меньше двух — тогда рисуется обычная пилюля
+     */
+    private boolean drawExpressiveMenuGroup(Canvas canvas, ActionBarMenu source,
+                                            int left, int top, int right, int bottom, int alpha) {
+        if (source == null || source.getVisibility() != VISIBLE) {
+            return false;
+        }
+        expressiveGroupItems.clear();
+        for (int i = 0, n = source.getChildCount(); i < n; i++) {
+            final View child = source.getChildAt(i);
+            if (child instanceof ActionBarMenuItem && child.getVisibility() == VISIBLE
+                    && child.getWidth() > 0 && child.getAlpha() > 0.01f) {
+                expressiveGroupItems.add(child);
+            }
+        }
+        if (expressiveGroupItems.size() < 2) {
+            return false;
+        }
+        java.util.Collections.sort(expressiveGroupItems, (x, y) -> Float.compare(x.getX(), y.getX()));
+
+        final int p = dp(6);
+        final int gap = dp(1);
+        final float outer = dp(23);
+        final float inner = dp(8);
+        final float baseX = source.getX();
+        final int last = expressiveGroupItems.size() - 1;
+        int visibleLeft = left + p;
+        for (int i = 0; i <= last; i++) {
+            final int visibleRight;
+            if (i == last) {
+                visibleRight = right - p;
+            } else {
+                final View current = expressiveGroupItems.get(i);
+                final View next = expressiveGroupItems.get(i + 1);
+                final float boundary = baseX + (current.getX() + current.getWidth() + next.getX()) / 2f;
+                visibleRight = Math.round(boundary) - gap;
+            }
+            if (visibleRight > visibleLeft) {
+                final float leftRadius = i == 0 ? outer : inner;
+                final float rightRadius = i == last ? outer : inner;
+                glassDrawableMenu.setRadius(leftRadius, rightRadius, rightRadius, leftRadius);
+                glassDrawableMenu.setBounds(visibleLeft - p, top, visibleRight + p, bottom);
+                glassDrawableMenu.setAlpha(alpha);
+                glassDrawableMenu.draw(canvas);
+            }
+            visibleLeft = visibleRight + gap * 2;
+        }
+        glassDrawableMenu.setRadius(dp(23));
+        glassMenuAppliedOuterRadius = glassMenuAppliedInnerRadius = -1;
+        return true;
+    }
+
     @Override
     protected void dispatchDraw(Canvas canvas) {
         final int p = dp(6);
@@ -2501,9 +2561,19 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                     glassDrawableMenu.setRadius(inner, outer, outer, inner);
                 }
             }
-            glassDrawableMenu.setBounds(menuLeft, menuTop, menuRight, menuBottom);
-            glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
-            glassDrawableMenu.draw(canvas);
+            final int menuAlpha = hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue());
+            // Expressive-чат: кнопки шапки и режима выбора — группа отдельных сегментов
+            final boolean expressiveGroup = (actionModeVisible
+                    ? app.exteraless.appearance.ExpressiveChat.selection()
+                    : app.exteraless.appearance.ExpressiveChat.header())
+                    && (avatarContainer == null || !avatarContainer.isAvatarCentered())
+                    && drawExpressiveMenuGroup(canvas, actionModeVisible ? actionMode : menu,
+                            menuLeft, menuTop, menuRight, menuBottom, menuAlpha);
+            if (!expressiveGroup) {
+                glassDrawableMenu.setBounds(menuLeft, menuTop, menuRight, menuBottom);
+                glassDrawableMenu.setAlpha(menuAlpha);
+                glassDrawableMenu.draw(canvas);
+            }
         }
 
         if (blurredBackground && actionBarColor != Color.TRANSPARENT) {

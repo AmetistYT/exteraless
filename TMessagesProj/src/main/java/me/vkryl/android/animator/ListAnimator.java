@@ -261,6 +261,12 @@ public final class ListAnimator<T> implements Iterable<ListAnimator.Entry<T>> {
     }
   }
 
+  public void setDuration (long duration) {
+    if (animator != null) {
+      animator.setDuration(duration);
+    }
+  }
+
   public int size () {
     return entries.size();
   }

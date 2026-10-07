@@ -41,11 +41,25 @@ public final class MainTabsUiHelper {
      * поэтому все размеры считаются через MainTabsHelper. M3 приоритетнее.
      */
     public static boolean isIosNavigationBar() {
-        return AppearanceConfig.iosNavigationBarStyle() && !isMaterial3NavigationBar();
+        return AppearanceConfig.iosNavigationBarStyle() && !isMaterial3NavigationBar() && !isExpressiveNavigationBar();
     }
 
-    /** В iOS-стиле обёртка добавляет к системным инсетам ещё 8dp по бокам — вместе с подложкой выходит 16dp. */
+    /**
+     * Expressive-док из Mesh Expressive. Та же не-M3 ветка, что и iOS-панель, только
+     * размеры, отступы и цвета целиком берутся из настроек — см. ExpressiveDock.
+     */
+    public static boolean isExpressiveNavigationBar() {
+        return AppearanceConfig.expressiveNavigationBarStyle() && !isMaterial3NavigationBar();
+    }
+
+    /**
+     * В iOS-стиле обёртка добавляет к системным инсетам ещё 8dp по бокам — вместе с подложкой выходит 16dp.
+     * У дока подложка и так отступает на нижний отступ, поэтому обёртка добирает остаток до бокового.
+     */
     private static int getWrapperSideInset() {
+        if (isExpressiveNavigationBar()) {
+            return AndroidUtilities.dp(Math.max(0, ExpressiveDock.sideMargin() - ExpressiveDock.margin()));
+        }
         return isIosNavigationBar() ? AndroidUtilities.dp(8) : 0;
     }
 
@@ -66,10 +80,18 @@ public final class MainTabsUiHelper {
         if (isMaterial3NavigationBar()) {
             return 0;
         }
+        if (isExpressiveNavigationBar()) {
+            return AndroidUtilities.dp(ExpressiveDock.margin() + ExpressiveDock.innerPadding());
+        }
         return AndroidUtilities.dp(MainTabsHelper.getMainTabsMargin() + (isIosNavigationBar() ? 6 : 4));
     }
 
     public static int getTabsInnerPaddingHorizontal() {
+        if (isExpressiveNavigationBar()) {
+            // Половина промежутка между вкладками уже сидит в каждой вкладке по краям.
+            return AndroidUtilities.dp(ExpressiveDock.margin()
+                    + Math.max(0f, ExpressiveDock.innerPadding() - ExpressiveDock.spacing() / 2f));
+        }
         return isMaterial3NavigationBar() ? 0 : AndroidUtilities.dp(MainTabsHelper.getMainTabsMargin() + 4);
     }
 
@@ -80,12 +102,16 @@ public final class MainTabsUiHelper {
 
     /** В M3 подложка прямоугольная, иначе скругление в половину высоты. */
     public static float getBackgroundRadius() {
+        if (isExpressiveNavigationBar()) {
+            return ExpressiveDock.dockRadius();
+        }
         return isMaterial3NavigationBar() ? 0 : AndroidUtilities.dp(MainTabsHelper.getMainTabsHeight() / 2f);
     }
 
     /** В M3 и iOS-стиле панель растянута на всю ширину. */
     public static int getTabsViewWidth() {
-        return isMaterial3NavigationBar() || isIosNavigationBar() ? LayoutHelper.MATCH_PARENT : MainTabsHelper.getTabsViewWidth();
+        return isMaterial3NavigationBar() || isIosNavigationBar() || isExpressiveNavigationBar()
+                ? LayoutHelper.MATCH_PARENT : MainTabsHelper.getTabsViewWidth();
     }
 
     /** Сдвиг кнопки «написать» над панелью: в M3 всегда 64. */
@@ -98,6 +124,11 @@ public final class MainTabsUiHelper {
         final int paddingH = getTabsInnerPaddingHorizontal();
         final int paddingV = getTabsInnerPaddingVertical();
         layout.setPadding(paddingH, paddingV, paddingH, paddingV);
+        if (isExpressiveNavigationBar()) {
+            // Ширину дока считает сам MainTabsLayout; предел нужен только планшетам.
+            layout.setMaxWidth(AndroidUtilities.dp(ExpressiveDock.MAX_WIDTH_DP));
+            return;
+        }
         layout.setMaxWidth(isMaterial3NavigationBar() || isIosNavigationBar() ? 0 : legacyMaxWidthPx);
     }
 
@@ -131,6 +162,9 @@ public final class MainTabsUiHelper {
                     .setStrokeColorTop(0, 0)
                     .setStrokeColorBottom(0, 0)
                     .setStrokeWidth(0, 0);
+        }
+        if (isExpressiveNavigationBar()) {
+            return ExpressiveDock.applyBackground(builder);
         }
         return builder
                 .setStrokeColorTop(0x11000000, 0x06FFFFFF)

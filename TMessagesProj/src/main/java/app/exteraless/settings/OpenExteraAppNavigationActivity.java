@@ -67,6 +67,8 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
     private static final int ID_HIDE_CONTACTS_TAB = -108;
     private static final int ID_HIDE_CALLS_TAB = -109;
     private static final int ID_HIDE_PROFILE_TAB = -110;
+    private static final int ID_EXPRESSIVE_DOCK = -111;
+    private static final int ID_EXPRESSIVE_DOCK_SETTINGS = -112;
 
     /** Кнопка «добавить разделитель». */
     private static final int ID_ADD_DIVIDER = -200;
@@ -162,6 +164,12 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
         items.add(UItem.asButton(ID_BOTTOM_NAVIGATION_BAR, getString(R.string.OEBottomNavigationBarMode),
                 bottomNavigationModes()[MainTabsLayout.getBottomNavigationMode()]));
         if (hasBottomTabs()) {
+            items.add(UItem.asCheck(ID_EXPRESSIVE_DOCK, getString(R.string.OEExpressiveDock))
+                    .setChecked(AppearanceConfig.expressiveNavigationBarStyle()));
+            if (AppearanceConfig.expressiveNavigationBarStyle()) {
+                items.add(UItem.asButton(ID_EXPRESSIVE_DOCK_SETTINGS, R.drawable.msg_customize,
+                        getString(R.string.OEExpressiveDockCustomize)).accent());
+            }
             items.add(UItem.asCheck(ID_HIDE_TAB_TITLES, getString(R.string.MainTabsHideTitles))
                     .setChecked(NaConfig.INSTANCE.getMainTabsHideTitles().Bool()));
             items.add(UItem.asCheck(ID_HIDE_CONTACTS_TAB, getString(R.string.MainTabsHideContacts))
@@ -261,12 +269,12 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
     private static final int[] LINK_IDS = {
             ID_TABLET_MODE, ID_BACK_ANIMATION, ID_PREDICTIVE_INTENSITY, ID_BOTTOM_NAVIGATION_BAR,
             ID_HIDE_TAB_TITLES, ID_HIDE_CONTACTS_TAB, ID_HIDE_CALLS_TAB, ID_HIDE_PROFILE_TAB,
-            ID_DRAWER, ID_IMMERSIVE
+            ID_DRAWER, ID_IMMERSIVE, ID_EXPRESSIVE_DOCK
     };
     private static final String[] LINK_KEYS = {
             "tabletMode", "backAnimation", "predictiveBackIntensity", "bottomNavigationBar",
             "MainTabsHideTitles", "MainTabsHideContacts", "MainTabsHideCallsSettings", "MainTabsHideProfile",
-            "navigationDrawer", "immersiveDrawerAnimation"
+            "navigationDrawer", "immersiveDrawerAnimation", "expressiveDock"
     };
 
     private static String linkKey(int id) {
@@ -372,6 +380,24 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
             if (getParentLayout() != null) {
                 getParentLayout().rebuildFragments(0);
             }
+            return;
+        }
+        if (id == ID_EXPRESSIVE_DOCK) {
+            final boolean enable = !AppearanceConfig.expressiveNavigationBarStyle();
+            AppearanceConfig.expressiveNavigationBarStyle.setConfigBool(enable);
+            if (enable) {
+                // Док — третий вариант панели наравне с M3 и iOS, вместе они не живут.
+                AppearanceConfig.newNavigationBarStyle.setConfigBool(false);
+                AppearanceConfig.iosNavigationBarStyle.setConfigBool(false);
+            }
+            update();
+            if (getParentLayout() != null) {
+                getParentLayout().rebuildAllFragmentViews(false, false);
+            }
+            return;
+        }
+        if (id == ID_EXPRESSIVE_DOCK_SETTINGS) {
+            presentFragment(new ExpressiveDockSettingsActivity());
             return;
         }
         if (id == ID_IMMERSIVE) {

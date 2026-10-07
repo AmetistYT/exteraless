@@ -592,6 +592,10 @@ public class ReplyMessageLine {
     }
 
     public void drawLine(Canvas canvas, RectF rect, float alpha) {
+        // Expressive-чат: цитата — тональная подложка без вертикальной полосы
+        if (app.exteraless.appearance.ExpressiveChat.replies() && !loading && !sponsored) {
+            return;
+        }
         final int rad = (int) Math.floor(SharedConfig.bubbleRadius / (sponsored ? 2f : 3f));
         final float lineRight = rect.left + Math.max(dp(3), dp(2 * rad));
 
@@ -670,6 +674,14 @@ public class ReplyMessageLine {
     }
 
     public void drawBackground(Canvas canvas, RectF rect, float leftRad, float rightRad, float bottomRad, float alpha, boolean hasQuote, boolean emojiOnly) {
+        if (app.exteraless.appearance.ExpressiveChat.replies() && !sponsored) {
+            // Скруглённая плашка, острый только нижний левый угол — «указывает» на исходное сообщение
+            final float big = Math.min(AndroidUtilities.dp(12), Math.min(rect.width(), rect.height()) / 2f);
+            radii[0] = radii[1] = radii[2] = radii[3] = radii[4] = radii[5] = big;
+            radii[6] = radii[7] = Math.min(big, AndroidUtilities.dp(4));
+            drawBackground(canvas, rect, alpha, hasQuote, emojiOnly);
+            return;
+        }
         radii[0] = radii[1] = Math.max(AndroidUtilities.dp((int) Math.floor(SharedConfig.bubbleRadius / 3f)), AndroidUtilities.dp(leftRad));
         radii[2] = radii[3] = AndroidUtilities.dp(rightRad);
         radii[4] = radii[5] = AndroidUtilities.dp(bottomRad);

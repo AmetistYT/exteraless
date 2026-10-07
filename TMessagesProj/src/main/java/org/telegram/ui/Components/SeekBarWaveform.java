@@ -319,6 +319,10 @@ public class SeekBarWaveform {
         if (totalBarsCount <= 0.1f) {
             return;
         }
+        if (app.exteraless.appearance.ExpressiveChat.voice() && !exploding && explosionRate <= 0 && fromHeights == null) {
+            drawExpressiveWave(canvas, parentView);
+            return;
+        }
         if (clearProgress != 1f) {
             clearProgress += 16 / 150f;
             if (clearProgress > 1f) {
@@ -430,6 +434,78 @@ public class SeekBarWaveform {
                 .setEmitArea(emitArea)
                 .draw(canvas, explosionRate);
         }
+    }
+
+    // ---- Expressive-чат: волна вместо столбиков ----
+
+    private Paint wavePaint;
+    private Path wavePath;
+    private float wavePhase;
+    private long waveLastTime;
+
+    /**
+     * Прогресс голосового в духе M3 Expressive: прослушанная часть — синусоида, которая
+     * бежит, пока сообщение играет, остаток — прямая линия, между ними вертикальная
+     * риска-ползунок. Цвета те же, что у столбиков.
+     */
+    private void drawExpressiveWave(Canvas canvas, View parentView) {
+        if (wavePaint == null) {
+            wavePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            wavePaint.setStyle(Paint.Style.STROKE);
+            wavePaint.setStrokeCap(Paint.Cap.ROUND);
+            wavePath = new Path();
+        }
+        final boolean playing = messageObject != null
+                && MediaController.getInstance().isPlayingMessage(messageObject)
+                && !MediaController.getInstance().isMessagePaused();
+        final long now = SystemClock.uptimeMillis();
+        final float dt = waveLastTime == 0 ? 0 : Math.min(64, now - waveLastTime) / 1000f;
+        waveLastTime = now;
+        if (playing) {
+            wavePhase += dt * 7f;
+            if (parentView != null) {
+                parentView.invalidate();
+            }
+        }
+
+        final float stroke = AndroidUtilities.dpf2(3);
+        final float cy = height / 2f;
+        final float start = stroke / 2f;
+        final float end = width - stroke / 2f;
+        final float px = AndroidUtilities.lerp(start, end, MathUtils.clamp(progress, 0, 1));
+        final float gap = AndroidUtilities.dpf2(4);
+
+        isUnread = messageObject != null && messageObject.isContentUnread() && !messageObject.isOut() && this.progress <= 0;
+        final int restColor = isUnread ? outerColor : (selected ? selectedColor : innerColor);
+        wavePaint.setStrokeWidth(stroke);
+
+        if (px + gap < end) {
+            wavePaint.setColor(restColor);
+            wavePaint.setAlpha((int) (wavePaint.getAlpha() * alpha));
+            canvas.drawLine(px + gap, cy, end, cy, wavePaint);
+        }
+
+        if (px > start) {
+            final float amplitude = AndroidUtilities.dpf2(playing ? 3.2f : 2.2f);
+            final float wavelength = AndroidUtilities.dpf2(18);
+            wavePath.rewind();
+            for (float x = start; x <= px; x += AndroidUtilities.dpf2(1.5f)) {
+                final float y = cy + (float) Math.sin((x / wavelength) * Math.PI * 2 - wavePhase) * amplitude;
+                if (x == start) {
+                    wavePath.moveTo(x, y);
+                } else {
+                    wavePath.lineTo(x, y);
+                }
+            }
+            wavePaint.setColor(outerColor);
+            wavePaint.setAlpha((int) (wavePaint.getAlpha() * alpha));
+            canvas.drawPath(wavePath, wavePaint);
+        }
+
+        final float thumbHalf = AndroidUtilities.dpf2(8);
+        wavePaint.setColor(outerColor);
+        wavePaint.setAlpha((int) (wavePaint.getAlpha() * alpha));
+        canvas.drawLine(px, cy - thumbHalf, px, cy + thumbHalf, wavePaint);
     }
 
     private void drawFill(Canvas canvas, float alpha) {

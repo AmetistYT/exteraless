@@ -785,6 +785,9 @@ public class EmojiTabsStrip extends ScrollableHorizontalScrollView {
     }
 
     private int selectorColor() {
+        if (app.exteraless.appearance.ExpressiveChat.emojiPanel()) {
+            return app.exteraless.appearance.ExpressiveChat.tonalSelectorColor(resourcesProvider);
+        }
         if (isGlassDesign) {
             return getGlassIconColor(0.05f);
         }

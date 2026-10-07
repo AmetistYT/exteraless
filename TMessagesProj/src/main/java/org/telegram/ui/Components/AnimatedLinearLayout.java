@@ -34,6 +34,10 @@ public class AnimatedLinearLayout extends LinearLayout {
         super(context);
     }
 
+    public void setAnimationDuration(long duration) {
+        listAnimator.setDuration(duration);
+    }
+
     public boolean isViewVisible(View child) {
         final Holder holder = viewHolders.get(child);
         return holder != null && holder.isVisible;

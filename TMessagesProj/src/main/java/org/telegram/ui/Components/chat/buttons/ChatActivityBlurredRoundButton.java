@@ -122,7 +122,14 @@ public class ChatActivityBlurredRoundButton extends FrameLayout implements Facto
     public void setBlurredBackgroundDrawable(BlurredBackgroundDrawable drawable) {
         backgroundDrawable = drawable;
         backgroundDrawable.setPadding(dp(CLICK_ZONE_MARGIN));
-        backgroundDrawable.setRadius(dp(BUTTON_SIZE / 2f));
+        backgroundDrawable.setRadius(getButtonRadius());
+    }
+
+    /** Круг, а в Expressive-чате — скруглённый квадрат, как FAB в M3. */
+    public static float getButtonRadius() {
+        return app.exteraless.appearance.ExpressiveChat.buttons()
+                ? app.exteraless.appearance.ExpressiveChat.buttonRadius(dp(BUTTON_SIZE))
+                : dp(BUTTON_SIZE / 2f);
     }
 
     public void showLoading(boolean loading, boolean animated) {
@@ -173,7 +180,7 @@ public class ChatActivityBlurredRoundButton extends FrameLayout implements Facto
         button.resourcesProvider = resourcesProvider;
         button.setBlurredBackgroundDrawable(factory.create(button, colorProvider));
         button.setIconColor(color);
-        int rad = dp(22);
+        int rad = (int) getButtonRadius();
         int pressedColor = Theme.multAlpha(color, .15f);
         button.setBackground(Theme.createInsetRoundRectDrawable(pressedColor, rad, dp(6)));
 
@@ -196,7 +203,7 @@ public class ChatActivityBlurredRoundButton extends FrameLayout implements Facto
         button.setBlurredBackgroundDrawable(factory.create(button, colorProvider));
         button.setIcon(res, iconSize);
         button.setIconColor(color);
-        int rad = dp(22);
+        int rad = (int) getButtonRadius();
         int pressedColor = Theme.multAlpha(color, .15f);
         button.setBackground(Theme.createInsetRoundRectDrawable(pressedColor, rad, dp(6)));
 
@@ -211,7 +218,7 @@ public class ChatActivityBlurredRoundButton extends FrameLayout implements Facto
 
         final int color = Theme.getColor(Theme.key_glass_defaultIcon, resourcesProvider);
         setIconColor(Theme.getColor(Theme.key_glass_defaultIcon, resourcesProvider));
-        int rad = dp(22);
+        int rad = (int) getButtonRadius();
         int pressedColor = Theme.multAlpha(color, .15f);
         setBackground(Theme.createInsetRoundRectDrawable(pressedColor, rad, dp(6)));
     }
