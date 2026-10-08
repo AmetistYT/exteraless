@@ -58,4 +58,5 @@
     <string name="OEEnergyProfilerStarted">Профиль энергопотребления запущен, он работает и в фоне, и после перезапуска. Пользуйтесь телефоном как обычно несколько часов, потом остановите его здесь же.</string>
     <string name="OEEnergyProfilerShareCurrent">Отправить текущий отчёт об энергопотреблении</string>
     <string name="OEEnergyProfilerShareLast">Отправить последний отчёт об энергопотреблении</string>
+    <string name="OEPluginToggleLogShare">Отправить журнал включения плагинов</string>
 </resources>
