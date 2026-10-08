@@ -59,4 +59,10 @@
     <string name="OEEnergyProfilerShareCurrent">Отправить текущий отчёт об энергопотреблении</string>
     <string name="OEEnergyProfilerShareLast">Отправить последний отчёт об энергопотреблении</string>
     <string name="OEPluginToggleLogShare">Отправить журнал включения плагинов</string>
+    <string name="OEProfileIdDate">Дата регистрации и вступления</string>
+    <string name="OEProfileAccountCreated">Аккаунт **%1$s** создан %2$s</string>
+    <string name="OEProfileJoinedChat">Вы вступили в **%1$s** %2$s</string>
+    <string name="OEProfileJoinedChannel">Вы подписались на **%1$s** %2$s</string>
+    <string name="OEProfileChatCreated">**%1$s** создан %2$s</string>
+    <string name="OEProfileJoinDateUnknown">Дата вступления недоступна</string>
 </resources>

@@ -432,6 +432,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private RLottieDrawable cellCameraDrawable;
 
     private HintView fwdRestrictedHint;
+    private HintView idDateHint;
 //    private ProfileMetaballView metaball;
     private FrameLayout avatarContainer;
     private FrameLayout avatarContainer2;
@@ -6071,6 +6072,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (fwdRestrictedHint != null) {
                     fwdRestrictedHint.hide();
                 }
+                if (idDateHint != null) {
+                    idDateHint.hide();
+                }
                 checkListViewScroll();
                 if (participantsMap != null && !usersEndReached && layoutManager.findLastVisibleItemPosition() > membersEndRow - 8) {
                     getChannelParticipants(false);
@@ -6110,6 +6114,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         fwdRestrictedHint.setAlpha(0);
         frameLayout.addView(fwdRestrictedHint, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 12, 0, 12, 0));
         sharedMediaLayout.setForwardRestrictedHint(fwdRestrictedHint);
+
+        idDateHint = new HintView(getParentActivity(), 7, true);
+        idDateHint.setAlpha(0);
+        idDateHint.setShowingDuration(4500);
+        frameLayout.addView(idDateHint, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 12, 0, 12, 0));
 
         ViewGroup decorView;
         decorView = (ViewGroup) getParentActivity().getWindow().getDecorView();
@@ -14146,6 +14155,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     TextDetailCell detailCell = (TextDetailCell) holder.itemView;
                     boolean containsQr = false;
                     boolean containsGift = false;
+                    boolean containsIdDate = false;
                     if (position == birthdayRow) {
                         TLRPC.UserFull userFull = getMessagesController().getUserFull(userId);
                         if (userFull != null && userFull.birthday != null) {
@@ -14267,6 +14277,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         }
                         detailCell.setTextAndValue(text, alsoUsernamesString(username, usernames, value), infoEndRowEmpty == -1 && (isTopic || bizHoursRow != -1 || bizLocationRow != -1) && birthdayRow < 0);
                     } else if (position == idDcRow) {
+                        containsIdDate = true;
                         long id = getId(true);
                         int dc = getDc();
                         boolean isUserSelf = userId == UserConfig.getInstance(currentAccount).getClientUserId();
@@ -14356,6 +14367,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         Drawable drawable = ContextCompat.getDrawable(detailCell.getContext(), R.drawable.header_qr_24);
                         drawable.setColorFilter(new PorterDuffColorFilter(dontApplyPeerColor(getThemedColor(Theme.key_actionBarDefaultIcon), false), PorterDuff.Mode.MULTIPLY));
                         detailCell.setImage(drawable, LocaleController.getString(R.string.GetQRCode));
+                        detailCell.setImageClickListener(ProfileActivity.this::onTextDetailCellImageClicked);
+                    } else if (containsIdDate) {
+                        Drawable drawable = ContextCompat.getDrawable(detailCell.getContext(), R.drawable.msg_calendar2);
+                        drawable.setColorFilter(new PorterDuffColorFilter(dontApplyPeerColor(getThemedColor(Theme.key_actionBarDefaultIcon), false), PorterDuff.Mode.MULTIPLY));
+                        detailCell.setImage(drawable, LocaleController.getString(R.string.OEProfileIdDate));
                         detailCell.setImageClickListener(ProfileActivity.this::onTextDetailCellImageClicked);
                     } else {
                         detailCell.setImage(null);
@@ -16367,7 +16383,89 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 return;
             }
             showDialog(new GiftSheet(getContext(), currentAccount, userId, null, null));
+        } else if (parent.getTag() != null && ((int) parent.getTag()) == idDcRow) {
+            showIdDateHint(view);
         }
+    }
+
+    private void showIdDateHint(View anchor) {
+        if (idDateHint == null) {
+            return;
+        }
+        if (idDateHint.getTag() != null) {
+            idDateHint.hide();
+            return;
+        }
+        if (userId != 0) {
+            final TLRPC.User user = getMessagesController().getUser(userId);
+            final String name = user != null ? UserObject.getFirstName(user) : String.valueOf(userId);
+            showIdDateHint(anchor, LocaleController.formatString(R.string.OEProfileAccountCreated, name, ProfileDateHelper.getUserTime(userId)));
+            return;
+        }
+        final TLRPC.Chat chat = getMessagesController().getChat(chatId);
+        if (chat == null) {
+            return;
+        }
+        if (ChatObject.isNotInChat(chat)) {
+            if (chat.date != 0) {
+                showIdDateHint(anchor, LocaleController.formatString(R.string.OEProfileChatCreated, chat.title, formatIdDate(chat.date)));
+            } else {
+                showIdDateHint(anchor, LocaleController.getString(R.string.OEProfileJoinDateUnknown));
+            }
+            return;
+        }
+        final int date = selfJoinDate(chat);
+        if (date != 0 || !ChatObject.isChannel(chat)) {
+            showJoinedHint(anchor, chat, date);
+            return;
+        }
+        final TLRPC.TL_channels_getParticipant req = new TLRPC.TL_channels_getParticipant();
+        req.channel = getMessagesController().getInputChannel(chatId);
+        req.participant = getMessagesController().getInputPeer(getUserConfig().getClientUserId());
+        final int reqId = getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            int joined = 0;
+            if (response instanceof TLRPC.TL_channels_channelParticipant && ((TLRPC.TL_channels_channelParticipant) response).participant != null) {
+                joined = ((TLRPC.TL_channels_channelParticipant) response).participant.date;
+            }
+            if (anchor.isAttachedToWindow()) {
+                showJoinedHint(anchor, chat, joined);
+            }
+        }));
+        getConnectionsManager().bindRequestToGuid(reqId, classGuid);
+    }
+
+    private int selfJoinDate(TLRPC.Chat chat) {
+        if (ChatObject.isChannel(chat)) {
+            return chat.date;
+        }
+        final long selfId = getUserConfig().getClientUserId();
+        if (chatInfo != null && chatInfo.participants != null) {
+            for (TLRPC.ChatParticipant participant : chatInfo.participants.participants) {
+                if (participant.user_id == selfId) {
+                    return participant instanceof TLRPC.TL_chatParticipantCreator ? chat.date : participant.date;
+                }
+            }
+        }
+        return 0;
+    }
+
+    private void showJoinedHint(View anchor, TLRPC.Chat chat, int date) {
+        if (date == 0) {
+            showIdDateHint(anchor, LocaleController.getString(R.string.OEProfileJoinDateUnknown));
+        } else {
+            final int format = ChatObject.isChannelAndNotMegaGroup(chat) ? R.string.OEProfileJoinedChannel : R.string.OEProfileJoinedChat;
+            showIdDateHint(anchor, LocaleController.formatString(format, chat.title, formatIdDate(date)));
+        }
+    }
+
+    private String formatIdDate(int date) {
+        final long ms = date * 1000L;
+        return LocaleController.formatString(R.string.formatDateAtTime, LocaleController.getInstance().getFormatterYear().format(ms), LocaleController.getInstance().getFormatterDay().format(ms));
+    }
+
+    private void showIdDateHint(View anchor, String text) {
+        idDateHint.setText(AndroidUtilities.replaceTags(text));
+        idDateHint.showForView(anchor, true);
     }
 
     private boolean fullyVisible;
