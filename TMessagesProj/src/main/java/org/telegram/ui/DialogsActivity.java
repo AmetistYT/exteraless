@@ -3085,6 +3085,24 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private Drawable premiumStar;
     private Drawable ghostDrawable;
 
+    private void updateTitleText() {
+        if (actionBar == null || actionBarTitleNax == null || onlySelect || folderId != 0 || communityId != 0) {
+            return;
+        }
+        final CharSequence title = TypefaceHelper.getTitleText(currentAccount);
+        if (TextUtils.equals(title, actionBarTitleNax)) {
+            return;
+        }
+        actionBarTitleNax = title;
+        if (AppearanceConfig.folderNameAsTitle() && filterTabsView != null && filterTabsView.getCurrentTabId() != filterTabsView.getDefaultTabId()) {
+            return;
+        }
+        actionBar.setTitle(actionBarTitleNax, statusDrawable);
+        if (dialogStoriesCell != null) {
+            dialogStoriesCell.setLogoTitle(actionBarTitleNax, true, false, false);
+        }
+    }
+
     @SuppressLint("UseCompatLoadingForDrawables")
     public void updateStatus(TLRPC.User user, boolean animated) {
         if (dialogStoriesCell != null) {
@@ -11133,9 +11151,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         } else if (id == NotificationCenter.userEmojiStatusUpdated) {
             updateStatus((TLRPC.User) args[0], true);
         } else if (id == NotificationCenter.currentUserPremiumStatusChanged) {
+            updateTitleText();
             updateStatus(UserConfig.getInstance(account).getCurrentUser(), true);
             updateStoriesPosting();
         } else if (id == NotificationCenter.mainUserInfoChanged) {
+            updateTitleText();
             updateStatus(UserConfig.getInstance(account).getCurrentUser(), true);
             updateDrawerButton();
         } else if (id == NotificationCenter.onDatabaseReset) {
