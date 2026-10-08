@@ -134,4 +134,19 @@
     <string name="OEAyuDatabaseImportFailed">无法导入此文件</string>
     <string name="OEAyuRegexReversed">反向</string>
     <string name="OEAyuRegexReversedInfo">隐藏与表达式不匹配的消息</string>
+    <string name="OEUpdaterChecking">正在检查更新…</string>
+    <string name="OEUpdaterLatest">已是最新版本</string>
+    <string name="OEUpdaterAvailable">版本 %1$s 可用</string>
+    <string name="OEUpdaterFailedInfo">请检查网络连接后重试</string>
+    <string name="OEUpdaterCheckedJustNow">刚刚检查过</string>
+    <string name="OEUpdaterCheckedAt">检查于 %1$s</string>
+    <string name="OEUpdaterCheckAgain">再次检查</string>
+    <string name="OEUpdaterChannel">自动检查</string>
+    <string name="OEUpdaterChannelOff">关闭</string>
+    <string name="OEUpdaterChannelStable">正式版</string>
+    <string name="OEUpdaterChannelBeta">测试版</string>
+    <string name="OEUpdaterChannelOffInfo">仅在点击图标时检查更新。</string>
+    <string name="OEUpdaterChannelStableInfo">每 6 小时检查 GitHub 上的新版本。</string>
+    <string name="OEUpdaterChannelBetaInfo">还会提供 GitHub 上的预发布版本。</string>
+    <string name="OEUpdaterAllReleases">GitHub 上的所有版本</string>
 </resources>

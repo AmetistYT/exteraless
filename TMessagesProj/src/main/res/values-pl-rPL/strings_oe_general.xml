@@ -134,4 +134,19 @@
     <string name="OEAyuDatabaseImportFailed">Nie udało się zaimportować pliku</string>
     <string name="OEAyuRegexReversed">Odwrócony</string>
     <string name="OEAyuRegexReversedInfo">Ukrywaj wiadomości niepasujące do wyrażenia</string>
+    <string name="OEUpdaterChecking">Sprawdzanie aktualizacji…</string>
+    <string name="OEUpdaterLatest">Masz najnowszą wersję</string>
+    <string name="OEUpdaterAvailable">Dostępna jest wersja %1$s</string>
+    <string name="OEUpdaterFailedInfo">Sprawdź połączenie i spróbuj ponownie</string>
+    <string name="OEUpdaterCheckedJustNow">Sprawdzono przed chwilą</string>
+    <string name="OEUpdaterCheckedAt">Sprawdzono %1$s</string>
+    <string name="OEUpdaterCheckAgain">Sprawdź ponownie</string>
+    <string name="OEUpdaterChannel">Automatyczne sprawdzanie</string>
+    <string name="OEUpdaterChannelOff">Wył.</string>
+    <string name="OEUpdaterChannelStable">Wydania</string>
+    <string name="OEUpdaterChannelBeta">Beta</string>
+    <string name="OEUpdaterChannelOffInfo">Aktualizacje są sprawdzane tylko po dotknięciu logo.</string>
+    <string name="OEUpdaterChannelStableInfo">Nowe wydania na GitHubie są sprawdzane co 6 godzin.</string>
+    <string name="OEUpdaterChannelBetaInfo">Oferuje też wydania wstępne z GitHuba, zanim staną się wydaniami.</string>
+    <string name="OEUpdaterAllReleases">Wszystkie wydania na GitHubie</string>
 </resources>
