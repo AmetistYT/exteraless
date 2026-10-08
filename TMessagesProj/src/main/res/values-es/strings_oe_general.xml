@@ -125,4 +125,9 @@
     <string name="OEUserLookupNotFound">Usuario %1$d no encontrado</string>
     <string name="OEUpdateTitle">Actualización disponible</string>
     <string name="OEUpdateDownloadProgress">%1$s de %2$s</string>
+    <string name="OEAyuDatabaseExport">Exportar base de datos</string>
+    <string name="OEAyuDatabaseImport">Importar base de datos</string>
+    <string name="OEAyuDatabaseImportInfo">Los mensajes eliminados y editados de este archivo se añadirán a los ya guardados. Se admiten exportaciones de exteraless y AyuGram. Es posible que los archivos multimedia de otra app no estén disponibles.</string>
+    <string name="OEAyuDatabaseImportDone">Mensajes añadidos: %1$d</string>
+    <string name="OEAyuDatabaseImportFailed">No se pudo importar este archivo</string>
 </resources>

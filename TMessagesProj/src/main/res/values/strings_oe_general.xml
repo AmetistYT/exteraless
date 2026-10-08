@@ -187,4 +187,9 @@
     <string name="OEUserLookupNotFound">User %1$d not found</string>
     <string name="OEUpdateTitle">Update available</string>
     <string name="OEUpdateDownloadProgress">%1$s of %2$s</string>
+    <string name="OEAyuDatabaseExport">Export database</string>
+    <string name="OEAyuDatabaseImport">Import database</string>
+    <string name="OEAyuDatabaseImportInfo">Deleted and edited messages from this file will be added to the ones already saved. Exports from exteraless and AyuGram are supported. Media from another app may be unavailable.</string>
+    <string name="OEAyuDatabaseImportDone">Messages added: %1$d</string>
+    <string name="OEAyuDatabaseImportFailed">Couldn\'t import this file</string>
 </resources>

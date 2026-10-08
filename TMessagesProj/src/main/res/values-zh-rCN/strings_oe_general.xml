@@ -125,4 +125,9 @@
     <string name="OEUserLookupNotFound">未找到用户 %1$d</string>
     <string name="OEUpdateTitle">有可用更新</string>
     <string name="OEUpdateDownloadProgress">%1$s / %2$s</string>
+    <string name="OEAyuDatabaseExport">导出数据库</string>
+    <string name="OEAyuDatabaseImport">导入数据库</string>
+    <string name="OEAyuDatabaseImportInfo">此文件中被删除和编辑的消息将添加到已保存的消息中。支持 exteraless 和 AyuGram 的导出文件。来自其他应用的媒体可能无法打开。</string>
+    <string name="OEAyuDatabaseImportDone">已添加消息：%1$d</string>
+    <string name="OEAyuDatabaseImportFailed">无法导入此文件</string>
 </resources>
