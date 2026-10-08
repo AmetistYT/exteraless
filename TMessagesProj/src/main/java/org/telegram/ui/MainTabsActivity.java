@@ -1046,11 +1046,18 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         default void setParentTabsGlassInvalidationCallback(Runnable callback) {
 
         }
+
+        default void setMiniPlayerInset(float inset, int padding) {
+
+        }
     }
 
     private <T extends BaseFragment> T prepareTabFragment(T fragment) {
         if (fragment instanceof TabFragmentDelegate) {
             ((TabFragmentDelegate) fragment).setParentTabsGlassInvalidationCallback(this::invalidateTabsGlass);
+            if (miniPlayer != null) {
+                ((TabFragmentDelegate) fragment).setMiniPlayerInset(miniPlayer.getVisibleOffset(), miniPlayer.getTargetOffset());
+            }
         }
         return fragment;
     }
@@ -1275,8 +1282,16 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     }
 
     private void onMiniPlayerOffsetChanged() {
-        if (dialogsActivity != null && miniPlayer != null) {
-            dialogsActivity.setMiniPlayerInset(miniPlayer.getVisibleOffset(), miniPlayer.getTargetOffset());
+        if (miniPlayer == null) {
+            return;
+        }
+        final float inset = miniPlayer.getVisibleOffset();
+        final int padding = miniPlayer.getTargetOffset();
+        for (int a = 0, N = fragmentsArr.size(); a < N; a++) {
+            final BaseFragment fragment = fragmentsArr.valueAt(a).fragment;
+            if (fragment instanceof TabFragmentDelegate) {
+                ((TabFragmentDelegate) fragment).setMiniPlayerInset(inset, padding);
+            }
         }
     }
 
