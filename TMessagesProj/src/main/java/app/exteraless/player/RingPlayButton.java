@@ -12,15 +12,18 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
+import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.MessageObject;
 
 public class RingPlayButton extends View {
 
     private static final float TAU = (float) (Math.PI * 2);
+    private static final long WAVE_FRAME_MS = 33;
 
     private final Paint trackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ringPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
+    private final Runnable waveFrame = this::invalidate;
     private final PlayerIcon playIcon;
     private final PlayerIcon pauseIcon;
     private final Spring alt = new Spring(0, 520f, 0.6f, 0.002f);
@@ -34,6 +37,7 @@ public class RingPlayButton extends View {
     private float amplitude;
     private float phase;
     private long lastFrame;
+    private float drawnProgress = -1f;
 
     public RingPlayButton(Context context, int radiusDp, float strokeDp, int iconDp, float amplitudeDp, int waves) {
         super(context);
@@ -76,13 +80,30 @@ public class RingPlayButton extends View {
         invalidate();
     }
 
+    public void progressChanged() {
+        if (amplitude > 0f) {
+            return;
+        }
+        MessageObject mo = message;
+        float progress = mo != null ? Math.max(0f, Math.min(1f, mo.audioProgress)) : 0f;
+        if (Math.abs(progress - drawnProgress) * TAU * radius >= 1f) {
+            invalidate();
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        removeCallbacks(waveFrame);
+    }
+
     @Override
     protected void onDraw(@NonNull Canvas canvas) {
         long now = SystemClock.elapsedRealtime();
         float dt = lastFrame == 0 ? 0.016f : Math.min(0.05f, (now - lastFrame) / 1000f);
         lastFrame = now;
         boolean animating = alt.step(dt);
-        float targetAmp = playing ? maxAmplitude : 0f;
+        float targetAmp = playing && !LiteMode.isPowerSaverApplied() ? maxAmplitude : 0f;
         amplitude += (targetAmp - amplitude) * (1f - (float) Math.pow(0.85, dt / 0.04f));
         if (Math.abs(amplitude - targetAmp) < dpf2(0.03f)) {
             amplitude = targetAmp;
@@ -95,6 +116,7 @@ public class RingPlayButton extends View {
         canvas.drawCircle(cx, cy, radius, trackPaint);
         MessageObject mo = message;
         float progress = mo != null ? Math.max(0f, Math.min(1f, mo.audioProgress)) : 0f;
+        drawnProgress = progress;
         float sweep = 360f * progress;
         if (sweep > 0.5f) {
             path.rewind();
@@ -122,8 +144,11 @@ public class RingPlayButton extends View {
         float t = Math.max(0f, Math.min(1f, alt.value));
         drawIcon(canvas, playIcon, 1f - t, 1f - 0.4f * alt.value);
         drawIcon(canvas, pauseIcon, t, 0.6f + 0.4f * alt.value);
-        if (animating || amplitude > 0f || targetAmp != amplitude) {
+        removeCallbacks(waveFrame);
+        if (animating || targetAmp != amplitude) {
             postInvalidateOnAnimation();
+        } else if (amplitude > 0f) {
+            postDelayed(waveFrame, WAVE_FRAME_MS);
         } else {
             lastFrame = 0;
         }
