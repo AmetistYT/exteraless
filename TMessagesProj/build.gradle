@@ -185,6 +185,7 @@ android {
         buildConfigField 'int', 'APP_ID', appId
         buildConfigField 'String', 'APP_HASH', '"' + appHash + '"'
         buildConfigField 'long', 'BUILD_TIMESTAMP', buildTimestamp + 'L'
+        buildConfigField 'boolean', 'DEBUG_TOOLS', String.valueOf(project.findProperty('debugTools') == 'true')
 
         externalNativeBuild {
             cmake {
