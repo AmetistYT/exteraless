@@ -17,6 +17,8 @@ import org.telegram.ui.ActionBar.Theme;
 import java.util.List;
 import java.util.Map;
 
+import tw.nekomimi.nekogram.helpers.MonetHelper;
+
 public final class PlayerColors {
 
     public final boolean dark;
@@ -128,6 +130,16 @@ public final class PlayerColors {
 
     public static boolean isDark(Theme.ResourcesProvider resourcesProvider) {
         return ColorUtils.calculateLuminance(Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider)) < 0.5;
+    }
+
+    public static int noCoverSeed(Theme.ResourcesProvider resourcesProvider) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            Integer monet = MonetHelper.getColorOrNull("a1_500");
+            if (monet != null && Color.alpha(monet) != 0) {
+                return monet | 0xff000000;
+            }
+        }
+        return fallbackSeed(resourcesProvider);
     }
 
     public static int fallbackSeed(Theme.ResourcesProvider resourcesProvider) {

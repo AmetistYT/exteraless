@@ -181,7 +181,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         account = playing != null ? playing.currentAccount : UserConfig.selectedAccount;
         currentAccount = account;
         dark = PlayerColors.isDark(resourcesProvider);
-        fallbackSeed = PlayerColors.fallbackSeed(resourcesProvider);
+        fallbackSeed = PlayerColors.noCoverSeed(resourcesProvider);
         Integer seed = PlayerArt.cachedSeed(playing);
         colors = PlayerColors.fromSeed(seed != null ? seed : fallbackSeed, dark);
 
@@ -286,7 +286,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         header.addView(headerCenter, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 56, 0, 56, 0));
         layout.addView(header);
 
-        cover = new CoverImage(context, 96);
+        cover = new CoverImage(context, 120);
         cover.setRadius(dp(28));
         cover.setListener(fallbackSeed, this::onSeed);
         cover.setOutlineProvider(new ViewOutlineProvider() {
