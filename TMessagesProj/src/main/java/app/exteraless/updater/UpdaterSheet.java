@@ -166,6 +166,7 @@ public class UpdaterSheet extends BottomSheet {
             }
         };
         notesScroll.setVerticalScrollBarEnabled(false);
+        notesScroll.setVisibility(View.GONE);
         notesScroll.addView(notesView, new FrameLayout.LayoutParams(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
         card.addView(notesScroll, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 12, 0, 0));
         content.addView(card, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 20, 0, 0));
@@ -372,12 +373,14 @@ public class UpdaterSheet extends BottomSheet {
         ((View) statusImage.getParent()).setBackground(Theme.createCircleDrawable(dp(44), iconBackground));
         statusSubtitle.setText(subtitle);
         statusSubtitle.setVisibility(TextUtils.isEmpty(subtitle) ? View.GONE : View.VISIBLE);
-        boolean hasNotes = value == STATE_AVAILABLE && release != null && !TextUtils.isEmpty(release.body);
-        if (hasNotes) {
-            notesView.setText(Emoji.replaceEmoji(UpdateSheet.format(release.body), notesView.getPaint().getFontMetricsInt(), false));
-            notesScroll.scrollTo(0, 0);
+        if (!checking) {
+            boolean hasNotes = value == STATE_AVAILABLE && release != null && !TextUtils.isEmpty(release.body);
+            if (hasNotes) {
+                notesView.setText(Emoji.replaceEmoji(UpdateSheet.format(release.body), notesView.getPaint().getFontMetricsInt(), false));
+                notesScroll.scrollTo(0, 0);
+            }
+            notesScroll.setVisibility(hasNotes ? View.VISIBLE : View.GONE);
         }
-        notesScroll.setVisibility(hasNotes ? View.VISIBLE : View.GONE);
         updateAction();
     }
 
@@ -408,11 +411,9 @@ public class UpdaterSheet extends BottomSheet {
 
     private void updateAction() {
         progressView.setVisibility(downloading ? View.VISIBLE : View.GONE);
-        if (state == STATE_CHECKING) {
-            actionButton.setVisibility(View.GONE);
-            return;
-        }
         actionButton.setVisibility(View.VISIBLE);
+        actionButton.setEnabled(state != STATE_CHECKING);
+        actionButton.setAlpha(state == STATE_CHECKING ? 0.5f : 1f);
         boolean filled = state == STATE_AVAILABLE && !downloading;
         actionButton.setTextColor(filled ? getThemedColor(Theme.key_featuredStickers_buttonText) : accent);
         actionButton.setBackground(Theme.AdaptiveRipple.filledRect(filled ? accent : ColorUtils.setAlphaComponent(accent, 0x1F), 24));
