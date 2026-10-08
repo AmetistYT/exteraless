@@ -10554,6 +10554,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         } else {
             proxyMenuSubItem.setSubtext(null);
         }
+        proxyDrawable.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_actionBarDefaultSubmenuItemIcon), PorterDuff.Mode.SRC_IN));
         proxyDrawable.setConnected(proxyEnabled, connected, animated);
     }
 
@@ -14258,6 +14259,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             if (proxyVisible) {
                 io.addGap();
                 io.add(proxyMenuSubItem);
+                proxyDrawable.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_actionBarDefaultSubmenuItemIcon), PorterDuff.Mode.SRC_IN));
             }
         }
 
