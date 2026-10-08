@@ -56,6 +56,25 @@ def test_ui_only_plugin_is_offered_nothing(scanner, tmp_path):
     assert found == {}
 
 
+def test_app_files_dir_offers_files(scanner, tmp_path):
+    found = _scan(scanner, tmp_path, (
+        "import os\n"
+        "from file_utils import get_files_dir, ensure_dir_exists\n"
+        "def data_dir():\n"
+        "    return ensure_dir_exists(os.path.join(get_files_dir(), 'cache'))\n"
+    ))
+    assert "files" in found
+
+
+def test_own_plugin_dir_is_offered_nothing(scanner, tmp_path):
+    found = _scan(scanner, tmp_path, (
+        "from file_utils import get_plugin_dir, get_plugin_cache_dir\n"
+        "def dirs():\n"
+        "    return get_plugin_dir(), get_plugin_cache_dir()\n"
+    ))
+    assert found == {}
+
+
 
 _STUB_DEX = """\
 # __DEX_BEGIN__
