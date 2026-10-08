@@ -114,3 +114,23 @@ def test_loaded_embedded_dex_adds_what_it_calls(scanner, tmp_path, monkeypatch):
     assert "DEX: HttpURLConnection" in found["network"]
     assert "DEX: Xposed" in found["hooks"]
     assert "DEX: Runtime.exec" in found["native"]
+
+
+def test_dex_in_base64_literal_adds_what_it_calls(scanner, tmp_path, monkeypatch):
+    symbols = (
+        {"Lcom/example/Core;"},
+        ["Lcom/example/Core;", "Landroid/webkit/WebView;"],
+        [("Landroid/webkit/WebView;", "loadUrl")],
+    )
+    monkeypatch.setattr(scanner, "_dex_symbols", lambda data: symbols)
+    payload = "\n".join(line[2:] for line in _STUB_DEX.splitlines()[1:-1])
+    found = _scan(scanner, tmp_path,
+                  "from dalvik.system import InMemoryDexClassLoader\n"
+                  f'DEX_B64 = """{payload}"""\n')
+    assert found["dex"][:3] == ["size:920", "loaded:yes", "class:com.example.Core"]
+    assert "DEX: WebView" in found["network"]
+
+
+def test_plain_base64_literal_is_not_a_dex(scanner, tmp_path):
+    found = _scan(scanner, tmp_path, f'ICON = "{"QUJD" * 300}"\n')
+    assert "dex" not in found

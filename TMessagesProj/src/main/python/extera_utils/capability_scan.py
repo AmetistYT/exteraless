@@ -126,6 +126,8 @@ KEY_DEX = "dex"
 
 _DEX_BLOCK = re.compile(r"^[ \t]*#[ \t]*__DEX_BEGIN__[ \t\r]*$(.*?)^[ \t]*#[ \t]*__DEX_END__[ \t\r]*$",
                         re.M | re.S)
+_DEX_LITERAL = re.compile(r"(\"\"\"|'''|\"|')([A-Za-z0-9+/=\s]{512,})\1")
+_DEX_LITERAL_PREFIXES = ("ZGV4C", "eJ", "eN", "eA", "eF")
 _DEX_LOADERS = ("InMemoryDexClassLoader", "DexClassLoader", "PathClassLoader")
 _MAX_DEX_BYTES = 8 * 1024 * 1024
 _DEX_CLASS_LIMIT = 6
@@ -188,21 +190,56 @@ def _decode_dex_block(body: str):
     return raw
 
 
+def _decode_dex_literal(body: str):
+    text = "".join(body.split())
+    if not text.startswith(_DEX_LITERAL_PREFIXES) or len(text) > _MAX_DEX_BYTES * 2:
+        return None
+    try:
+        raw = base64.b64decode(text)
+    except Exception:
+        return None
+    if not raw.startswith(b"dex\n"):
+        try:
+            if not zlib.decompressobj().decompress(raw, 4).startswith(b"dex\n"):
+                return None
+            raw = zlib.decompressobj().decompress(raw, _MAX_DEX_BYTES + 1)
+        except zlib.error:
+            return None
+    if len(raw) > _MAX_DEX_BYTES:
+        return None
+    return raw
+
+
 def _scan_embedded_dex(source: str) -> Dict[str, List[str]]:
-    blocks = list(_DEX_BLOCK.finditer(source))
-    if not blocks:
+    payloads = []
+    spans = []
+    for block in _DEX_BLOCK.finditer(source):
+        try:
+            payloads.append(_decode_dex_block(block.group(1)))
+        except Exception:
+            payloads.append(None)
+        spans.append(block.span())
+    for literal in _DEX_LITERAL.finditer(source):
+        raw = _decode_dex_literal(literal.group(2))
+        if raw is not None:
+            payloads.append(raw)
+            spans.append(literal.span(2))
+    if not payloads:
         return {}
-    outside = _DEX_BLOCK.sub("", source)
+    parts = []
+    cursor = 0
+    for start, end in sorted(spans):
+        if start >= cursor:
+            parts.append(source[cursor:start])
+            cursor = end
+    parts.append(source[cursor:])
+    outside = "".join(parts)
     loaded = any(loader in outside for loader in _DEX_LOADERS)
     summary: List[str] = []
     found: Dict[str, List[str]] = {}
     total = 0
     defined_all: List[str] = []
-    for block in blocks:
-        try:
-            raw = _decode_dex_block(block.group(1))
-        except Exception:
-            raw = None
+    for raw in payloads:
         if raw is None:
             _note_opaque(found, "unreadable DEX block")
             continue
