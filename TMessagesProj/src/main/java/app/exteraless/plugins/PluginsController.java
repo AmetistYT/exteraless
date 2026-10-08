@@ -1784,12 +1784,20 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         if (PluginSinkGate.refuseForeign(pluginId, "addEventHook")) {
             return;
         }
+        if (!matchSubstring && PluginsConstants.SEND_MESSAGE_HOOK.equals(hookName)) {
+            registerSendMessageHook(pluginId, priority);
+            return;
+        }
         registerRequestHook(pluginId, hookName, matchSubstring, priority);
     }
 
     @Override
     public void removeEventHook(String pluginId, String hookName) {
         if (PluginSinkGate.refuseForeign(pluginId, "removeEventHook")) {
+            return;
+        }
+        if (PluginsConstants.SEND_MESSAGE_HOOK.equals(hookName)) {
+            unregisterSendMessageHook(pluginId);
             return;
         }
         unregisterRequestHook(pluginId, hookName);
