@@ -27,6 +27,7 @@ import app.exteraless.plugins.PluginsWatchdog;
 public final class HookStats {
 
     static volatile boolean enabled;
+    private static volatile boolean pythonArmed;
 
     private static final Set<HookStats> ALL = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     private static final AtomicInteger NEXT_ID = new AtomicInteger();
@@ -135,11 +136,20 @@ public final class HookStats {
             }
         }
         enabled = true;
+        pythonArmed = Python.isStarted();
         callProfile("start");
+    }
+
+    public static void armPython() {
+        if (enabled && !pythonArmed && Python.isStarted()) {
+            pythonArmed = true;
+            callProfile("start");
+        }
     }
 
     public static void stop() {
         enabled = false;
+        pythonArmed = false;
         callProfile("stop");
     }
 

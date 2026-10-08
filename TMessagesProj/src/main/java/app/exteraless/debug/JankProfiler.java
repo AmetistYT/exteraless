@@ -2,6 +2,7 @@ package app.exteraless.debug;
 
 import android.app.Activity;
 import android.app.Application;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +12,9 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.util.Printer;
 import android.view.FrameMetrics;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 
 import androidx.annotation.NonNull;
@@ -170,6 +174,12 @@ public final class JankProfiler {
     private final FrameStats frameTotals = new FrameStats();
     private final HashMap<String, FrameStats> frameByScreen = new HashMap<>();
     private final HashSet<Window> windows = new HashSet<>();
+    private final HashMap<Window, RedrawTracker> redrawTrackers = new HashMap<>();
+    private final HashMap<String, Integer> redrawn = new HashMap<>();
+    private final ArrayList<View> dirtyLeaves = new ArrayList<>();
+    private final Rect visibleRect = new Rect();
+    private long checkedFrames;
+    private long cleanFrames;
     private final Application.ActivityLifecycleCallbacks lifecycleCallbacks;
     private final HandlerThread frameThread = new HandlerThread("JankProfilerFrames");
     private final Handler frameHandler;
@@ -264,6 +274,13 @@ public final class JankProfiler {
         } catch (Exception e) {
             windows.remove(window);
             FileLog.e(e);
+            return;
+        }
+        final View decor = window.peekDecorView();
+        if (decor != null) {
+            final RedrawTracker tracker = new RedrawTracker(decor);
+            decor.getViewTreeObserver().addOnPreDrawListener(tracker);
+            redrawTrackers.put(window, tracker);
         }
     }
 
@@ -276,6 +293,81 @@ public final class JankProfiler {
         } catch (Exception e) {
             FileLog.e(e);
         }
+        final RedrawTracker tracker = redrawTrackers.remove(window);
+        if (tracker != null) {
+            final ViewTreeObserver observer = tracker.root.getViewTreeObserver();
+            if (observer.isAlive()) {
+                observer.removeOnPreDrawListener(tracker);
+            }
+        }
+    }
+
+    private final class RedrawTracker implements ViewTreeObserver.OnPreDrawListener {
+        final View root;
+
+        RedrawTracker(View root) {
+            this.root = root;
+        }
+
+        @Override
+        public boolean onPreDraw() {
+            recordRedraw(root);
+            return true;
+        }
+    }
+
+    private void recordRedraw(View root) {
+        dirtyLeaves.clear();
+        collectDirty(root, dirtyLeaves);
+        for (int i = dirtyLeaves.size() - 1; i >= 0; i--) {
+            if (!dirtyLeaves.get(i).getGlobalVisibleRect(visibleRect)) {
+                dirtyLeaves.remove(i);
+            }
+        }
+        final String screen = screenName(currentScreen);
+        synchronized (redrawn) {
+            checkedFrames++;
+            if (dirtyLeaves.isEmpty()) {
+                cleanFrames++;
+                return;
+            }
+            for (View view : dirtyLeaves) {
+                increment(redrawn, screen + "  " + describeView(view));
+            }
+        }
+        dirtyLeaves.clear();
+    }
+
+    private static void collectDirty(View view, ArrayList<View> out) {
+        if (!view.isDirty() || view.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        if (view instanceof ViewGroup) {
+            final ViewGroup group = (ViewGroup) view;
+            final int before = out.size();
+            for (int i = 0, count = group.getChildCount(); i < count; i++) {
+                collectDirty(group.getChildAt(i), out);
+            }
+            if (out.size() > before) {
+                return;
+            }
+        }
+        out.add(view);
+    }
+
+    private static String describeView(View view) {
+        final StringBuilder name = new StringBuilder(view.getClass().getName());
+        if (view.getParent() != null) {
+            name.append(" in ").append(view.getParent().getClass().getName());
+        }
+        float alpha = 1f;
+        for (Object node = view; node instanceof View; node = ((View) node).getParent()) {
+            alpha *= ((View) node).getAlpha();
+        }
+        if (alpha <= 0f) {
+            name.append(" [alpha 0]");
+        }
+        return name.toString();
     }
 
     private final class FrameTracker implements Window.OnFrameMetricsAvailableListener {
@@ -571,6 +663,14 @@ public final class JankProfiler {
             screens.sort((a, b) -> Long.compare(b.getValue().janky, a.getValue().janky));
             for (Map.Entry<String, FrameStats> entry : screens) {
                 appendFrameLine(out, entry.getKey(), entry.getValue());
+            }
+        }
+
+        synchronized (redrawn) {
+            out.append("\n== redrawn views (dirty before draw) ==\n");
+            out.append("frames checked ").append(checkedFrames).append(", without dirty views ").append(cleanFrames).append('\n');
+            for (Map.Entry<String, Integer> entry : sorted(redrawn, REPORT_TOP)) {
+                out.append(String.format(Locale.US, "%7d  ", entry.getValue())).append(entry.getKey()).append('\n');
             }
         }
 

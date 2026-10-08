@@ -25,6 +25,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.Utilities;
@@ -268,6 +269,7 @@ public final class EnergyProfiler {
     private final Application.ActivityLifecycleCallbacks lifecycleCallbacks;
     private boolean ownHookStats;
     private String wakelockStatus = "not tracked";
+    private boolean wakelocksWaiting;
     private final ArrayList<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
     private final IdentityHashMap<Object, HeldLock> heldLocks = new IdentityHashMap<>();
     private final Runnable tick = this::tick;
@@ -379,6 +381,12 @@ public final class EnergyProfiler {
     private void tick() {
         if (stopped) {
             return;
+        }
+        if (wakelocksWaiting) {
+            installWakelockHooks();
+        }
+        if (ownHookStats) {
+            HookStats.armPython();
         }
         sample();
         handler.removeCallbacks(tick);
@@ -566,9 +574,11 @@ public final class EnergyProfiler {
             return;
         }
         if (!XposedHooks.isReady()) {
+            wakelocksWaiting = true;
             wakelockStatus = "not tracked: native hooks are not active (no plugin uses hooks)";
             return;
         }
+        wakelocksWaiting = false;
         prefs.edit().putBoolean(KEY_WAKELOCK_PENDING, true).commit();
         try {
             final XC_MethodHook acquire = new XC_MethodHook() {
@@ -739,7 +749,8 @@ public final class EnergyProfiler {
         final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         final StringBuilder out = new StringBuilder();
         out.append("exteraless energy profile\n");
-        out.append("app ").append(BuildVars.BUILD_VERSION_STRING).append(" (").append(BuildVars.BUILD_COMMIT_ID).append(")")
+        out.append("app ").append(BuildVars.BUILD_VERSION_STRING).append(" (").append(BuildConfig.VERSION_CODE)
+                .append(BuildVars.BUILD_COMMIT_ID.isEmpty() ? "" : ", " + BuildVars.BUILD_COMMIT_ID).append(")")
                 .append(", ").append(Build.MANUFACTURER).append(' ').append(Build.MODEL)
                 .append(", Android ").append(Build.VERSION.RELEASE).append(" (API ").append(Build.VERSION.SDK_INT).append(")\n");
         out.append("started ").append(format.format(new Date(sessionStart)))
