@@ -7024,7 +7024,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         }
     }
 
-    private void clearMusicPlaylistState() {
+    public void clearMusicPlaylistState() {
         savedMusicPlaylistState = null;
     }
 
