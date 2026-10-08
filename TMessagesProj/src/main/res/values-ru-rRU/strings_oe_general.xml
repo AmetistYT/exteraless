@@ -184,6 +184,8 @@
     <string name="OEUserLookupNotFound">Пользователь %1$d не найден</string>
     <string name="OEUpdateTitle">Доступно обновление</string>
     <string name="OEUpdateDownloadProgress">%1$s из %2$s</string>
+    <string name="OEAyuSaveInArchived">Сохранять в архивных чатах</string>
+    <string name="OEAyuSaveInArchivedInfo">Удалённые и изменённые сообщения из чатов в архиве тоже сохраняются.</string>
     <string name="OEAyuDatabaseExport">Экспорт базы</string>
     <string name="OEAyuDatabaseImport">Импорт базы</string>
     <string name="OEAyuDatabaseImportInfo">Удалённые и изменённые сообщения из файла добавятся к уже сохранённым. Подходят выгрузки exteraless и AyuGram. Медиа из другого приложения могут не открыться.</string>

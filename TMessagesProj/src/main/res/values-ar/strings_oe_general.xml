@@ -167,6 +167,8 @@
     <string name="OEUserLookupNotFound">المستخدم %1$d غير موجود</string>
     <string name="OEUpdateTitle">يتوفر تحديث</string>
     <string name="OEUpdateDownloadProgress">%1$s من %2$s</string>
+    <string name="OEAyuSaveInArchived">الحفظ في المحادثات المؤرشفة</string>
+    <string name="OEAyuSaveInArchivedInfo">تُحفظ أيضًا الرسائل المحذوفة والمعدّلة من المحادثات المؤرشفة.</string>
     <string name="OEAyuDatabaseExport">تصدير قاعدة البيانات</string>
     <string name="OEAyuDatabaseImport">استيراد قاعدة البيانات</string>
     <string name="OEAyuDatabaseImportInfo">ستُضاف الرسائل المحذوفة والمعدّلة من هذا الملف إلى الرسائل المحفوظة. ملفات التصدير من exteraless وAyuGram مدعومة. قد لا تتوفر الوسائط من تطبيق آخر.</string>

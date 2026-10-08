@@ -89,6 +89,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private int saveReadDateRow;
     private int saveDeletedRow;
     private int saveEditsRow;
+    private int saveInArchivedRow;
     private int saveMediaRow;
     private int saveMediaPrivateChatsRow;
     private int saveMediaPublicChannelsRow;
@@ -142,6 +143,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         savingHeaderRow = addRow("ayuSavingHeader");
         saveDeletedRow = addRow(NaConfig.INSTANCE.getEnableSaveDeletedMessages().getKey());
         saveEditsRow = addRow(NaConfig.INSTANCE.getEnableSaveEditsHistory().getKey());
+        saveInArchivedRow = addRow("saveInArchived");
         if (saveDeleted) {
             saveMediaRow = addRow(NaConfig.INSTANCE.getMessageSavingSaveMedia().getKey());
             if (saveMediaExpanded) {
@@ -241,6 +243,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             toggleAyuConfig(view, NaConfig.INSTANCE.getEnableSaveDeletedMessages(), true);
         } else if (position == saveEditsRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getEnableSaveEditsHistory(), false);
+        } else if (position == saveInArchivedRow) {
+            toggleAyuConfig(view, NaConfig.INSTANCE.getSaveInArchivedChats(), false);
         } else if (position == saveMediaRow) {
             saveMediaExpanded = !saveMediaExpanded;
             rebuildRowsAndNotify();
@@ -629,6 +633,11 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getEnableSaveDeletedMessages(), true);
                     } else if (position == saveEditsRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getEnableSaveEditsHistory(), true);
+                    } else if (position == saveInArchivedRow) {
+                        cell.setTextAndValueAndCheck(
+                                getString(R.string.OEAyuSaveInArchived),
+                                getString(R.string.OEAyuSaveInArchivedInfo),
+                                NaConfig.INSTANCE.getSaveInArchivedChats().Bool(), true, true);
                     } else if (position == botUserRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getSaveDeletedMessageForBotUser(), true);
                     } else if (position == botChatRow) {
