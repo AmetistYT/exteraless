@@ -48,4 +48,6 @@
     <string name="OEProfileJoinedChannel">اشتركت في **%1$s** في %2$s</string>
     <string name="OEProfileChatCreated">أُنشئ **%1$s** في %2$s</string>
     <string name="OEProfileJoinDateUnknown">تاريخ الانضمام غير متاح</string>
+    <string name="AppIconsSelect">اختيار</string>
+    <string name="AppIconsKeep">الإبقاء على هذه</string>
 </resources>

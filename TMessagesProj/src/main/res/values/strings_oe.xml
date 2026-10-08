@@ -36,6 +36,25 @@
     <string name="AppIconMono" translatable="false">Mono</string>
     <string name="AppIconNothing" translatable="false">Nothing</string>
     <string name="AppIconPlus" translatable="false">Plus</string>
+    <string name="AppIconsSelect">Select</string>
+    <string name="AppIconsKeep">Keep this one</string>
+    <string name="AppIconInfoExteraless"><!-- сюда подпись --></string>
+    <string name="AppIconInfoBlueprint"><!-- сюда подпись --></string>
+    <string name="AppIconInfoRed"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNya"><!-- сюда подпись --></string>
+    <string name="AppIconInfoAyu"><!-- сюда подпись --></string>
+    <string name="AppIconInfoQuack"><!-- сюда подпись --></string>
+    <string name="AppIconInfoGo"><!-- сюда подпись --></string>
+    <string name="AppIconInfoHand"><!-- сюда подпись --></string>
+    <string name="AppIconInfoMono"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNothing"><!-- сюда подпись --></string>
+    <string name="AppIconInfoPlus"><!-- сюда подпись --></string>
+    <string name="AppIconInfoTelegram"><!-- сюда подпись --></string>
+    <string name="AppIconInfoVintage"><!-- сюда подпись --></string>
+    <string name="AppIconInfoAqua"><!-- сюда подпись --></string>
+    <string name="AppIconInfoPremium"><!-- сюда подпись --></string>
+    <string name="AppIconInfoTurbo"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNox"><!-- сюда подпись --></string>
     <string name="OpenExteraPreferences">exteraless Preferences</string>
     <string name="OpenExteraDesignSection">Design</string>
     <string name="OpenExteraDesigner">Icons and design</string>

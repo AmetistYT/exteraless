@@ -65,4 +65,6 @@
     <string name="OEProfileJoinedChannel">Вы подписались на **%1$s** %2$s</string>
     <string name="OEProfileChatCreated">**%1$s** создан %2$s</string>
     <string name="OEProfileJoinDateUnknown">Дата вступления недоступна</string>
+    <string name="AppIconsSelect">Выбрать</string>
+    <string name="AppIconsKeep">Оставить эту</string>
 </resources>
