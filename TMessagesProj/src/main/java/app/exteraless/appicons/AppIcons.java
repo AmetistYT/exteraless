@@ -27,6 +27,7 @@ public final class AppIcons {
 
     private static final HashMap<String, Integer> DESCRIPTIONS = new HashMap<>();
     private static final HashMap<LauncherIcon, Integer> accents = new HashMap<>();
+    private static volatile LauncherIcon pending;
 
     // пока все подписи пустые, строка под названием не показывается
     static {
@@ -86,6 +87,10 @@ public final class AppIcons {
     }
 
     public static LauncherIcon current() {
+        LauncherIcon applying = pending;
+        if (applying != null) {
+            return applying;
+        }
         for (LauncherIcon icon : LauncherIcon.values()) {
             if (LauncherIconController.isEnabled(icon)) {
                 return icon;
@@ -95,7 +100,13 @@ public final class AppIcons {
     }
 
     public static void apply(LauncherIcon icon) {
-        Utilities.globalQueue.postRunnable(() -> LauncherIconController.setIcon(icon));
+        pending = icon;
+        Utilities.globalQueue.postRunnable(() -> {
+            LauncherIconController.setIcon(icon);
+            if (pending == icon) {
+                pending = null;
+            }
+        });
     }
 
     // слои 108dp, а видно только 72dp в центре

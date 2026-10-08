@@ -140,11 +140,17 @@ public class AppIconsActivity extends BaseFragment {
 
     @Override
     public void onFragmentDestroy() {
+        cancelTintAnimation();
+        super.onFragmentDestroy();
+    }
+
+    private void cancelTintAnimation() {
         if (tintAnimator != null) {
+            tintAnimator.removeAllListeners();
+            tintAnimator.removeAllUpdateListeners();
             tintAnimator.cancel();
             tintAnimator = null;
         }
-        super.onFragmentDestroy();
     }
 
     @Override
@@ -212,15 +218,12 @@ public class AppIconsActivity extends BaseFragment {
     }
 
     private void animateTint(int to) {
+        cancelTintAnimation();
         if (tint == to) {
             return;
         }
-        if (tintAnimator != null) {
-            tintAnimator.cancel();
-            tintAnimator = null;
-        }
         int from = tint;
-        if (from == 0) {
+        if (from == 0 || to == 0) {
             tint = to;
             invalidateTop();
             updateStatusBar();
