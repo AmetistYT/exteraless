@@ -245,6 +245,34 @@ public class PlayerQueueSheet extends BottomSheet implements NotificationCenter.
         return direct() ? playlist.get(position) : playlist.get(playlist.size() - 1 - position);
     }
 
+    private static MessageObject currentItem() {
+        MediaController mc = MediaController.getInstance();
+        MessageObject playing = mc.getPlayingMessageObject();
+        if (playing == null) {
+            return null;
+        }
+        ArrayList<MessageObject> playlist = mc.getPlaylist();
+        for (int i = 0; i < playlist.size(); i++) {
+            if (playlist.get(i) == playing) {
+                return playing;
+            }
+        }
+        for (int i = 0; i < playlist.size(); i++) {
+            MessageObject mo = playlist.get(i);
+            if (mo.getDialogId() == playing.getDialogId() && mo.getId() == playing.getId()) {
+                return mo;
+            }
+        }
+        String key = PlayerArt.key(playing);
+        for (int i = 0; i < playlist.size(); i++) {
+            MessageObject mo = playlist.get(i);
+            if (key.equals(PlayerArt.key(mo))) {
+                return mo;
+            }
+        }
+        return null;
+    }
+
     private int indexOfPlaying() {
         MessageObject playing = MediaController.getInstance().getPlayingMessageObject();
         int count = adapter.getItemCount();
@@ -355,8 +383,7 @@ public class PlayerQueueSheet extends BottomSheet implements NotificationCenter.
         }
 
         void updateState() {
-            MessageObject playing = MediaController.getInstance().getPlayingMessageObject();
-            boolean current = message != null && playing != null && PlayerArt.key(playing).equals(PlayerArt.key(message));
+            boolean current = message != null && message == currentItem();
             bg.setColor(current ? colors.secondaryContainer : 0);
             title.setTextColor(current ? colors.onSecondaryContainer : colors.onSurface);
             artist.setTextColor(current ? colors.onSecondaryContainer : colors.onSurfaceVariant);
