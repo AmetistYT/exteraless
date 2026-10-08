@@ -178,4 +178,7 @@ Código:
     <string name="PluginsUnconsentedTitle">Plugins añadidos sin permisos</string>
     <string name="PluginsUnconsentedMore">%1$s y %2$d más</string>
     <string name="PluginsUnconsentedAction">Revisar</string>
+    <string name="PluginOverlayTitle">Mostrar sobre otras apps</string>
+    <string name="PluginOverlayText">%1$s quiere mostrar una ventana sobre otras apps. Permítelo en los ajustes del sistema e inténtalo de nuevo.</string>
+    <string name="PluginOverlayOpen">Abrir ajustes</string>
 </resources>

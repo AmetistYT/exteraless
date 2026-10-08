@@ -178,4 +178,7 @@ Wtyczka: %1$s
     <string name="PluginsUnconsentedTitle">Wtyczki dodane bez uprawnień</string>
     <string name="PluginsUnconsentedMore">%1$s i %2$d więcej</string>
     <string name="PluginsUnconsentedAction">Przejrzyj</string>
+    <string name="PluginOverlayTitle">Wyświetlanie nad innymi aplikacjami</string>
+    <string name="PluginOverlayText">%1$s chce wyświetlić okno nad innymi aplikacjami. Zezwól na to w ustawieniach systemu i spróbuj ponownie.</string>
+    <string name="PluginOverlayOpen">Otwórz ustawienia</string>
 </resources>

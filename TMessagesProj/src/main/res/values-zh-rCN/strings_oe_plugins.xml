@@ -178,4 +178,7 @@
     <string name="PluginsUnconsentedTitle">已添加未授权的插件</string>
     <string name="PluginsUnconsentedMore">%1$s 及另外 %2$d 个</string>
     <string name="PluginsUnconsentedAction">查看</string>
+    <string name="PluginOverlayTitle">在其他应用上层显示</string>
+    <string name="PluginOverlayText">%1$s 想在其他应用上层显示窗口。请在系统设置中允许后重试。</string>
+    <string name="PluginOverlayOpen">打开设置</string>
 </resources>

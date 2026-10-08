@@ -99,6 +99,10 @@ public final class PythonBridge {
         return PluginPermissions.check(pluginId, permission, what);
     }
 
+    public static void noteOverlayDenied(String pluginId) {
+        PluginDenialNotice.noteOverlay(pluginId);
+    }
+
     public static boolean isUnsafeMode() {
         return PluginPermissions.isUnsafeMode();
     }

@@ -1,8 +1,14 @@
 package app.exteraless.plugins;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 import android.text.TextUtils;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
@@ -38,6 +44,7 @@ import app.exteraless.plugins.ui.PluginsActivity;
 public final class PluginDenialNotice {
 
     private static final Set<String> SHOWN = ConcurrentHashMap.newKeySet();
+    private static final Set<String> OVERLAY_SHOWN = ConcurrentHashMap.newKeySet();
     private static final Queue<String> PENDING = new ConcurrentLinkedQueue<>();
     private static final Set<String> UNCONSENTED = ConcurrentHashMap.newKeySet();
     private static final Runnable SHOW_UNCONSENTED = PluginDenialNotice::showUnconsented;
@@ -73,6 +80,36 @@ public final class PluginDenialNotice {
                 PENDING.add(mark);
             }
         });
+    }
+
+    public static void noteOverlay(String pluginId) {
+        if (TextUtils.isEmpty(pluginId) || Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return;
+        }
+        AndroidUtilities.runOnUIThread(() -> showOverlay(pluginId));
+    }
+
+    private static void showOverlay(String pluginId) {
+        BaseFragment fragment = LaunchActivity.getSafeLastFragment();
+        Activity activity = fragment != null ? fragment.getParentActivity() : null;
+        if (activity == null || Settings.canDrawOverlays(activity) || !OVERLAY_SHOWN.add(pluginId)) {
+            return;
+        }
+        Plugin plugin = PluginsController.getInstance().getPlugin(pluginId);
+        String name = plugin != null ? plugin.getDisplayName() : pluginId;
+        fragment.showDialog(new AlertDialog.Builder(activity, fragment.getResourceProvider())
+                .setTitle(LocaleController.getString(R.string.PluginOverlayTitle))
+                .setMessage(LocaleController.formatString(R.string.PluginOverlayText, name))
+                .setPositiveButton(LocaleController.getString(R.string.PluginOverlayOpen), (d, w) -> {
+                    try {
+                        activity.startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:" + activity.getPackageName())));
+                    } catch (Exception e) {
+                        FileLog.e(e);
+                    }
+                })
+                .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
+                .create());
     }
 
     public static void noteUnconsented(String pluginId) {
@@ -219,6 +256,7 @@ public final class PluginDenialNotice {
             return;
         }
         SHOWN.removeIf(mark -> mark.startsWith(pluginId + "|"));
+        OVERLAY_SHOWN.remove(pluginId);
         PENDING.removeIf(mark -> mark.startsWith(pluginId + "|"));
     }
 }

@@ -180,4 +180,7 @@
     <string name="PluginsUnconsentedTitle">أُضيفت إضافات بلا أذونات</string>
     <string name="PluginsUnconsentedMore">%1$s و%2$d أخرى</string>
     <string name="PluginsUnconsentedAction">مراجعة</string>
+    <string name="PluginOverlayTitle">الظهور فوق التطبيقات الأخرى</string>
+    <string name="PluginOverlayText">تريد %1$s عرض نافذة فوق التطبيقات الأخرى. اسمح بذلك في إعدادات النظام ثم حاول مرة أخرى.</string>
+    <string name="PluginOverlayOpen">فتح الإعدادات</string>
 </resources>

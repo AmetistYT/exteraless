@@ -187,4 +187,7 @@
     <string name="PluginsDexLoaded">%1$s. Плагин загружает и запускает его; что он вызывает, учтено в разрешениях ниже с пометкой «DEX».</string>
     <string name="PluginsDexUnused">%1$s, но плагин его нигде не загружает — этот код не выполняется.</string>
     <string name="PluginsDexClasses">Классы: %1$s</string>
+    <string name="PluginOverlayTitle">Поверх других приложений</string>
+    <string name="PluginOverlayText">%1$s хочет показать окно поверх других приложений. Разрешите это в настройках системы и попробуйте снова.</string>
+    <string name="PluginOverlayOpen">Открыть настройки</string>
 </resources>
