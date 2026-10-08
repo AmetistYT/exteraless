@@ -2148,6 +2148,10 @@ public class MessageObject {
     }
 
     protected void checkBigAnimatedEmoji() {
+        checkBigAnimatedEmoji(true);
+    }
+
+    private void checkBigAnimatedEmoji(boolean generate) {
         emojiAnimatedSticker = null;
         emojiAnimatedStickerId = null;
         if (emojiOnlyCount == 1 && !(getMedia(messageOwner) instanceof TLRPC.TL_messageMediaWebPage) && !(getMedia(messageOwner) instanceof TLRPC.TL_messageMediaInvoice) && (getMedia(messageOwner) instanceof TLRPC.TL_messageMediaEmpty || getMedia(messageOwner) == null) && this.messageOwner.grouped_id == 0) {
@@ -2193,7 +2197,9 @@ public class MessageObject {
             }
         }
         if (emojiAnimatedSticker == null && emojiAnimatedStickerId == null) {
-            generateLayout(null);
+            if (generate) {
+                generateLayout(null);
+            }
         } else if (isSticker()) {
             type = TYPE_STICKER;
         } else if (isAnimatedSticker()) {
@@ -7032,7 +7038,7 @@ public class MessageObject {
                 replaceEmojiToLottieFrame(messageText, emojiOnly);
             }
             checkEmojiOnly(emojiOnly);
-            checkBigAnimatedEmoji();
+            checkBigAnimatedEmoji(false);
             setType();
             generateLayout(fromUser);
             if (caption != null) {
@@ -8496,6 +8502,9 @@ public class MessageObject {
         int linksCount = 0, spoilersCount = 0, codesCount = 0;
         for (int a = 0; a < count; a++) {
             TextStyleSpan.TextStyleRun run = runs.get(a);
+            if (run.start < 0 || run.start >= run.end || run.end > text.length()) {
+                continue;
+            }
 
             if (run.start >= run.end)
                 continue;
@@ -8562,6 +8571,13 @@ public class MessageObject {
             } else {
                 setRun = true;
                 spannable.setSpan(new TextStyleSpan(run), run.start, run.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            if (!setRun && (run.flags & TextStyleSpan.FLAG_STYLE_MONO) == 0
+                    && (run.flags & (TextStyleSpan.FLAG_STYLE_BOLD | TextStyleSpan.FLAG_STYLE_ITALIC)) != 0) {
+                Typeface linkTypeface = run.getTypeface();
+                if (linkTypeface != null) {
+                    spannable.setSpan(new app.exteraless.chats.LinkTypefaceSpan(linkTypeface), run.start, run.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
             }
             if (!setRun && (run.flags & TextStyleSpan.FLAG_STYLE_SPOILER) != 0) {
                 if (spoilersCount >= SpoilerEffect.MAX_SPOILERS_COUNT) continue;

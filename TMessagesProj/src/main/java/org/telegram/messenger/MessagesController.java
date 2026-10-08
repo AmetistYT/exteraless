@@ -152,6 +152,7 @@ import xyz.nextalone.nagram.helper.LocalPremiumStatusHelper;
 import com.radolyn.ayugram.AyuConstants;
 import com.radolyn.ayugram.messages.AyuSavePreferences;
 import com.radolyn.ayugram.messages.AyuMessagesController;
+import com.radolyn.ayugram.utils.AyuGhostUtils;
 import com.radolyn.ayugram.utils.AyuState;
 import com.radolyn.ayugram.utils.LastSeenHelper;
 
@@ -10108,12 +10109,18 @@ public class MessagesController extends BaseController implements NotificationCe
 
 
     public ArrayList<TLRPC.Dialog> getDialogs(int folderId) {
+        if (folderId == 0) {
+            final boolean hideArchive = NaConfig.INSTANCE.getHideArchive().Bool();
+            final boolean hasArchiveDialog = dialogs_dict.get(DialogObject.makeFolderDialogId(1)) != null;
+            if (hideArchive && hasArchiveDialog) {
+                removeFolder(1);
+            } else if (!hideArchive && !hasArchiveDialog && (hasArchivedChats || getStoriesController().hasHiddenStories())) {
+                checkArchiveFolder();
+            }
+        }
         ArrayList<TLRPC.Dialog> dialogs = dialogsByFolder.get(folderId);
         if (dialogs == null) {
             return new ArrayList<>();
-        }
-        if (NaConfig.INSTANCE.getHideArchive().Bool() && folderId != 1) {
-            removeFolder(1);
         }
         return dialogs;
     }
@@ -10140,40 +10147,53 @@ public class MessagesController extends BaseController implements NotificationCe
 
     public void putAllNeededDraftDialogs() {
         LongSparseArray<LongSparseArray<TLRPC.DraftMessage>> drafts = getMediaDataController().getDrafts();
+        final long minDate = getMinDraftDialogDate();
+        boolean added = false;
         for (int i = 0, size = drafts.size(); i < size; i++) {
             LongSparseArray<TLRPC.DraftMessage> threads = drafts.valueAt(i);
             TLRPC.DraftMessage draftMessage = threads.get(0);
-            if (draftMessage == null) {
+            if (draftMessage == null || draftMessage.date < minDate) {
                 continue;
             }
-            putDraftDialogIfNeed(drafts.keyAt(i), draftMessage);
+            if (addDraftDialog(drafts.keyAt(i), draftMessage)) {
+                added = true;
+            }
+        }
+        if (added) {
+            sortDialogs(null);
         }
     }
 
     public void putDraftDialogIfNeed(long dialogId, TLRPC.DraftMessage draftMessage) {
-        if (dialogs_dict.indexOfKey(dialogId) < 0) {
-            if (ChatObject.isMonoForum(currentAccount, dialogId) && !ChatObject.canManageMonoForum(currentAccount, dialogId)) {
-                return;
-            }
-
-            MediaDataController mediaDataController = getMediaDataController();
-            int dialogsCount = allDialogs.size();
-            if (dialogsCount > 0) {
-                TLRPC.Dialog dialog = allDialogs.get(dialogsCount - 1);
-                long minDate = DialogObject.getLastMessageOrDraftDate(dialog, mediaDataController.getDraft(dialog.id, 0));
-                if (draftMessage.date < minDate) {
-                    return;
-                }
-            }
-            TLRPC.TL_dialog dialog = new TLRPC.TL_dialog();
-            dialog.id = dialogId;
-            dialog.draft = draftMessage;
-            dialog.folder_id = mediaDataController.getDraftFolderId(dialogId);
-            dialog.flags = dialogId < 0 && ChatObject.isChannel(getChat(-dialogId)) ? 1 : 0;
-            dialogs_dict.put(dialogId, dialog);
-            allDialogs.add(dialog);
+        if (dialogs_dict.indexOfKey(dialogId) < 0 && draftMessage.date >= getMinDraftDialogDate() && addDraftDialog(dialogId, draftMessage)) {
             sortDialogs(null);
         }
+    }
+
+    private long getMinDraftDialogDate() {
+        int dialogsCount = allDialogs.size();
+        if (dialogsCount == 0) {
+            return Long.MIN_VALUE;
+        }
+        TLRPC.Dialog dialog = allDialogs.get(dialogsCount - 1);
+        return DialogObject.getLastMessageOrDraftDate(dialog, getMediaDataController().getDraft(dialog.id, 0));
+    }
+
+    private boolean addDraftDialog(long dialogId, TLRPC.DraftMessage draftMessage) {
+        if (dialogs_dict.indexOfKey(dialogId) >= 0) {
+            return false;
+        }
+        if (ChatObject.isMonoForum(currentAccount, dialogId) && !ChatObject.canManageMonoForum(currentAccount, dialogId)) {
+            return false;
+        }
+        TLRPC.TL_dialog dialog = new TLRPC.TL_dialog();
+        dialog.id = dialogId;
+        dialog.draft = draftMessage;
+        dialog.folder_id = getMediaDataController().getDraftFolderId(dialogId);
+        dialog.flags = dialogId < 0 && ChatObject.isChannel(getChat(-dialogId)) ? 1 : 0;
+        dialogs_dict.put(dialogId, dialog);
+        allDialogs.add(dialog);
+        return true;
     }
 
     public void removeDraftDialogIfNeed(long dialogId) {
@@ -12645,6 +12665,13 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void checkArchiveFolder() {
+        if (NaConfig.INSTANCE.getHideArchive().Bool()) {
+            if (dialogs_dict.get(DialogObject.makeFolderDialogId(1)) != null) {
+                removeFolder(1);
+            }
+            getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, 0);
+            return;
+        }
         if (!hasArchivedChats && !getStoriesController().hasHiddenStories()) {
             removeFolder(1);
         } else {
@@ -14733,7 +14760,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void markMentionMessageAsRead(int mid, long channelId, long did) {
-        getMessagesStorage().markMentionMessageAsRead(-channelId, mid, did);
+        getMessagesStorage().markMentionMessageAsRead(did, mid, did);
         if (channelId != 0) {
             TLRPC.TL_channels_readMessageContents req = new TLRPC.TL_channels_readMessageContents();
             req.channel = getInputChannel(channelId);
@@ -14741,13 +14768,13 @@ public class MessagesController extends BaseController implements NotificationCe
                 return;
             }
             req.id.add(mid);
-            getConnectionsManager().sendRequest(req, (response, error) -> {
+            getConnectionsManager().sendRequest(AyuGhostUtils.bypass(req), (response, error) -> {
 
             });
         } else {
             TLRPC.TL_messages_readMessageContents req = new TLRPC.TL_messages_readMessageContents();
             req.id.add(mid);
-            getConnectionsManager().sendRequest(req, (response, error) -> {
+            getConnectionsManager().sendRequest(AyuGhostUtils.bypass(req), (response, error) -> {
                 if (error == null) {
                     TLRPC.TL_messages_affectedMessages res = (TLRPC.TL_messages_affectedMessages) response;
                     processNewDifferenceParams(-1, res.pts, -1, res.pts_count);
@@ -16923,6 +16950,12 @@ public class MessagesController extends BaseController implements NotificationCe
                     channelsPts.put(channelId, channelPts);
                 }
                 if (channelPts == 0 && (newDialogType == 2 || newDialogType == 3)) {
+                    if (newDialogType == 3) {
+                        final TLRPC.Chat chat = getChat(channelId);
+                        if (ChatObject.isNotInChat(chat) && !ChatObject.isMonoForum(chat)) {
+                            getMessagesStorage().deleteChannelHistoryWithoutPts(channelId);
+                        }
+                    }
                     AndroidUtilities.runOnUIThread(() -> {
                         NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.onReceivedChannelDifference, channelId);
                     });

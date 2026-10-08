@@ -82,6 +82,8 @@
     <string name="OEAppearanceGlassMessageMenu">Glass Message Menu</string>
     <string name="OEAppearanceGlassMessageMenuInfo">The message menu and the reactions bar become frosted glass.</string>
     <string name="OEAppearanceGlassMessageMenuBlurOff">Glass menus need blur, which is currently off.</string>
+    <string name="OEAppearancePowerSaverActive">Power saving is on below %1$d%% battery, so blur and animations are paused. The setting is saved and turns back on once you charge.</string>
+    <string name="OEAppearancePowerSaverSettings">Power saving</string>
     <string name="OEAppearanceIconPacks">Icon Packs</string>
     <string name="OEAppearanceIconPacksInfo">Customize icons across the app</string>
     <string name="OEAppearancePillStack">Pill Stack</string>
@@ -222,4 +224,8 @@
     <string name="OEExpressiveTabsPress">Press Bounce</string>
     <string name="OEExpressiveTabsSpeed">Animation Speed</string>
     <string name="OEExpressiveTabsMotionInfo">While moving, the leading edge of the pill runs ahead and the pill flattens a little. Swiping between folders moves it exactly with your finger.</string>
+    <string name="OEAppearanceHiding">Hide Elements</string>
+    <string name="OEAppearanceHidingInfo">Stories, buttons, tabs and AI features</string>
+    <string name="OEAppearanceHidingInChats">In Chats</string>
+    <string name="OEAppearanceHidingAiPremium">AI and Premium</string>
 </resources>

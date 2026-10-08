@@ -34,6 +34,7 @@ import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ViewGroup;
 
@@ -302,6 +303,9 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
             org.telegram.ui.ActionBar.Theme.reloadMonetThemes();
         }
         app.exteraless.plugins.PluginsController.getInstance().init(applicationContext);
+        if (BuildConfig.DEBUG_TOOLS) {
+            app.exteraless.debug.EnergyProfiler.resumeIfEnabled(applicationContext);
+        }
         SharedPrefsHelper.init(applicationContext);
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(AndroidUtil.shouldEnableCrashlytics());
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
@@ -421,6 +425,9 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
 
         LauncherIconController.tryFixLauncherIconIfNeeded();
         ProxyRotationController.init();
+        app.exteraless.proxy.ProxyPingController.init();
+        app.exteraless.links.LinkCleaner.preloadIfEnabled();
+        app.exteraless.appearance.M3CircularProgress.prewarm();
 
         //if (BuildConfig.DEBUG_PRIVATE_VERSION) {
         //    Choreographer60FpsContent.getInstance().addFrameCallback(debugEverySecondChecks, 1);
@@ -439,14 +446,17 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
     private static void startPushServiceInternal() {
         SharedPreferences preferences = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
         final int pushServiceType = NaConfig.INSTANCE.getPushServiceType().Int();
-        final boolean remotePush = pushServiceType != 0
-                && (pushServiceType == 2 || PushListenerController.getProvider().hasServices());
+        final boolean remoteFailed = TextUtils.isEmpty(SharedConfig.pushString)
+                && ("__FIREBASE_FAILED__".equals(SharedConfig.pushStringStatus)
+                || UnifiedPushService.UP_FAILED.equals(SharedConfig.pushStringStatus));
+        final boolean remotePush = pushServiceType != 0 && !remoteFailed
+                && PushListenerController.getProvider().hasServices();
         boolean enabled;
         if (remotePush) {
             enabled = false;
         } else if (preferences.contains("pushService")) {
             enabled = preferences.getBoolean("pushService", true);
-        } else if (PushListenerController.getProvider().hasServices()) {
+        } else if (!remoteFailed && PushListenerController.getProvider().hasServices()) {
             return;
         } else {
             enabled = MessagesController.getMainSettings(UserConfig.selectedAccount).getBoolean("keepAliveService", false);
@@ -504,6 +514,7 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
         AndroidUtilities.runOnUIThread(() -> {
             if (getPushProvider().hasServices()) {
                 getPushProvider().onRequestPushToken();
+                AndroidUtilities.runOnUIThread(ApplicationLoader::checkPushTokenTimeout, PUSH_TOKEN_TIMEOUT_MS);
             } else {
                 if (BuildVars.LOGS_ENABLED) {
                     FileLog.d("No valid " + getPushProvider().getLogTitle() + " APK found.");
@@ -513,6 +524,25 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
                 startPushService();
             }
         }, 1000);
+    }
+
+    private static final long PUSH_TOKEN_TIMEOUT_MS = 60_000;
+
+    private static void checkPushTokenTimeout() {
+        final String status = SharedConfig.pushStringStatus;
+        if (!TextUtils.isEmpty(SharedConfig.pushString) || status == null || !status.contains("_GENERATING_SINCE_")) {
+            return;
+        }
+        final int pushType = getPushProvider().getPushType();
+        FileLog.d(getPushProvider().getLogTitle() + " token request timed out");
+        if (pushType == PushListenerController.PUSH_TYPE_WEB) {
+            SharedConfig.pushStringStatus = UnifiedPushService.UP_FAILED;
+        } else {
+            GooglePushListenerServiceProvider.lastError = "no token after " + PUSH_TOKEN_TIMEOUT_MS / 1000 + " s";
+            SharedConfig.pushStringStatus = "__FIREBASE_FAILED__";
+        }
+        PushListenerController.sendRegistrationToServer(pushType, null);
+        startPushService();
     }
 
     /*private boolean checkPlayServices() {
