@@ -1054,7 +1054,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
 
     private void toggleProfile() {
         MessageObject mo = current;
-        if (mo == null) {
+        if (mo == null || PlayerActions.isProfileSavePending(mo)) {
             return;
         }
         boolean save = !PlayerActions.isSavedToProfile(mo);

@@ -41,10 +41,13 @@ import org.telegram.ui.LaunchActivity;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import xyz.nextalone.nagram.NaConfig;
 
 public final class PlayerActions {
+
+    private static final HashSet<Long> pendingProfileSaves = new HashSet<>();
 
     private PlayerActions() {
     }
@@ -53,6 +56,11 @@ public final class PlayerActions {
         int account = messageObject.currentAccount;
         long dialogId = messageObject.getDialogId();
         return MessagesController.getInstance(account).isPeerNoForwards(dialogId) || messageObject.messageOwner != null && messageObject.messageOwner.noforwards;
+    }
+
+    public static boolean isProfileSavePending(MessageObject messageObject) {
+        TLRPC.Document document = messageObject.getDocument();
+        return document != null && pendingProfileSaves.contains(document.id);
     }
 
     public static boolean isSavedToProfile(MessageObject messageObject) {
@@ -257,7 +265,15 @@ public final class PlayerActions {
     }
 
     public static void saveToProfile(MessageObject messageObject, boolean save, ResultCallback callback) {
-        saveToProfile(messageObject, save, callback, false);
+        final TLRPC.Document document = messageObject.getDocument();
+        if (document == null || !pendingProfileSaves.add(document.id)) {
+            return;
+        }
+        final long documentId = document.id;
+        saveToProfile(messageObject, save, error -> {
+            pendingProfileSaves.remove(documentId);
+            callback.onResult(error);
+        }, false);
     }
 
     private static void saveToProfile(MessageObject messageObject, boolean save, ResultCallback callback, boolean triedFileRef) {
